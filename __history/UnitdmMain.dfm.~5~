@@ -1,0 +1,35 @@
+object dmMain: TdmMain
+  Height = 442
+  Width = 699
+  PixelsPerInch = 96
+  object conn: TFDConnection
+    Params.Strings = (
+      'DriverID=SQLite'
+      
+        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
+        'ary\Win32\Debug\database\salarydb.db')
+    Connected = True
+    LoginPrompt = False
+    BeforeConnect = connBeforeConnect
+    Left = 40
+    Top = 16
+  end
+  object FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink
+    Left = 168
+    Top = 16
+  end
+  object FDGUIxWaitCursor1: TFDGUIxWaitCursor
+    Provider = 'Forms'
+    Left = 336
+    Top = 24
+  end
+  object FDTable1: TFDTable
+    Connection = conn
+    Left = 504
+    Top = 208
+  end
+  object DataSource1: TDataSource
+    Left = 504
+    Top = 312
+  end
+end

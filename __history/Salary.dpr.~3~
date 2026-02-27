@@ -1,0 +1,17 @@
+program Salary;
+
+uses
+  Vcl.Forms,
+  Main in 'Main.pas' {Form1},
+  UnitdmMain in 'UnitdmMain.pas' {dmMain: TDataModule},
+  Unit1 in 'Unit1.pas' {Frame1: TFrame};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TdmMain, dmMain);
+  Application.Run;
+end.

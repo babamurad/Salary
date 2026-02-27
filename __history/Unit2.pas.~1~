@@ -1,0 +1,122 @@
+﻿unit Unit2;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+
+type
+  TForm2 = class(TForm)
+    ListBoxNav: TListBox;
+    procedure FormCreate(Sender: TObject);
+    procedure ListBoxNavDrawItem(Control: TWinControl; Index: Integer;
+      Rect: TRect; State: TOwnerDrawState);
+    procedure ListBoxNavClick(Sender: TObject);
+    procedure ListBoxNavMouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Integer);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form2: TForm2;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm2.FormCreate(Sender: TObject);
+begin
+  // Очищаем и добавляем пункты
+  ListBoxNav.Items.Clear;
+
+  ListBoxNav.Items.Add('🏠 Главная');
+  ListBoxNav.Items.Add('👤 Сотрудники');
+  ListBoxNav.Items.Add('💰 Зарплата');
+  ListBoxNav.Items.Add('📊 Отчёты');
+  ListBoxNav.Items.Add('⚙️ Настройки');
+
+  // Выбираем первый пункт по умолчанию
+  ListBoxNav.ItemIndex := 0;
+end;
+
+procedure TForm2.ListBoxNavClick(Sender: TObject);
+begin
+//  case ListBoxNav.ItemIndex of
+//    0: ShowMainPage;
+//    1: ShowEmployeesPage;
+//    2: ShowSalaryPage;
+//    3: ShowReportsPage;
+//    4: ShowSettingsPage;
+//  end;
+end;
+
+procedure TForm2.ListBoxNavDrawItem(Control: TWinControl; Index: Integer;
+  Rect: TRect; State: TOwnerDrawState);
+var
+  ListBox: TListBox;
+  Text: string;
+  TextRect: TRect;
+  IconRect: TRect;
+begin
+  ListBox := TListBox(Control);
+
+  // Цвета
+  if odSelected in State then
+  begin
+    // Выделенный пункт — синий фон
+    ListBox.Canvas.Brush.Color := $00D77800; // или RGB(0, 120, 215)
+    ListBox.Canvas.Font.Color := clWhite;
+  end
+  else
+  begin
+    // Обычный пункт — белый/светлый фон
+    ListBox.Canvas.Brush.Color := clWhite;
+    ListBox.Canvas.Font.Color := clBlack;
+  end;
+
+  // Заливаем фон
+  ListBox.Canvas.FillRect(Rect);
+
+  // Рисуем иконку (квадрат 24x24 слева)
+  IconRect := Rect;
+  IconRect.Left := Rect.Left + 10;
+  IconRect.Top := Rect.Top + 8;
+  IconRect.Right := IconRect.Left + 24;
+  IconRect.Bottom := IconRect.Top + 24;
+
+  // Здесь можно нарисовать иконку из ImageList
+  // ImageList1.Draw(ListBox.Canvas, IconRect.Left, IconRect.Top, Index);
+
+  // Или просто цветной квадрат как заглушка
+  ListBox.Canvas.Brush.Color := $00D77800;
+  ListBox.Canvas.FillRect(IconRect);
+
+  // Рисуем текст
+  TextRect := Rect;
+  TextRect.Left := IconRect.Right + 10; // отступ от иконки
+  Text := ListBox.Items[Index];
+
+  // Убираем эмодзи для отрисовки (если используешь их как в примере выше)
+  // или оставляем — Windows 10+ их поддерживает
+
+  ListBox.Canvas.Font.Size := 10;
+  ListBox.Canvas.TextRect(TextRect, Text, [tfVerticalCenter, tfSingleLine]);
+
+end;
+
+procedure TForm2.ListBoxNavMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+var
+  Index: Integer;
+begin
+  Index := ListBoxNav.ItemAtPos(Point(X, Y), True);
+  if Index <> -1 then
+    ListBoxNav.Hint := ListBoxNav.Items[Index];
+
+end;
+
+end.

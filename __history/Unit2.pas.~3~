@@ -1,0 +1,117 @@
+﻿unit Unit2;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+
+type
+  TForm2 = class(TForm)
+    ListBoxNav: TListBox;
+    procedure FormCreate(Sender: TObject);
+    procedure ListBoxNavDrawItem(Control: TWinControl; Index: Integer;
+      Rect: TRect; State: TOwnerDrawState);
+    procedure ListBoxNavClick(Sender: TObject);
+    procedure ListBoxNavMouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Integer);
+    procedure ListBoxNavEnter(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form2: TForm2;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm2.FormCreate(Sender: TObject);
+begin
+  // Очищаем и добавляем пункты
+  ListBoxNav.Items.Clear;
+
+  ListBoxNav.Items.Add('🏠 Главная');
+  ListBoxNav.Items.Add('👤 Сотрудники');
+  ListBoxNav.Items.Add('💰 Зарплата');
+  ListBoxNav.Items.Add('📊 Отчёты');
+  ListBoxNav.Items.Add('⚙️ Настройки');
+
+  // Выбираем первый пункт по умолчанию
+  ListBoxNav.ItemIndex := 0;
+end;
+
+procedure TForm2.ListBoxNavClick(Sender: TObject);
+begin
+//  case ListBoxNav.ItemIndex of
+//    0: ShowMainPage;
+//    1: ShowEmployeesPage;
+//    2: ShowSalaryPage;
+//    3: ShowReportsPage;
+//    4: ShowSettingsPage;
+//  end;
+end;
+
+procedure TForm2.ListBoxNavDrawItem(Control: TWinControl; Index: Integer;
+  Rect: TRect; State: TOwnerDrawState);
+var
+  ListBox: TListBox;
+  Text: string;
+  TextRect: TRect;
+begin
+  ListBox := TListBox(Control);
+  Text := ListBox.Items[Index];
+
+  // Фон
+  if odSelected in State then
+  begin
+    ListBox.Canvas.Brush.Color := RGB(0, 120, 215); // Windows blue
+    ListBox.Canvas.Font.Color := clWhite;
+  end
+  else
+  begin
+    ListBox.Canvas.Brush.Color := RGB(250, 250, 250); // почти белый
+    ListBox.Canvas.Font.Color := RGB(50, 50, 50);     // темно-серый текст
+  end;
+
+  ListBox.Canvas.FillRect(Rect);
+
+  // === ГЛАВНОЕ: правильный отступ для текста ===
+  TextRect := Rect;
+  TextRect.Left := Rect.Left + 15;   // Отступ слева
+  TextRect.Right := Rect.Right - 10; // Отступ справа (чтобы не обрезалось)
+
+  // Шрифт
+  ListBox.Canvas.Font.Name := 'Segoe UI'; // или 'Tahoma'
+  ListBox.Canvas.Font.Size := 10;
+  ListBox.Canvas.Font.Style := [];
+
+  // Рисуем текст по центру вертикали
+  DrawText(ListBox.Canvas.Handle, PChar(Text), Length(Text), TextRect, DT_LEFT or DT_VCENTER or DT_END_ELLIPSIS);
+
+  if (not (odSelected in State)) and (not ListBox.Focused) then
+    ListBox.Canvas.Brush.Color := clWhite;
+
+end;
+
+procedure TForm2.ListBoxNavEnter(Sender: TObject);
+begin
+  // Убираем фокусную рамку
+  ListBoxNav.Invalidate;
+end;
+
+procedure TForm2.ListBoxNavMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+var
+  Index: Integer;
+begin
+  Index := ListBoxNav.ItemAtPos(Point(X, Y), True);
+  if Index <> -1 then
+    ListBoxNav.Hint := ListBoxNav.Items[Index];
+
+end;
+
+end.

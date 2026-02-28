@@ -36,9 +36,20 @@ type
     dsProdCalendar: TDataSource;
     qrySickLeaveRates: TFDQuery;
     dsSickLeaveRates: TDataSource;
+    qryHistory: TFDQuery;
+    dsHistory: TDataSource;
+    qryHistoryid: TFDAutoIncField;
+    qryHistoryemp_id: TIntegerField;
+    qryHistoryfio: TWideMemoField;
+    qryHistoryperiod_date: TDateField;
+    qryHistoryamount: TFMTBCDField;
+    qrySettingskey_name: TWideMemoField;
+    qrySettingskey_value: TFloatField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
+    procedure qrySettingskey_nameGetText(Sender: TField; var Text: string;
+      DisplayText: Boolean);
   private
     { Private declarations }
   public
@@ -118,6 +129,17 @@ begin
   qryConstSettings.Open;
   qryProdCalendar.Open;
   qrySickLeaveRates.Open;
+end;
+
+procedure TdmMain.qrySettingskey_nameGetText(Sender: TField; var Text: string;
+  DisplayText: Boolean);
+begin
+  // Маппинг технических имен в человеческие
+  if Sender.AsString = 'income_tax' then Text := 'Подоходный налог'
+  else if Sender.AsString = 'pension_fund' then Text := 'Пенсионный фонд'
+  else if Sender.AsString = 'min_salary_limit' then Text := 'Минимальный оклад'
+  else if Sender.AsString = 'salary_increase_pct' then Text := 'Процент индексации'
+  else Text := Sender.AsString;
 end;
 
 end.

@@ -102,9 +102,9 @@ begin
     DBGrid1.Columns[4].Title.Caption := 'Начислено';
     DBGrid1.Columns[4].Width := 100;
     DBGrid1.Columns[5].Title.Caption := 'Подоходный (10%)';
-    DBGrid1.Columns[5].Width := 120;
+    DBGrid1.Columns[5].Width := 140;
     DBGrid1.Columns[6].Title.Caption := 'Пенсионный (2%)';
-    DBGrid1.Columns[6].Width := 120;
+    DBGrid1.Columns[6].Width := 140;
     DBGrid1.Columns[7].Title.Caption := 'К выдаче';
     DBGrid1.Columns[7].Width := 100;
   end;

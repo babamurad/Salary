@@ -10,6 +10,7 @@ object dmMain: TdmMain
         'ary\Win32\Debug\database\salarydb.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
+    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 40
@@ -64,11 +65,23 @@ object dmMain: TdmMain
     Top = 248
   end
   object qrySettings: TFDQuery
+    Active = True
     Connection = conn
     SQL.Strings = (
       'SELECT * FROM settings ORDER BY key_name')
     Left = 400
     Top = 168
+    object qrySettingskey_name: TWideMemoField
+      FieldName = 'key_name'
+      Origin = 'key_name'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      OnGetText = qrySettingskey_nameGetText
+      BlobType = ftWideMemo
+    end
+    object qrySettingskey_value: TFloatField
+      FieldName = 'key_value'
+      Origin = 'key_value'
+    end
   end
   object dsSettings: TDataSource
     DataSet = qrySettings
@@ -110,5 +123,48 @@ object dmMain: TdmMain
     DataSet = qrySickLeaveRates
     Left = 720
     Top = 248
+  end
+  object qryHistory: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT h.id, h.emp_id, e.fio, h.period_date, h.amount '
+      'FROM salary_history h'
+      'JOIN employees e ON h.emp_id = e.id'
+      'ORDER BY h.period_date DESC, e.fio')
+    Left = 32
+    Top = 320
+    object qryHistoryid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryHistoryemp_id: TIntegerField
+      FieldName = 'emp_id'
+      Origin = 'emp_id'
+      Required = True
+    end
+    object qryHistoryfio: TWideMemoField
+      AutoGenerateValue = arDefault
+      FieldName = 'fio'
+      Origin = 'fio'
+      ProviderFlags = []
+      ReadOnly = True
+      BlobType = ftWideMemo
+    end
+    object qryHistoryperiod_date: TDateField
+      FieldName = 'period_date'
+      Origin = 'period_date'
+      Required = True
+    end
+    object qryHistoryamount: TFMTBCDField
+      FieldName = 'amount'
+      Origin = 'amount'
+      Precision = 18
+      Size = 2
+    end
+  end
+  object dsHistory: TDataSource
+    Left = 24
+    Top = 384
   end
 end

@@ -12,8 +12,7 @@ uses
   UnitEditEmployee in 'UnitEditEmployee.pas' {frmEditEmployee},
   UnitframeDepts in 'UnitframeDepts.pas' {frameDepts: TFrame},
   UnitframePositions in 'UnitframePositions.pas' {framePositions: TFrame},
-  UnitframeSettings in 'UnitframeSettings.pas' {frameSettings: TFrame},
-  UnitframeVacation in 'UnitframeVacation.pas' {frameVacation: TFrame};
+  UnitframeSettings in 'UnitframeSettings.pas' {frameSettings: TFrame};
 
 {$R *.res}
 

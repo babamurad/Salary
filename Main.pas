@@ -81,6 +81,8 @@ begin
   Child := TreeView1.Items.AddChild(Root, 'Начисление зарплаты');
   Child.Data := TframePayroll;
 
+  Child := TreeView1.Items.AddChild(Root, 'Расчет отпускных');
+
   Root.Expand(True);
 
   // --- БЛОК 3: Отчеты ---

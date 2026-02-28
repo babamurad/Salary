@@ -1,8 +1,71 @@
 object frameReports: TframeReports
   Left = 0
   Top = 0
-  Width = 640
-  Height = 480
+  Width = 800
+  Height = 500
+  Align = alClient
   TabOrder = 0
   PixelsPerInch = 96
+  object PanelTop: TPanel
+    Left = 0
+    Top = 0
+    Width = 800
+    Height = 50
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    object lblPeriod: TLabel
+      Left = 16
+      Top = 18
+      Width = 73
+      Height = 15
+      Caption = 'Select Month:'
+    end
+    object dtpPeriod: TDateTimePicker
+      Left = 120
+      Top = 14
+      Width = 100
+      Height = 23
+      Date = 46081.000000000000000000
+      Time = 0.684849583332834300
+      TabOrder = 0
+    end
+    object btnGenerate: TButton
+      Left = 240
+      Top = 13
+      Width = 150
+      Height = 25
+      Caption = 'Generate Report'
+      TabOrder = 1
+    end
+    object btnExport: TButton
+      Left = 410
+      Top = 13
+      Width = 150
+      Height = 25
+      Caption = 'Export to Excel'
+      TabOrder = 2
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Top = 50
+    Width = 800
+    Height = 450
+    Align = alClient
+    Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+    ReadOnly = True
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+  object SaveDialog1: TSaveDialog
+    DefaultExt = 'xlsx'
+    Filter = 'Excel Files (*.xlsx)|*.xlsx'
+    Left = 32
+    Top = 120
+  end
 end

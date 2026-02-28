@@ -88,7 +88,7 @@ begin
   PageControl1.OwnerDraw := True;
   PageControl1.DoubleBuffered := True;
   PageControl1.HotTrack := True;
-  PageControl1.TabWidth := 160;
+  PageControl1.TabWidth := 200;
 
   FHoverCloseTab := -1;
 end;

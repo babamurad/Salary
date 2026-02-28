@@ -7,7 +7,9 @@ uses
   UnitframeEmployees in 'UnitframeEmployees.pas' {frameEmployees: TFrame},
   UnitMusor in 'UnitMusor.pas' {Form2},
   UnitframeReports in 'UnitframeReports.pas' {frameReports: TFrame},
-  UnitframePayroll in 'UnitframePayroll.pas' {framePayroll: TFrame};
+  UnitframePayroll in 'UnitframePayroll.pas' {framePayroll: TFrame},
+  UnitBaseEditForm in 'UnitBaseEditForm.pas' {frmBaseEdit},
+  UnitEditEmployee in 'UnitEditEmployee.pas' {frmEditEmployee};
 
 {$R *.res}
 
@@ -17,5 +19,7 @@ begin
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TdmMain, dmMain);
   Application.CreateForm(TForm2, Form2);
+  Application.CreateForm(TfrmBaseEdit, frmBaseEdit);
+  Application.CreateForm(TfrmEditEmployee, frmEditEmployee);
   Application.Run;
 end.

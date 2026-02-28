@@ -10,7 +10,6 @@ object dmMain: TdmMain
         'ary\Win32\Debug\database\salarydb.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
-    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 40
@@ -65,7 +64,6 @@ object dmMain: TdmMain
     Top = 248
   end
   object qrySettings: TFDQuery
-    Active = True
     Connection = conn
     SQL.Strings = (
       'SELECT * FROM settings ORDER BY key_name')
@@ -76,7 +74,7 @@ object dmMain: TdmMain
       Origin = 'key_name'
       ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
       OnGetText = qrySettingskey_nameGetText
-      BlobType = ftWideMemo
+      BlobType = ftWideString
     end
     object qrySettingskey_value: TFloatField
       FieldName = 'key_value'
@@ -134,37 +132,54 @@ object dmMain: TdmMain
     Left = 32
     Top = 320
     object qryHistoryid: TFDAutoIncField
+      DisplayWidth = 10
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
     end
     object qryHistoryemp_id: TIntegerField
+      DisplayWidth = 10
       FieldName = 'emp_id'
       Origin = 'emp_id'
       Required = True
     end
-    object qryHistoryfio: TWideMemoField
+    object qryHistoryfio: TWideStringField
       AutoGenerateValue = arDefault
+      DisplayWidth = 52
       FieldName = 'fio'
       Origin = 'fio'
       ProviderFlags = []
       ReadOnly = True
-      BlobType = ftWideMemo
+      Size = 32767
     end
     object qryHistoryperiod_date: TDateField
+      DisplayWidth = 10
       FieldName = 'period_date'
       Origin = 'period_date'
       Required = True
     end
     object qryHistoryamount: TFMTBCDField
+      DisplayWidth = 19
       FieldName = 'amount'
       Origin = 'amount'
       Precision = 18
       Size = 2
     end
+    object qryHistoryEmployeeName: TStringField
+      DisplayWidth = 43
+      FieldKind = fkLookup
+      FieldName = 'EmployeeName'
+      LookupDataSet = qryEmployees
+      LookupKeyFields = 'id'
+      LookupResultField = 'fio'
+      KeyFields = 'emp_id'
+      Size = 100
+      Lookup = True
+    end
   end
   object dsHistory: TDataSource
-    Left = 24
+    DataSet = qryHistory
+    Left = 32
     Top = 384
   end
 end

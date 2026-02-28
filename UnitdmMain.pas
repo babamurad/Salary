@@ -38,13 +38,14 @@ type
     dsSickLeaveRates: TDataSource;
     qryHistory: TFDQuery;
     dsHistory: TDataSource;
-    qryHistoryid: TFDAutoIncField;
-    qryHistoryemp_id: TIntegerField;
-    qryHistoryfio: TWideMemoField;
-    qryHistoryperiod_date: TDateField;
-    qryHistoryamount: TFMTBCDField;
     qrySettingskey_name: TWideMemoField;
     qrySettingskey_value: TFloatField;
+    qryHistoryid: TFDAutoIncField;
+    qryHistoryemp_id: TIntegerField;
+    qryHistoryfio: TWideStringField;
+    qryHistoryperiod_date: TDateField;
+    qryHistoryamount: TFMTBCDField;
+    qryHistoryEmployeeName: TStringField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -129,6 +130,7 @@ begin
   qryConstSettings.Open;
   qryProdCalendar.Open;
   qrySickLeaveRates.Open;
+  qryHistory.Open;
 end;
 
 procedure TdmMain.qrySettingskey_nameGetText(Sender: TField; var Text: string;

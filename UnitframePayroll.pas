@@ -121,7 +121,8 @@ var
   TaxRate, PensionRate: Double;
   EmpId: Integer;
   Gross, Tax, Pension, Net: Currency;
-  CalcDateStr: string; // <-- Теперь дата это просто текст
+  CalcDateStr: string;
+  IndexPct: Double;
 begin
   if MessageDlg('Рассчитать зарплату за текущий месяц для всех активных сотрудников?',
      mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;

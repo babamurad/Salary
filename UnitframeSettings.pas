@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Data.DB,
-  Vcl.Grids, Vcl.DBGrids, FireDAC.Comp.DataSet;
+  Vcl.Grids, Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.DBCtrls, Vcl.ExtCtrls;
 
 type
   TframeSettings = class(TFrame)
@@ -16,6 +16,8 @@ type
     DBGrid2: TDBGrid;
     TabSheet1: TTabSheet;
     DBGridHistory: TDBGrid;
+    Panel1: TPanel;
+    DBNavigator1: TDBNavigator;
 
   private
   procedure SetupHistoryGrid;
@@ -35,21 +37,24 @@ begin
   if Assigned(dmMain) then
   begin
     if not dmMain.qrySettings.Active then dmMain.qrySettings.Open;
+    if not dmMain.qryHistory.Active then dmMain.qryHistory.Open;
     if not dmMain.qrySickLeaveRates.Active then dmMain.qrySickLeaveRates.Open;
 
     // --- Настройка вкладки Глобальные настройки ---
     DBGrid1.Columns[0].FieldName := 'key_name';
     DBGrid1.Columns[0].Title.Caption := 'Параметр';
     DBGrid1.Columns[0].ReadOnly := True;
-    DBGrid1.Columns[0].Width := 150;
+    DBGrid1.Columns[0].Width := 180;
 
     DBGrid1.Columns[1].FieldName := 'key_value';
     DBGrid1.Columns[1].Title.Caption := 'Значение (%)';
-    DBGrid1.Columns[1].Width := 100;
+    DBGrid1.Columns[1].Width := 120;
 
     // --- Настройка вкладки Больничные ---
     DBGrid2.Columns[0].Title.Caption := 'Стаж от (лет)';
+    DBGrid2.Columns[0].Width := 180;
     DBGrid2.Columns[1].Title.Caption := '% Выплаты';
+    DBGrid2.Columns[1].Width := 120;
   end;
 end;
 

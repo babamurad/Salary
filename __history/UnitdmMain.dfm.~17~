@@ -1,0 +1,177 @@
+object dmMain: TdmMain
+  OnCreate = DataModuleCreate
+  Height = 442
+  Width = 830
+  PixelsPerInch = 96
+  object conn: TFDConnection
+    Params.Strings = (
+      
+        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
+        'ary\Win32\Debug\database\salarydb.db'
+      'OpenMode=ReadWrite'
+      'DriverID=SQLite')
+    LoginPrompt = False
+    BeforeConnect = connBeforeConnect
+    Left = 40
+    Top = 16
+  end
+  object FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink
+    Left = 168
+    Top = 16
+  end
+  object FDGUIxWaitCursor1: TFDGUIxWaitCursor
+    Provider = 'Forms'
+    Left = 336
+    Top = 24
+  end
+  object qryEmployees: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      
+        'SELECT e.*, d.dept_name, p.name as pos_name FROM employees e LEF' +
+        'T JOIN departments d ON e.dept_id = d.id LEFT JOIN positions p O' +
+        'N e.pos_id = p.id ORDER BY e.fio')
+    Left = 40
+    Top = 168
+    object qryEmployeesid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryEmployeestabno: TIntegerField
+      FieldName = 'tabno'
+      Origin = 'tabno'
+      Required = True
+    end
+    object qryEmployeesfio: TWideMemoField
+      FieldName = 'fio'
+      Origin = 'fio'
+      Required = True
+      BlobType = ftWideMemo
+    end
+    object qryEmployeeshire_date: TDateField
+      FieldName = 'hire_date'
+      Origin = 'hire_date'
+    end
+    object qryEmployeesbase_salary: TCurrencyField
+      FieldName = 'base_salary'
+      Origin = 'base_salary'
+    end
+    object qryEmployeesdept_id: TIntegerField
+      FieldName = 'dept_id'
+      Origin = 'dept_id'
+    end
+    object qryEmployeespos_id: TIntegerField
+      FieldName = 'pos_id'
+      Origin = 'pos_id'
+    end
+    object qryEmployeesstatus: TIntegerField
+      FieldName = 'status'
+      Origin = 'status'
+    end
+    object qryEmployeesdept_name: TWideMemoField
+      AutoGenerateValue = arDefault
+      FieldName = 'dept_name'
+      Origin = 'dept_name'
+      ProviderFlags = []
+      ReadOnly = True
+      BlobType = ftWideMemo
+    end
+    object qryEmployeespos_name: TWideMemoField
+      AutoGenerateValue = arDefault
+      FieldName = 'pos_name'
+      Origin = 'name'
+      ProviderFlags = []
+      ReadOnly = True
+      BlobType = ftWideMemo
+    end
+  end
+  object dsEmployees: TDataSource
+    DataSet = qryEmployees
+    Left = 40
+    Top = 248
+  end
+  object qryDepts: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM departments ORDER BY dept_name')
+    Left = 160
+    Top = 168
+    object qryDeptsid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryDeptsdept_name: TWideMemoField
+      FieldName = 'dept_name'
+      Origin = 'dept_name'
+      Required = True
+      BlobType = ftWideMemo
+    end
+  end
+  object dsDepts: TDataSource
+    DataSet = qryDepts
+    Left = 160
+    Top = 248
+  end
+  object qryPositions: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM positions ORDER BY name')
+    Left = 280
+    Top = 168
+  end
+  object dsPositions: TDataSource
+    DataSet = qryPositions
+    Left = 280
+    Top = 248
+  end
+  object qrySettings: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM settings ORDER BY key_name')
+    Left = 400
+    Top = 168
+  end
+  object dsSettings: TDataSource
+    DataSet = qrySettings
+    Left = 400
+    Top = 248
+  end
+  object qryConstSettings: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM const_settings ORDER BY key_name')
+    Left = 496
+    Top = 168
+  end
+  object dsConstSettings: TDataSource
+    DataSet = qryConstSettings
+    Left = 496
+    Top = 248
+  end
+  object qryProdCalendar: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM production_calendar ORDER BY cal_date DESC')
+    Left = 608
+    Top = 168
+  end
+  object dsProdCalendar: TDataSource
+    DataSet = qryProdCalendar
+    Left = 608
+    Top = 248
+  end
+  object qrySickLeaveRates: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM sick_leave_rates ORDER BY min_years')
+    Left = 720
+    Top = 168
+  end
+  object dsSickLeaveRates: TDataSource
+    DataSet = qrySickLeaveRates
+    Left = 720
+    Top = 248
+  end
+end

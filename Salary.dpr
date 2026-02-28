@@ -9,7 +9,10 @@ uses
   UnitframeReports in 'UnitframeReports.pas' {frameReports: TFrame},
   UnitframePayroll in 'UnitframePayroll.pas' {framePayroll: TFrame},
   UnitBaseEditForm in 'UnitBaseEditForm.pas' {frmBaseEdit},
-  UnitEditEmployee in 'UnitEditEmployee.pas' {frmEditEmployee};
+  UnitEditEmployee in 'UnitEditEmployee.pas' {frmEditEmployee},
+  UnitframeDepts in 'UnitframeDepts.pas' {frameDepts: TFrame},
+  UnitframePositions in 'UnitframePositions.pas' {framePositions: TFrame},
+  UnitframeSettings in 'UnitframeSettings.pas' {frameSettings: TFrame};
 
 {$R *.res}
 

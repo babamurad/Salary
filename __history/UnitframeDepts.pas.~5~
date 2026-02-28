@@ -1,0 +1,64 @@
+unit UnitframeDepts;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids,
+  Vcl.DBGrids, Vcl.ExtCtrls, Vcl.DBCtrls,
+  FireDAC.Comp.DataSet;
+
+type
+  TframeDepts = class(TFrame)
+    PanelTop: TPanel;
+    DBNavigator1: TDBNavigator;
+    DBGrid1: TDBGrid;
+  private
+    { Private declarations }
+    procedure DBGrid1TitleClick(Column: TColumn); // Наш метод сортировки
+  public
+    constructor Create(AOwner: TComponent); override;
+  end;
+
+implementation
+
+{$R *.dfm}
+
+uses
+  UnitdmMain; // Подключаем наш DataModule
+
+constructor TframeDepts.Create(AOwner: TComponent);
+begin
+  inherited;
+
+  // Безопасно привязываем компоненты к DataModule
+  if Assigned(dmMain) then
+  begin
+    DBGrid1.DataSource := dmMain.dsDepts;
+    DBNavigator1.DataSource := dmMain.dsDepts;
+
+    // Автоматически открываем таблицу при создании фрейма, если она закрыта
+    if not dmMain.qryDepts.Active then
+      dmMain.qryDepts.Open;
+
+    // Делаем заголовки колонок красивыми и понятными
+    if DBGrid1.Columns.Count > 0 then
+    begin
+      DBGrid1.Columns[0].Title.Caption := 'ID';
+      DBGrid1.Columns[0].Width := 50;
+      DBGrid1.Columns[0].ReadOnly := True; // ID генерируется базой данных
+
+      DBGrid1.Columns[1].Title.Caption := 'Название отдела';
+      DBGrid1.Columns[1].Width := 300;
+    end;
+    // Динамически подключаем событие клика по заголовку
+    DBGrid1.OnTitleClick := DBGrid1TitleClick;
+  end;
+end;
+
+procedure TframeDepts.DBGrid1TitleClick(Column: TColumn);
+begin
+
+end;
+
+end.

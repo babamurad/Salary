@@ -47,7 +47,8 @@ implementation
 uses
   UnitframeEmployees,
   UnitframePayroll,
-  UnitframeReports;
+  UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
+  UnitframeDepts, UnitframePositions, UnitframeSettings;
 
 { ================= TREE ================= }
 
@@ -57,13 +58,24 @@ var
 begin
   TreeView1.Items.Clear;
 
+  // --- БЛОК 1: Справочники ---
   Root := TreeView1.Items.Add(nil, 'Справочники');
+
+  Child := TreeView1.Items.AddChild(Root, 'Отделы');
+  Child.Data := TframeDepts; // Твой будущий фрейм
+
+  Child := TreeView1.Items.AddChild(Root, 'Должности');
+  Child.Data := TframePositions; // Твой будущий фрейм
 
   Child := TreeView1.Items.AddChild(Root, 'Сотрудники');
   Child.Data := TframeEmployees;
 
+  Child := TreeView1.Items.AddChild(Root, 'Настройки');
+  Child.Data := TframeSettings; // Сюда можно вывести settings, const_settings и ставки
+
   Root.Expand(True);
 
+  // --- БЛОК 2: Документы ---
   Root := TreeView1.Items.Add(nil, 'Документы');
 
   Child := TreeView1.Items.AddChild(Root, 'Начисление зарплаты');
@@ -71,6 +83,7 @@ begin
 
   Root.Expand(True);
 
+  // --- БЛОК 3: Отчеты ---
   Root := TreeView1.Items.Add(nil, 'Отчеты');
 
   Child := TreeView1.Items.AddChild(Root, 'Ведомость');
@@ -142,10 +155,10 @@ procedure TForm1.PageControl1DrawTab(Control: TCustomTabControl;
 var
   C: TCanvas;
   CloseRect: TRect;
-  OldColor: TColor;
   Hovered: Boolean;
 begin
   C := PageControl1.Canvas;
+  // Единые координаты крестика для всех 3-х методов!
   CloseRect := System.Types.Rect(Rect.Right - 22, Rect.Top + 6, Rect.Right - 6, Rect.Bottom - 6);
 
   // Отрисовка фона вкладки
@@ -155,11 +168,20 @@ begin
     C.Brush.Color := $00F0F0F0;
   C.FillRect(Rect);
 
+  // Делаем фон текста прозрачным, чтобы не было "грязных" квадратов вокруг букв
+  SetBkMode(C.Handle, TRANSPARENT);
+
+  // Цвет текста вкладки
+  if Active then
+    C.Font.Color := clBlack
+  else
+    C.Font.Color := clDkGray;
+
   // Текст заголовка
   C.TextOut(Rect.Left + 10, Rect.Top + 6, PageControl1.Pages[TabIndex].Caption);
 
   // Определяем, наведена ли мышь на крестик
-  Hovered := (FHoverCloseTab = TabIndex); // FHoverCloseTab нужно обновлять в MouseMove
+  Hovered := (FHoverCloseTab = TabIndex);
 
   // Выбор цвета крестика
   if Hovered then
@@ -167,22 +189,16 @@ begin
   else
     C.Font.Color := clGray;
 
-  // Рисуем символ ✕ (U+2715) – для этого шрифт должен его поддерживать
-  C.Font.Name := 'Arial Unicode MS'; // или 'Arial Unicode MS' 'Segoe UI Symbol'
-  C.Font.Size := 12;
+  // Рисуем крестик
+  C.Font.Name := 'Arial'; // Arial гарантированно есть на всех ПК Windows и содержит базовые символы
+  C.Font.Size := 10;
   C.Font.Style := [fsBold];
-  C.TextOut(CloseRect.Left + 2, CloseRect.Top, '✕');
 
-  // Если нужен кружок при наведении – раскомментируйте:
-//   if Hovered then
-//   begin
-//     C.Pen.Color := clRed;
-//     C.Brush.Style := bsClear;
-//     C.Ellipse(CloseRect.Left, CloseRect.Top, CloseRect.Right, CloseRect.Bottom);
-//   end;
+  // Рисуем обычную "X" или спецсимвол
+  C.TextOut(CloseRect.Left + 2, CloseRect.Top + 1, 'x');
 end;
 
-// Рисуем крестик (координаты вычисляем на лету) System.Types.
+{ ================= MOUSE DOWN ================= }
 
 procedure TForm1.PageControl1MouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -195,18 +211,24 @@ begin
     for i := 0 to PageControl1.PageCount - 1 do
     begin
       TabR := PageControl1.TabRect(i);
-      CloseRect := Rect(TabR.Right - 20, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
+      // Используем строго те же координаты (22 и 6), что и при отрисовке!
+      CloseRect := System.Types.Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
+
       if PtInRect(CloseRect, Point(X, Y)) then
       begin
         CloseTab(i);
+        // Сбрасываем Hover, иначе при удалении вкладки крестик может "зависнуть"
+        FHoverCloseTab := -1;
         Break;
       end;
     end;
 end;
 
+{ ================= MOUSE MOVE ================= }
+
 procedure TForm1.PageControl1MouseMove(Sender: TObject;
   Shift: TShiftState; X, Y: Integer);
-  var
+var
   i: Integer;
   TabR: TRect;
   CloseRect: TRect;
@@ -216,7 +238,9 @@ begin
   for i := 0 to PageControl1.PageCount - 1 do
   begin
     TabR := PageControl1.TabRect(i);
-    CloseRect := Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
+    // И тут те же самые координаты
+    CloseRect := System.Types.Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
+
     if PtInRect(CloseRect, Point(X, Y)) then
     begin
       NewHover := i;
@@ -227,7 +251,7 @@ begin
   if NewHover <> FHoverCloseTab then
   begin
     FHoverCloseTab := NewHover;
-    PageControl1.Invalidate; // перерисовать, чтобы обновить цвет крестика
+    PageControl1.Invalidate; // Перерисовываем только если поменялся ховер
   end;
 end;
 

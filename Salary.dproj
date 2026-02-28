@@ -136,6 +136,21 @@
             <Form>frmEditEmployee</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="UnitframeDepts.pas">
+            <Form>frameDepts</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="UnitframePositions.pas">
+            <Form>framePositions</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="UnitframeSettings.pas">
+            <Form>frameSettings</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

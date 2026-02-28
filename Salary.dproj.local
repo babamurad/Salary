@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899.12.30 00:00:00.000.656,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Main.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.808,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitdmMain.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.254,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.656,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Main.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.808,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitdmMain.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.943,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Salary.dproj=C:\Users\user\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.656,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Main.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.808,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitdmMain.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.254,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.656,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Main.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.946,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
     <Transaction>2026.02.27 22:05:00.024,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
     <Transaction>2026.02.27 22:07:30.819,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit2.pas</Transaction>
@@ -22,11 +22,11 @@
     <Transaction>2026.02.28 00:44:51.351,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitMusor.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.pas</Transaction>
     <Transaction>2026.02.28 00:44:51.351,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitMusor.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.dfm</Transaction>
     <Transaction>2026.02.28 00:45:45.092,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
-    <Transaction>2026.02.28 00:46:05.918,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
     <Transaction>2026.02.28 00:46:05.918,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm</Transaction>
+    <Transaction>2026.02.28 00:46:05.918,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
     <Transaction>2026.02.28 03:05:49.523,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
-    <Transaction>2026.02.28 03:06:35.375,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.dfm</Transaction>
     <Transaction>2026.02.28 03:06:35.375,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
+    <Transaction>2026.02.28 03:06:35.375,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.dfm</Transaction>
     <Transaction>2026.02.28 03:09:40.680,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEdit.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.dfm</Transaction>
     <Transaction>2026.02.28 03:09:40.680,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEdit.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.pas</Transaction>
     <Transaction>2026.02.28 10:15:58.884,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEdit.pas=</Transaction>
@@ -36,5 +36,16 @@
     <Transaction>2026.02.28 12:04:28.715,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>2026.02.28 12:04:54.095,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitEditEmployee.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>2026.02.28 12:04:54.095,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitEditEmployee.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.dfm</Transaction>
+    <Transaction>2026.02.28 13:16:51.445,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 13:17:04.977,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 13:17:23.861,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeDepts.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 13:17:23.861,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeDepts.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm</Transaction>
+    <Transaction>2026.02.28 13:17:44.166,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 13:17:53.388,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePositions.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm</Transaction>
+    <Transaction>2026.02.28 13:17:53.388,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePositions.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 13:18:06.133,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 13:18:15.525,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeSettings.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm</Transaction>
+    <Transaction>2026.02.28 13:18:15.525,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeSettings.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
+    <Transaction>2026.02.28 14:39:44.870,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
   </Transactions>
 </BorlandProject>

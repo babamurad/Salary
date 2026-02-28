@@ -1,0 +1,40 @@
+object frameDepts: TframeDepts
+  Left = 0
+  Top = 0
+  Width = 600
+  Height = 400
+  Align = alClient
+  TabOrder = 0
+  PixelsPerInch = 96
+  object PanelTop: TPanel
+    Left = 0
+    Top = 0
+    Width = 600
+    Height = 41
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    object DBNavigator1: TDBNavigator
+      Left = 0
+      Top = 0
+      Width = 240
+      Height = 41
+      Align = alLeft
+      Flat = True
+      TabOrder = 0
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Top = 41
+    Width = 600
+    Height = 359
+    Align = alClient
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+end

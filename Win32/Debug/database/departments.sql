@@ -1,4 +1,0 @@
-CREATE TABLE departments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dept_name TEXT NOT NULL UNIQUE
-);

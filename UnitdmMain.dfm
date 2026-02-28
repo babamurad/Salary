@@ -1,12 +1,15 @@
 object dmMain: TdmMain
   OnCreate = DataModuleCreate
   Height = 442
-  Width = 699
+  Width = 830
   PixelsPerInch = 96
   object conn: TFDConnection
     Params.Strings = (
-      'DriverID=SQLite'
-      'Database=salarydb.db')
+      
+        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
+        'ary\Win32\Debug\database\salarydb.db'
+      'OpenMode=ReadWrite'
+      'DriverID=SQLite')
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 40
@@ -58,6 +61,54 @@ object dmMain: TdmMain
   object dsPositions: TDataSource
     DataSet = qryPositions
     Left = 280
+    Top = 248
+  end
+  object qrySettings: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM settings ORDER BY key_name')
+    Left = 400
+    Top = 168
+  end
+  object dsSettings: TDataSource
+    DataSet = qrySettings
+    Left = 400
+    Top = 248
+  end
+  object qryConstSettings: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM const_settings ORDER BY key_name')
+    Left = 496
+    Top = 168
+  end
+  object dsConstSettings: TDataSource
+    DataSet = qryConstSettings
+    Left = 496
+    Top = 248
+  end
+  object qryProdCalendar: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM production_calendar ORDER BY cal_date DESC')
+    Left = 608
+    Top = 168
+  end
+  object dsProdCalendar: TDataSource
+    DataSet = qryProdCalendar
+    Left = 608
+    Top = 248
+  end
+  object qrySickLeaveRates: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM sick_leave_rates ORDER BY min_years')
+    Left = 720
+    Top = 168
+  end
+  object dsSickLeaveRates: TDataSource
+    DataSet = qrySickLeaveRates
+    Left = 720
     Top = 248
   end
 end

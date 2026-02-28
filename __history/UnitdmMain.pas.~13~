@@ -1,0 +1,87 @@
+unit UnitdmMain;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.SQLite,
+  FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
+  FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.VCLUI.Wait, FireDAC.Comp.UI, Data.DB,
+  FireDAC.Comp.Client, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
+  FireDAC.DApt, FireDAC.Comp.DataSet, Vcl.Dialogs;
+
+type
+  TdmMain = class(TDataModule)
+    conn: TFDConnection;
+    FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink;
+    FDGUIxWaitCursor1: TFDGUIxWaitCursor;
+
+    { Оперативные данные }
+    qryEmployees: TFDQuery;
+    dsEmployees: TDataSource;
+
+    { Базовые справочники }
+    qryDepts: TFDQuery;
+    dsDepts: TDataSource;
+    qryPositions: TFDQuery;
+    dsPositions: TDataSource;
+
+    { Дополнительные справочники и настройки }
+    qrySettings: TFDQuery;
+    dsSettings: TDataSource;
+    qryConstSettings: TFDQuery;
+    dsConstSettings: TDataSource;
+    qryProdCalendar: TFDQuery;
+    dsProdCalendar: TDataSource;
+    qrySickLeaveRates: TFDQuery;
+    dsSickLeaveRates: TDataSource;
+
+    procedure connBeforeConnect(Sender: TObject);
+    procedure DataModuleCreate(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    procedure OpenDictionaries;
+  end;
+
+var
+  dmMain: TdmMain;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+procedure TdmMain.connBeforeConnect(Sender: TObject);
+begin
+  // Динамическая установка пути к базе (файл должен лежать рядом с .exe)
+  conn.Params.Values['Database'] := ExtractFilePath(ParamStr(0)) + 'salarydb.db';
+end;
+
+procedure TdmMain.DataModuleCreate(Sender: TObject);
+begin
+  try
+    conn.Connected := True;
+    // OpenDictionaries; // Раскомментируй позже, если нужно грузить их на старте
+  except
+    on E: Exception do
+      ShowMessage('Ошибка при запуске базы данных: ' + E.Message);
+  end;
+end;
+
+procedure TdmMain.OpenDictionaries;
+begin
+  if not conn.Connected then Exit;
+
+  qryDepts.Open;
+  qryPositions.Open;
+  qrySettings.Open;
+  qryConstSettings.Open;
+  qryProdCalendar.Open;
+  qrySickLeaveRates.Open;
+end;
+
+end.

@@ -1,0 +1,141 @@
+﻿unit UnitframeEmployees;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids,
+  Vcl.DBGrids, Vcl.ExtCtrls, Vcl.DBCtrls, Vcl.StdCtrls, Vcl.Mask,
+  FireDAC.Comp.DataSet;
+
+type
+  TframeEmployees = class(TFrame)
+    PanelTop: TPanel;
+    DBNavigator1: TDBNavigator;
+    PanelDetails: TPanel;
+    Splitter1: TSplitter;
+    DBGrid1: TDBGrid;
+    lblTabNo: TLabel;
+    dbeTabNo: TDBEdit;
+    lblFIO: TLabel;
+    dbeFIO: TDBEdit;
+    lblDept: TLabel;
+    dblcbDept: TDBLookupComboBox;
+    lblPos: TLabel;
+    dblcbPos: TDBLookupComboBox;
+    lblHireDate: TLabel;
+    dbeHireDate: TDBEdit;
+    lblSalary: TLabel;
+    dbeSalary: TDBEdit;
+  private
+    procedure DBGrid1TitleClick(Column: TColumn);
+  public
+    constructor Create(AOwner: TComponent); override;
+  end;
+
+implementation
+
+{$R *.dfm}
+
+uses
+  UnitdmMain;
+
+constructor TframeEmployees.Create(AOwner: TComponent);
+begin
+  inherited;
+
+  if Assigned(dmMain) then
+  begin
+    // Открываем справочники (без них выпадающие списки будут пустыми)
+    if not dmMain.qryDepts.Active then dmMain.qryDepts.Open;
+    if not dmMain.qryPositions.Active then dmMain.qryPositions.Open;
+    if not dmMain.qryEmployees.Active then dmMain.qryEmployees.Open;
+
+    // 1. Подключаем грид и навигатор
+    DBGrid1.DataSource := dmMain.dsEmployees;
+    DBNavigator1.DataSource := dmMain.dsEmployees;
+
+    // 2. Подключаем обычные текстовые поля
+    dbeTabNo.DataSource := dmMain.dsEmployees;
+    dbeFIO.DataSource := dmMain.dsEmployees;
+    dbeHireDate.DataSource := dmMain.dsEmployees;
+    dbeSalary.DataSource := dmMain.dsEmployees;
+
+    // 3. Настраиваем выпадающий список ОТДЕЛОВ
+    dblcbDept.DataSource := dmMain.dsEmployees; // Куда сохранять
+    dblcbDept.ListSource := dmMain.dsDepts;     // Откуда брать список
+
+    // 4. Настраиваем выпадающий список ДОЛЖНОСТЕЙ
+    dblcbPos.DataSource := dmMain.dsEmployees;
+    dblcbPos.ListSource := dmMain.dsPositions;
+
+    // 5. Наводим красоту в таблице
+    if DBGrid1.Columns.Count > 0 then
+    begin
+      // Прячем технические ID-шники
+      DBGrid1.Columns[0].Visible := False; // id
+      DBGrid1.Columns[5].Visible := False; // dept_id
+      DBGrid1.Columns[6].Visible := False; // pos_id
+      DBGrid1.Columns[7].Visible := False; // status
+
+      DBGrid1.Columns[1].Title.Caption := 'Таб. №';
+      DBGrid1.Columns[1].Width := 60;
+
+      DBGrid1.Columns[2].Title.Caption := 'Ф.И.О.';
+      DBGrid1.Columns[2].Width := 200;
+
+      DBGrid1.Columns[3].Title.Caption := 'Дата приема';
+      DBGrid1.Columns[3].Width := 90;
+
+      DBGrid1.Columns[4].Title.Caption := 'Оклад';
+      DBGrid1.Columns[4].Width := 90;
+
+      // Наши красивые текстовые поля из JOIN (см. SQL-запрос)
+      if DBGrid1.Columns.Count > 8 then
+      begin
+        DBGrid1.Columns[8].Title.Caption := 'Отдел';
+        DBGrid1.Columns[8].Width := 150;
+      end;
+
+      if DBGrid1.Columns.Count > 9 then
+      begin
+        DBGrid1.Columns[9].Title.Caption := 'Должность';
+        DBGrid1.Columns[9].Width := 150;
+      end;
+    end;
+
+    // Подключаем ту же сортировку
+    DBGrid1.OnTitleClick := DBGrid1TitleClick;
+  end;
+end;
+
+procedure TframeEmployees.DBGrid1TitleClick(Column: TColumn);
+var
+  FDDataSet: TFDDataSet;
+  i: Integer;
+  CleanTitle: string;
+begin
+  if not Assigned(Column.Field) then Exit;
+  if not Assigned(DBGrid1.DataSource) or not Assigned(DBGrid1.DataSource.DataSet) then Exit;
+
+  FDDataSet := DBGrid1.DataSource.DataSet as TFDDataSet;
+
+  if FDDataSet.IndexFieldNames = Column.FieldName then
+    FDDataSet.IndexFieldNames := Column.FieldName + ':D'
+  else
+    FDDataSet.IndexFieldNames := Column.FieldName;
+
+  for i := 0 to DBGrid1.Columns.Count - 1 do
+  begin
+    CleanTitle := StringReplace(DBGrid1.Columns[i].Title.Caption, ' ▲', '', [rfReplaceAll]);
+    CleanTitle := StringReplace(CleanTitle, ' ▼', '', [rfReplaceAll]);
+    DBGrid1.Columns[i].Title.Caption := CleanTitle;
+  end;
+
+  if Pos(':D', FDDataSet.IndexFieldNames) > 0 then
+    Column.Title.Caption := Column.Title.Caption + ' ▼'
+  else
+    Column.Title.Caption := Column.Title.Caption + ' ▲';
+end;
+
+end.

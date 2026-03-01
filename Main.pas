@@ -28,6 +28,8 @@ type
     N1: TMenuItem;
     N2: TMenuItem;
     N3: TMenuItem;
+    N4: TMenuItem;
+    N5: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure PageControl1DrawTab(Control: TCustomTabControl;
@@ -39,6 +41,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure N2Click(Sender: TObject);
     procedure N3Click(Sender: TObject);
+    procedure N5Click(Sender: TObject);
   private
      FHoverCloseTab: Integer;  // можно раскомментировать, если нужен hover-эффект
     procedure BuildTree;
@@ -62,7 +65,7 @@ uses
   UnitframePayroll,
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
-  UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar;
+  UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp;
 
 { ================= TREE ================= }
 
@@ -176,6 +179,20 @@ if dlgSaveDb.Execute then
     dmMain.CreateNewDb(dlgSaveDb.FileName);
 
     RefreshDashboard;
+  end;
+end;
+
+procedure TMainForm.N5Click(Sender: TObject);
+begin
+  // Открываем окно справки поверх всех остальных окон
+  // 1. Создаем форму в памяти
+  FormHelp := TFormHelp.Create(Self);
+  try
+    // 2. Показываем её пользователю
+    FormHelp.ShowModal;
+  finally
+    // 3. Удаляем из памяти после закрытия крестиком
+    FormHelp.Free;
   end;
 end;
 

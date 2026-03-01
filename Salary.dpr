@@ -18,13 +18,15 @@ uses
   UnitSickLeaveCalc in 'UnitSickLeaveCalc.pas' {FormSickLeaveCalc},
   UnitframeSickLeave in 'UnitframeSickLeave.pas' {frameSickLeave: TFrame},
   UnitframeDashboard in 'UnitframeDashboard.pas' {frameDashboard: TFrame},
-  UnitframeCalendar in 'UnitframeCalendar.pas' {frameCalendar: TFrame};
+  UnitframeCalendar in 'UnitframeCalendar.pas' {frameCalendar: TFrame},
+  UnitFormHelp in 'UnitFormHelp.pas' {FormHelp};
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.CreateForm(TdmMain, dmMain);
+  Application.CreateForm(TMainForm, MainForm);
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TdmMain, dmMain);

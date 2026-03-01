@@ -90,6 +90,13 @@ object MainForm: TMainForm
         OnClick = N3Click
       end
     end
+    object N4: TMenuItem
+      Caption = #1057#1087#1088#1072#1074#1082#1072
+      object N5: TMenuItem
+        Caption = #1056#1091#1082#1086#1074#1086#1076#1089#1090#1074#1086' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103
+        OnClick = N5Click
+      end
+    end
   end
   object dlgOpenDb: TOpenDialog
     Left = 840

@@ -211,6 +211,7 @@ object dmMain: TdmMain
       FieldName = 'min_years'
       Origin = 'min_years'
       ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      OnGetText = qrySickLeaveRatesmin_yearsGetText
     end
     object qrySickLeaveRatespercent: TFloatField
       FieldName = 'percent'
@@ -547,13 +548,5 @@ object dmMain: TdmMain
     Macros = <>
     Left = 480
     Top = 24
-  end
-  object MainMenu1: TMainMenu
-    Left = 400
-    Top = 208
-  end
-  object MainMenu2: TMainMenu
-    Left = 408
-    Top = 216
   end
 end

@@ -90,8 +90,6 @@ type
     qrySickLeaveRatespercent: TFloatField;
     qryEmployeesdependents_count: TIntegerField;
     scrCreateDb: TFDScript;
-    MainMenu1: TMainMenu;
-    MainMenu2: TMainMenu;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -105,6 +103,8 @@ type
       DisplayText: Boolean);
     procedure qryEmployeesAfterOpen(DataSet: TDataSet);
     procedure qryEmployeesBeforeDelete(DataSet: TDataSet);
+    procedure qrySickLeaveRatesmin_yearsGetText(Sender: TField;
+      var Text: string; DisplayText: Boolean);
   private
     { Private declarations }
   public
@@ -380,6 +380,7 @@ begin
   else if Sender.AsString = 'pension_fund' then Text := 'Пенсионный фонд'
   else if Sender.AsString = 'min_salary_limit' then Text := 'Минимальный оклад'
   else if Sender.AsString = 'salary_increase_pct' then Text := 'Процент индексации'
+  else if Sender.AsString = 'dependent_deduction' then Text := 'Иждевенцы'
   else Text := Sender.AsString;
 end;
 
@@ -387,6 +388,27 @@ procedure TdmMain.qrySickLeavefioGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
   Text := Sender.AsString;
+end;
+
+procedure TdmMain.qrySickLeaveRatesmin_yearsGetText(Sender: TField;
+  var Text: string; DisplayText: Boolean);
+begin
+  // Если мы кликнули по ячейке для редактирования — показываем просто цифру
+  if not DisplayText then
+  begin
+    Text := Sender.AsString;
+    Exit;
+  end;
+
+  // Наводим красоту для отображения в сетке
+  if Sender.IsNull then
+    Text := ''
+  else if Sender.AsInteger = 0 then
+    Text := 'До 5 лет'
+  else if Sender.AsInteger >= 8 then // Если это максимальный порог
+    Text := 'Свыше ' + Sender.AsString + ' лет'
+  else
+    Text := 'От ' + Sender.AsString + ' лет';
 end;
 
 procedure TdmMain.qryVacationfioGetText(Sender: TField; var Text: string;

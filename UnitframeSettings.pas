@@ -51,7 +51,7 @@ begin
     DBGrid1.Columns[1].Width := 120;
 
     // --- Настройка вкладки Больничные ---
-    DBGrid2.Columns[0].Title.Caption := 'Стаж от (лет)';
+    DBGrid2.Columns[0].Title.Caption := 'Стаж работы';
     DBGrid2.Columns[0].Width := 180;
     DBGrid2.Columns[1].Title.Caption := '% Выплаты';
     DBGrid2.Columns[1].Width := 120;

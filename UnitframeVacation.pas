@@ -10,9 +10,9 @@ uses
 type
   TframeVacation = class(TFrame)
     Panel1: TPanel;
-    Button1: TButton;
+    btnNewCalc: TButton;
     DBGrid1: TDBGrid;
-    procedure Button1Click(Sender: TObject);
+    procedure btnNewCalcClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -25,9 +25,22 @@ implementation
 
 uses UnitVacationCalc, UnitdmMain;
 
-procedure TframeVacation.Button1Click(Sender: TObject);
+procedure TframeVacation.btnNewCalcClick(Sender: TObject);
+var
+  Frm: TFormVacationCalc;
 begin
-FormVacationCalc.ShowModal;
+  Frm := TFormVacationCalc.Create(Self);
+  try
+    // Если окно закрылось с ModalResult := mrOk (то есть сохранение прошло успешно)
+    if Frm.ShowModal = mrOk then
+    begin
+      // Обновляем таблицу, чтобы бухгалтер сразу увидел новый отпуск
+      dmMain.qryVacation.Refresh;
+    end;
+  finally
+    Frm.Free;
+  end;
+
 end;
 
 end.

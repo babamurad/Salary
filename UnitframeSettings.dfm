@@ -98,6 +98,7 @@ object frameSettings: TframeSettings
             Expanded = False
             FieldName = 'amount'
             Title.Caption = #1057#1091#1084#1084#1072
+            Width = 64
             Visible = True
           end>
       end
@@ -108,9 +109,6 @@ object frameSettings: TframeSettings
         Height = 41
         Align = alTop
         TabOrder = 1
-        ExplicitLeft = 120
-        ExplicitTop = 16
-        ExplicitWidth = 185
         object DBNavigator1: TDBNavigator
           Left = 8
           Top = 8

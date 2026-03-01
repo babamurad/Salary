@@ -137,6 +137,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryHistoryemp_id: TIntegerField
       DisplayWidth = 10
@@ -187,15 +188,88 @@ object dmMain: TdmMain
     ConstraintsEnabled = True
     Connection = conn
     SQL.Strings = (
-      
-        'SELECT v.*, e.fio FROM vacation_journal v JOIN employees e ON v.' +
-        'emp_id = e.id ORDER BY v.calc_date DESC')
+      'SELECT v.*, CAST(e.fio AS VARCHAR(150)) AS fio '
+      'FROM vacation_journal v '
+      'JOIN employees e ON v.emp_id = e.id ORDER BY v.calc_date DESC')
     Left = 136
     Top = 320
+    object qryVacationid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryVacationemp_id: TIntegerField
+      FieldName = 'emp_id'
+      Origin = 'emp_id'
+      Required = True
+    end
+    object qryVacationcalc_date: TDateField
+      FieldName = 'calc_date'
+      Origin = 'calc_date'
+      Required = True
+    end
+    object qryVacationstart_date: TDateField
+      FieldName = 'start_date'
+      Origin = 'start_date'
+      Required = True
+    end
+    object qryVacationend_date: TDateField
+      FieldName = 'end_date'
+      Origin = 'end_date'
+      Required = True
+    end
+    object qryVacationdays_count: TIntegerField
+      FieldName = 'days_count'
+      Origin = 'days_count'
+      Required = True
+    end
+    object qryVacationavg_monthly_salary: TFMTBCDField
+      FieldName = 'avg_monthly_salary'
+      Origin = 'avg_monthly_salary'
+      Precision = 18
+      Size = 2
+    end
+    object qryVacationavg_daily_salary: TFMTBCDField
+      FieldName = 'avg_daily_salary'
+      Origin = 'avg_daily_salary'
+      Precision = 18
+      Size = 2
+    end
+    object qryVacationtotal_amount: TFMTBCDField
+      FieldName = 'total_amount'
+      Origin = 'total_amount'
+      Precision = 18
+      Size = 2
+    end
+    object qryVacationfio: TWideMemoField
+      AutoGenerateValue = arDefault
+      FieldName = 'fio'
+      Origin = 'fio'
+      ProviderFlags = []
+      ReadOnly = True
+      OnGetText = qryVacationfioGetText
+      BlobType = ftWideString
+      Size = 32767
+    end
   end
   object dsVacation: TDataSource
     DataSet = qryVacation
     Left = 136
     Top = 384
+  end
+  object qrySickLeave: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT s.*, '
+      '       CAST(e.fio AS VARCHAR(150)) AS fio '
+      'FROM sick_leave_journal s '
+      'JOIN employees e ON s.emp_id = e.id '
+      'ORDER BY s.calc_date DESC')
+    Left = 240
+    Top = 328
+  end
+  object DataSource1: TDataSource
+    Left = 240
+    Top = 392
   end
 end

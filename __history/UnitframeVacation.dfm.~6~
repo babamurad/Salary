@@ -1,0 +1,102 @@
+object frameVacation: TframeVacation
+  Left = 0
+  Top = 0
+  Width = 977
+  Height = 493
+  TabOrder = 0
+  PixelsPerInch = 96
+  object Panel1: TPanel
+    Left = 0
+    Top = 0
+    Width = 977
+    Height = 41
+    Align = alTop
+    TabOrder = 0
+    ExplicitWidth = 640
+    object btnNewCalc: TButton
+      Left = 24
+      Top = 9
+      Width = 105
+      Height = 25
+      Caption = #1053#1086#1074#1099#1081' '#1088#1072#1089#1095#1077#1090
+      TabOrder = 0
+      OnClick = btnNewCalcClick
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Top = 41
+    Width = 977
+    Height = 452
+    Align = alClient
+    DataSource = dmMain.dsVacation
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+    Columns = <
+      item
+        Expanded = False
+        FieldName = 'id'
+        Visible = False
+      end
+      item
+        Expanded = False
+        FieldName = 'fio'
+        Title.Caption = #1057#1086#1090#1088#1091#1076#1085#1080#1082
+        Width = 135
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'emp_id'
+        Visible = False
+      end
+      item
+        Expanded = False
+        FieldName = 'calc_date'
+        Title.Caption = #1044#1072#1090#1072' '#1088#1072#1089#1095#1077#1090#1072
+        Width = 97
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'start_date'
+        Title.Caption = #1053#1072#1095#1072#1083#1086' '#1086#1090#1087#1091#1089#1082#1072
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'end_date'
+        Title.Caption = #1050#1086#1085#1077#1094' '#1086#1090#1087#1091#1089#1082#1072
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'days_count'
+        Title.Caption = #1044#1085#1077#1081
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'avg_monthly_salary'
+        Title.Caption = #1057#1088#1077#1076#1085#1077#1084#1077#1089#1103#1095#1085#1099#1081
+        Width = 149
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'avg_daily_salary'
+        Title.Caption = #1057#1088#1077#1076#1085#1077#1076#1085#1077#1074#1085#1086#1081
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'total_amount'
+        Title.Caption = #1048#1090#1086#1075#1086' '#1082' '#1074#1099#1087#1083#1072#1090#1077
+        Visible = True
+      end>
+  end
+end

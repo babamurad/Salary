@@ -1,0 +1,90 @@
+unit UnitVacationCalc;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.DBCtrls,
+  Vcl.ComCtrls, DBGridEhGrouping, ToolCtrlsEh, DBGridEhToolCtrls, DynVarsEh,
+  DBGridEh, DBLookupEh, Vcl.Mask, DBCtrlsEh, EhLibVCL, GridsEh, DBAxisGridsEh;
+
+type
+  TFormVacationCalc = class(TForm)
+    dtpStart: TDateTimePicker;
+    dtpEnd: TDateTimePicker;
+    Edit1: TEdit;
+    Panel1: TPanel;
+    Button1: TButton;
+    Button2: TButton;
+    DBGridEh1: TDBGridEh;
+    DBDateTimeEditEh1: TDBDateTimeEditEh;
+    DBDateTimeEditEh2: TDBDateTimeEditEh;
+    DBLookupComboboxEh1: TDBLookupComboboxEh;
+    cmbEmployee: TComboBox;
+    procedure FormShow(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+  private
+    { Private declarations }
+
+
+  public
+    { Public declarations }
+  end;
+
+var
+  FormVacationCalc: TFormVacationCalc;
+
+implementation
+
+{$R *.dfm}
+
+uses UnitdmMain;
+
+{ TFormVacationCalc }
+
+
+
+procedure TFormVacationCalc.Button1Click(Sender: TObject);
+var
+  SelectedEmpID: Integer;
+begin
+  // Проверяем, что кто-то точно выбран
+  if cmbEmployee.ItemIndex = -1 then
+  begin
+    ShowMessage('Выберите сотрудника!');
+    Exit;
+  end;
+
+  // Достаем спрятанный ID
+  SelectedEmpID := Integer(cmbEmployee.Items.Objects[cmbEmployee.ItemIndex]);
+
+  // Теперь переменную SelectedEmpID можно передавать в функцию расчета:
+  // AvgSalary := dmMain.GetAverageYearlySalary(SelectedEmpID, Date);
+end;
+
+procedure TFormVacationCalc.FormShow(Sender: TObject);
+begin
+  cmbEmployee.Items.Clear;
+
+  if not Assigned(dmMain) then Exit;
+
+  if not dmMain.qryEmployees.Active then
+    dmMain.qryEmployees.Open;
+
+  dmMain.qryEmployees.First;
+  while not dmMain.qryEmployees.Eof do
+  begin
+    // Добавляем текст (ФИО) и скрыто привязываем к нему ID сотрудника
+    cmbEmployee.Items.AddObject(
+      dmMain.qryEmployees.FieldByName('fio').AsString,
+      TObject(dmMain.qryEmployees.FieldByName('id').AsInteger)
+    );
+    dmMain.qryEmployees.Next;
+  end;
+
+  // Если список не пуст, автоматически выбираем первого человека
+  if cmbEmployee.Items.Count > 0 then
+    cmbEmployee.ItemIndex := 0;
+end;
+
+end.

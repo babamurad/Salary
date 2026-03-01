@@ -62,19 +62,15 @@ procedure TframeSettings.SetupHistoryGrid;
 begin
 // Подключаем сетку к источнику данных
   DBGridHistory.DataSource := dmMain.dsHistory;
-
   if DBGridHistory.Columns.Count > 0 then
   begin
     DBGridHistory.Columns[0].Visible := False; // Скрываем технический ID
-
     // Настраиваем выбор сотрудника через выпадающий список
     DBGridHistory.Columns[1].Title.Caption := 'Сотрудник';
     DBGridHistory.Columns[1].Width := 200;
     // Здесь мы используем Lookup-поле, которое вы настроили в DataSet qryHistory
-
     DBGridHistory.Columns[2].Title.Caption := 'Дата (01.ММ.ГГГГ)';
     DBGridHistory.Columns[2].Width := 100;
-
     DBGridHistory.Columns[3].Title.Caption := 'Сумма дохода';
     DBGridHistory.Columns[3].Width := 120;
   end;

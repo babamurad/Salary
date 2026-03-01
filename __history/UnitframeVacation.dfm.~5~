@@ -1,0 +1,39 @@
+object frameVacation: TframeVacation
+  Left = 0
+  Top = 0
+  Width = 640
+  Height = 480
+  TabOrder = 0
+  PixelsPerInch = 96
+  object Panel1: TPanel
+    Left = 0
+    Top = 0
+    Width = 640
+    Height = 41
+    Align = alTop
+    TabOrder = 0
+    object btnNewCalc: TButton
+      Left = 24
+      Top = 9
+      Width = 105
+      Height = 25
+      Caption = #1053#1086#1074#1099#1081' '#1088#1072#1089#1095#1077#1090
+      TabOrder = 0
+      OnClick = btnNewCalcClick
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Top = 41
+    Width = 640
+    Height = 439
+    Align = alClient
+    DataSource = dmMain.dsVacation
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+end

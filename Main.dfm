@@ -29,8 +29,6 @@ object Form1: TForm1
     Height = 545
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 624
-    ExplicitHeight = 441
     object Splitter1: TSplitter
       Left = 257
       Top = 1
@@ -46,7 +44,6 @@ object Form1: TForm1
       Height = 543
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 523
       object TreeView1: TTreeView
         Left = 1
         Top = 1
@@ -56,8 +53,6 @@ object Form1: TForm1
         Indent = 19
         TabOrder = 0
         OnChange = TreeView1Change
-        ExplicitWidth = 196
-        ExplicitHeight = 521
       end
     end
     object PageControl1: TPageControl
@@ -70,9 +65,6 @@ object Form1: TForm1
       OnDrawTab = PageControl1DrawTab
       OnMouseDown = PageControl1MouseDown
       OnMouseMove = PageControl1MouseMove
-      ExplicitLeft = 288
-      ExplicitWidth = 652
-      ExplicitHeight = 523
     end
   end
   object ImageList1: TImageList

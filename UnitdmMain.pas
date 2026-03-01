@@ -48,17 +48,31 @@ type
     qryHistoryEmployeeName: TStringField;
     qryVacation: TFDQuery;
     dsVacation: TDataSource;
+    qryVacationid: TFDAutoIncField;
+    qryVacationemp_id: TIntegerField;
+    qryVacationcalc_date: TDateField;
+    qryVacationstart_date: TDateField;
+    qryVacationend_date: TDateField;
+    qryVacationdays_count: TIntegerField;
+    qryVacationavg_monthly_salary: TFMTBCDField;
+    qryVacationavg_daily_salary: TFMTBCDField;
+    qryVacationtotal_amount: TFMTBCDField;
+    qryVacationfio: TWideMemoField;
+    qrySickLeave: TFDQuery;
+    DataSource1: TDataSource;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
     procedure qrySettingskey_nameGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
+    procedure qryVacationfioGetText(Sender: TField; var Text: string;
+      DisplayText: Boolean);
   private
     { Private declarations }
-    function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
   public
     { Public declarations }
     procedure OpenDictionaries;
+    function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
   end;
 
 var
@@ -116,7 +130,7 @@ begin
     conn.Connected := True;
 
     // Если подключились, можно открывать таблицы
-    // OpenDictionaries;
+    OpenDictionaries;
   except
     on E: Exception do
       ShowMessage('Ошибка при запуске базы данных: ' + E.Message);
@@ -127,6 +141,8 @@ function TdmMain.GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Doub
 var
   Qry: TFDQuery;
   StartDate: string;
+  SumTotal: Double;
+  MonthsCount: Integer;
 begin
   Result := 0;
   // Определяем дату "12 месяцев назад" от даты расчета
@@ -135,15 +151,20 @@ begin
   Qry := TFDQuery.Create(nil);
   try
     Qry.Connection := conn;
+
+    // Обновленный SQL-запрос: теперь он считает и сумму, и количество отработанных месяцев
     Qry.SQL.Text :=
-      'SELECT SUM(TotalAmount) as SumTotal ' +
+      'SELECT ' +
+      '  SUM(TotalAmount) as SumTotal, ' +
+      '  COUNT(DISTINCT strftime(''%Y-%m'', period_date)) as MonthsCount ' +
       'FROM ( ' +
-      '  SELECT gross_amount AS TotalAmount FROM payroll_journal ' +
+      '  SELECT gross_amount AS TotalAmount, period_date FROM payroll_journal ' +
       '  WHERE emp_id = :id1 AND period_date >= :dt1 ' +
       '  UNION ALL ' +
-      '  SELECT amount AS TotalAmount FROM salary_history ' +
+      '  SELECT amount AS TotalAmount, period_date FROM salary_history ' +
       '  WHERE emp_id = :id2 AND period_date >= :dt2 ' +
       ')';
+
     Qry.ParamByName('id1').AsInteger := AEmpID;
     Qry.ParamByName('id2').AsInteger := AEmpID;
     Qry.ParamByName('dt1').AsString := StartDate;
@@ -151,7 +172,16 @@ begin
     Qry.Open;
 
     if not Qry.FieldByName('SumTotal').IsNull then
-      Result := Qry.FieldByName('SumTotal').AsFloat / 12; // Среднемесячная
+    begin
+      SumTotal := Qry.FieldByName('SumTotal').AsFloat;
+      MonthsCount := Qry.FieldByName('MonthsCount').AsInteger;
+
+      // Защита: делим только если есть хотя бы 1 отработанный месяц
+      if MonthsCount > 0 then
+        Result := SumTotal / MonthsCount // Делим на фактическое количество месяцев!
+      else
+        Result := 0;
+    end;
   finally
     Qry.Free;
   end;
@@ -169,6 +199,7 @@ begin
   qrySickLeaveRates.Open;
   qryHistory.Open;
   qryVacation.Open;
+  qrySickLeave.Open;
 
 end;
 
@@ -181,6 +212,12 @@ begin
   else if Sender.AsString = 'min_salary_limit' then Text := 'Минимальный оклад'
   else if Sender.AsString = 'salary_increase_pct' then Text := 'Процент индексации'
   else Text := Sender.AsString;
+end;
+
+procedure TdmMain.qryVacationfioGetText(Sender: TField; var Text: string;
+  DisplayText: Boolean);
+begin
+  Text := Sender.AsString;
 end;
 
 end.

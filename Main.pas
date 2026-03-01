@@ -57,41 +57,28 @@ var
   Root, Child: TTreeNode;
 begin
   TreeView1.Items.Clear;
-
   // --- БЛОК 1: Справочники ---
   Root := TreeView1.Items.Add(nil, 'Справочники');
-
   Child := TreeView1.Items.AddChild(Root, 'Отделы');
   Child.Data := TframeDepts; // Твой будущий фрейм
-
   Child := TreeView1.Items.AddChild(Root, 'Должности');
   Child.Data := TframePositions; // Твой будущий фрейм
-
   Child := TreeView1.Items.AddChild(Root, 'Сотрудники');
   Child.Data := TframeEmployees;
-
   Child := TreeView1.Items.AddChild(Root, 'Настройки');
   Child.Data := TframeSettings; // Сюда можно вывести settings, const_settings и ставки
-
   Root.Expand(True);
-
   // --- БЛОК 2: Документы ---
   Root := TreeView1.Items.Add(nil, 'Документы');
-
   Child := TreeView1.Items.AddChild(Root, 'Начисление зарплаты');
   Child.Data := TframePayroll;
-
   Child := TreeView1.Items.AddChild(Root, 'Расчет отпускных');
   Child.Data := TframeVacation;
-
   Root.Expand(True);
-
   // --- БЛОК 3: Отчеты ---
   Root := TreeView1.Items.Add(nil, 'Отчеты');
-
   Child := TreeView1.Items.AddChild(Root, 'Ведомость');
   Child.Data := TframeReports;
-
   Root.Expand(True);
 end;
 
@@ -163,40 +150,32 @@ begin
   C := PageControl1.Canvas;
   // Единые координаты крестика для всех 3-х методов!
   CloseRect := System.Types.Rect(Rect.Right - 22, Rect.Top + 6, Rect.Right - 6, Rect.Bottom - 6);
-
   // Отрисовка фона вкладки
   if Active then
     C.Brush.Color := clWhite
   else
     C.Brush.Color := $00F0F0F0;
   C.FillRect(Rect);
-
   // Делаем фон текста прозрачным, чтобы не было "грязных" квадратов вокруг букв
   SetBkMode(C.Handle, TRANSPARENT);
-
   // Цвет текста вкладки
   if Active then
     C.Font.Color := clBlack
   else
     C.Font.Color := clDkGray;
-
   // Текст заголовка
   C.TextOut(Rect.Left + 10, Rect.Top + 6, PageControl1.Pages[TabIndex].Caption);
-
   // Определяем, наведена ли мышь на крестик
   Hovered := (FHoverCloseTab = TabIndex);
-
   // Выбор цвета крестика
   if Hovered then
     C.Font.Color := clRed
   else
     C.Font.Color := clGray;
-
   // Рисуем крестик
   C.Font.Name := 'Arial'; // Arial гарантированно есть на всех ПК Windows и содержит базовые символы
   C.Font.Size := 10;
   C.Font.Style := [fsBold];
-
   // Рисуем обычную "X" или спецсимвол
   C.TextOut(CloseRect.Left + 2, CloseRect.Top + 1, 'x');
 end;
@@ -216,7 +195,6 @@ begin
       TabR := PageControl1.TabRect(i);
       // Используем строго те же координаты (22 и 6), что и при отрисовке!
       CloseRect := System.Types.Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
-
       if PtInRect(CloseRect, Point(X, Y)) then
       begin
         CloseTab(i);
@@ -243,14 +221,12 @@ begin
     TabR := PageControl1.TabRect(i);
     // И тут те же самые координаты
     CloseRect := System.Types.Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
-
     if PtInRect(CloseRect, Point(X, Y)) then
     begin
       NewHover := i;
       Break;
     end;
   end;
-
   if NewHover <> FHoverCloseTab then
   begin
     FHoverCloseTab := NewHover;

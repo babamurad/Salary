@@ -40,14 +40,40 @@ type
     dsHistory: TDataSource;
     qrySettingskey_name: TWideMemoField;
     qrySettingskey_value: TFloatField;
+    qryVacation: TFDQuery;
+    dsVacation: TDataSource;
+    qrySickLeave: TFDQuery;
+    dsSickLeave: TDataSource;
+    qrySickLeaveid: TFDAutoIncField;
+    qrySickLeaveemp_id: TIntegerField;
+    qrySickLeavecalc_date: TDateField;
+    qrySickLeavestart_date: TDateField;
+    qrySickLeaveend_date: TDateField;
+    qrySickLeavedays_count: TIntegerField;
+    qrySickLeaveavg_daily_salary: TFMTBCDField;
+    qrySickLeaveexperience_years: TIntegerField;
+    qrySickLeavepayment_percent: TBCDField;
+    qrySickLeavetotal_amount: TFMTBCDField;
+    qrySickLeavefio: TWideStringField;
+    qryEmployeesid: TFDAutoIncField;
+    qryEmployeestabno: TIntegerField;
+    qryEmployeesfio: TWideStringField;
+    qryEmployeeshire_date: TDateField;
+    qryEmployeesbase_salary: TCurrencyField;
+    qryEmployeesdept_id: TIntegerField;
+    qryEmployeespos_id: TIntegerField;
+    qryEmployeesstatus: TIntegerField;
+    qryEmployeesprior_exp_years: TIntegerField;
+    qryEmployeesprior_exp_months: TIntegerField;
+    qryEmployeesdept_name: TWideStringField;
+    qryEmployeespos_name: TWideStringField;
+    qryDeptsid: TFDAutoIncField;
+    qryDeptsdept_name: TWideStringField;
     qryHistoryid: TFDAutoIncField;
     qryHistoryemp_id: TIntegerField;
     qryHistoryfio: TWideStringField;
     qryHistoryperiod_date: TDateField;
     qryHistoryamount: TFMTBCDField;
-    qryHistoryEmployeeName: TStringField;
-    qryVacation: TFDQuery;
-    dsVacation: TDataSource;
     qryVacationid: TFDAutoIncField;
     qryVacationemp_id: TIntegerField;
     qryVacationcalc_date: TDateField;
@@ -57,15 +83,19 @@ type
     qryVacationavg_monthly_salary: TFMTBCDField;
     qryVacationavg_daily_salary: TFMTBCDField;
     qryVacationtotal_amount: TFMTBCDField;
-    qryVacationfio: TWideMemoField;
-    qrySickLeave: TFDQuery;
-    DataSource1: TDataSource;
+    qryVacationfio: TWideStringField;
+    qrySickLeaveRatesmin_years: TIntegerField;
+    qrySickLeaveRatespercent: TFloatField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
     procedure qrySettingskey_nameGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
     procedure qryVacationfioGetText(Sender: TField; var Text: string;
+      DisplayText: Boolean);
+    procedure qryEmployeesfioGetText(Sender: TField; var Text: string;
+      DisplayText: Boolean);
+    procedure qrySickLeavefioGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
   private
     { Private declarations }
@@ -203,6 +233,12 @@ begin
 
 end;
 
+procedure TdmMain.qryEmployeesfioGetText(Sender: TField; var Text: string;
+  DisplayText: Boolean);
+begin
+  Text := Sender.AsString;
+end;
+
 procedure TdmMain.qrySettingskey_nameGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
@@ -212,6 +248,12 @@ begin
   else if Sender.AsString = 'min_salary_limit' then Text := 'Минимальный оклад'
   else if Sender.AsString = 'salary_increase_pct' then Text := 'Процент индексации'
   else Text := Sender.AsString;
+end;
+
+procedure TdmMain.qrySickLeavefioGetText(Sender: TField; var Text: string;
+  DisplayText: Boolean);
+begin
+  Text := Sender.AsString;
 end;
 
 procedure TdmMain.qryVacationfioGetText(Sender: TField; var Text: string;

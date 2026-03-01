@@ -1,0 +1,236 @@
+unit UnitSickLeaveCalc;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls,
+  System.DateUtils,
+  Vcl.StdCtrls;
+
+type
+  TFormSickLeaveCalc = class(TForm)
+    ComboBox1: TComboBox;
+    dtpStart: TDateTimePicker;
+    dtpEnd: TDateTimePicker;
+    edtTotalExp: TEdit;
+    edtPercent: TEdit;
+    Button1: TButton;
+    btnSave: TButton;
+    procedure Button1Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure btnSaveClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FormSickLeaveCalc: TFormSickLeaveCalc;
+
+implementation
+
+{$R *.dfm}
+
+uses UnitdmMain, FireDAC.Comp.Client, Data.DB, System.Math;
+
+procedure TFormSickLeaveCalc.btnSaveClick(Sender: TObject);
+var
+  SelectedEmpID: Integer;
+  StartDate, EndDate, CalcDate: TDate;
+  DaysCount, TotalYears: Integer;
+  Percent, AvgMonthly, AvgDaily, TotalAmount: Double;
+begin
+  // 1. Проверяем, всё ли заполнено
+  if ComboBox1.ItemIndex = -1 then
+  begin
+    ShowMessage('Выберите сотрудника!');
+    Exit;
+  end;
+
+  StartDate := dtpStart.Date;
+  EndDate := dtpEnd.Date;
+
+  if EndDate < StartDate then
+  begin
+    ShowMessage('Ошибка: Дата окончания не может быть раньше!');
+    Exit;
+  end;
+
+  // 2. Собираем финальные данные для записи
+  SelectedEmpID := Integer(ComboBox1.Items.Objects[ComboBox1.ItemIndex]);
+  CalcDate := Date; // Дата проведения расчета (сегодня)
+  DaysCount := DaysBetween(EndDate, StartDate) + 1;
+
+  // Берем стаж и процент прямо из текстовых полей формы,
+  // куда они попали после нажатия кнопки "Рассчитать"
+  TotalYears := StrToIntDef(edtTotalExp.Text, 0);
+  Percent := StrToFloatDef(edtPercent.Text, 60);
+
+  // Быстро пересчитываем суммы для надежности
+  AvgMonthly := dmMain.GetAverageYearlySalary(SelectedEmpID, StartDate);
+  AvgMonthly := SimpleRoundTo(AvgMonthly, -2);
+  if AvgMonthly > 0 then
+    AvgDaily := SimpleRoundTo(AvgMonthly / 29.7, -2)
+  else
+    AvgDaily := 0;
+
+  TotalAmount := SimpleRoundTo(AvgDaily * DaysCount * (Percent / 100.0), -2);
+
+  // 3. Сохраняем в базу данных (с обязательным форматом дат!)
+  try
+    dmMain.conn.ExecSQL(
+      'INSERT INTO sick_leave_journal (emp_id, calc_date, start_date, end_date, ' +
+      'days_count, avg_daily_salary, experience_years, payment_percent, total_amount) ' +
+      'VALUES (:emp_id, :calc_date, :start_date, :end_date, :days, :avg_d, :exp_y, :percent, :total)',
+      [
+        SelectedEmpID,
+        FormatDateTime('yyyy-mm-dd', CalcDate),   // Спасает от ошибки 'Invalid argument to date encode'
+        FormatDateTime('yyyy-mm-dd', StartDate),
+        FormatDateTime('yyyy-mm-dd', EndDate),
+        DaysCount,
+        AvgDaily,
+        TotalYears,
+        Percent,
+        TotalAmount
+      ]
+    );
+
+    ShowMessage('Больничный успешно сохранен!');
+    ModalResult := mrOk; // Сигнал фрейму обновить таблицу и закрыть форму
+
+  except
+    on E: Exception do
+      ShowMessage('Ошибка при сохранении: ' + E.Message);
+  end;
+
+end;
+
+procedure TFormSickLeaveCalc.Button1Click(Sender: TObject);
+var
+  SelectedEmpID: Integer;
+  StartDate, EndDate, HireDate: TDate;
+  PriorYears, PriorMonths, CurrentMonths, TotalMonths, TotalYears: Integer;
+  Percent: Double;
+  DaysCount: Integer;
+  AvgMonthly, AvgDaily, TotalAmount: Double;
+  Qry: TFDQuery;
+begin
+  // 1. Проверяем выбор сотрудника
+  if ComboBox1.ItemIndex = -1 then
+  begin
+    ShowMessage('Выберите сотрудника!');
+    Exit;
+  end;
+
+  SelectedEmpID := Integer(ComboBox1.Items.Objects[ComboBox1.ItemIndex]);
+  StartDate := dtpStart.Date; // Ваша первая дата
+  EndDate := dtpEnd.Date;   // Ваша вторая дата
+
+  if EndDate < StartDate then
+  begin
+    ShowMessage('Ошибка: Дата окончания не может быть раньше!');
+    Exit;
+  end;
+
+  Qry := TFDQuery.Create(nil);
+  try
+    Qry.Connection := dmMain.conn;
+
+    // 2. Достаем дату приема и прошлый стаж из базы
+    Qry.SQL.Text := 'SELECT hire_date, IFNULL(prior_exp_years, 0) as p_years, IFNULL(prior_exp_months, 0) as p_months ' +
+                    'FROM employees WHERE id = :id';
+    Qry.ParamByName('id').AsInteger := SelectedEmpID;
+    Qry.Open;
+
+    if Qry.IsEmpty then
+    begin
+      ShowMessage('Сотрудник не найден в базе.');
+      Exit;
+    end;
+
+    HireDate := Qry.FieldByName('hire_date').AsDateTime;
+    PriorYears := Qry.FieldByName('p_years').AsInteger;
+    PriorMonths := Qry.FieldByName('p_months').AsInteger;
+    Qry.Close;
+
+    // 3. Считаем общий стаж (переводим все в месяцы, затем в полные годы)
+    CurrentMonths := MonthsBetween(StartDate, HireDate);
+    TotalMonths := (PriorYears * 12) + PriorMonths + CurrentMonths;
+    TotalYears := TotalMonths div 12; // Получаем целые годы
+
+    edtTotalExp.Text := IntToStr(TotalYears); // Показываем стаж бухгалтеру
+
+    // 4. Ищем процент оплаты в зависимости от стажа
+    // (Подставьте свои названия полей, если они отличаются от min_years и payment_percent)
+    Qry.SQL.Text := 'SELECT percent FROM sick_leave_rates ' +
+                    'WHERE min_years <= :yrs ORDER BY min_years DESC LIMIT 1';
+    Qry.ParamByName('yrs').AsInteger := TotalYears;
+    Qry.Open;
+
+    if not Qry.IsEmpty then
+      Percent := Qry.FieldByName('percent').AsFloat
+    else
+      Percent := 60; // Если настройка не найдена, ставим базовые 60%
+
+    edtPercent.Text := FloatToStr(Percent); // Показываем процент на форме
+    Qry.Close;
+
+    // 5. Финансовая математика
+    DaysCount := DaysBetween(EndDate, StartDate) + 1;
+    AvgMonthly := dmMain.GetAverageYearlySalary(SelectedEmpID, StartDate);
+
+    if AvgMonthly > 0 then
+      AvgDaily := AvgMonthly / 29.7
+    else
+      AvgDaily := 0;
+
+    // Главная формула больничного: Дни * Среднедневной * (Процент / 100)
+    TotalAmount := AvgDaily * DaysCount * (Percent / 100.0);
+
+    // 6. Выводим результат для проверки
+    ShowMessage(
+      'Дней болезни: ' + IntToStr(DaysCount) + sLineBreak +
+      'Общий стаж: ' + IntToStr(TotalYears) + ' лет' + sLineBreak +
+      'Процент оплаты: ' + FloatToStr(Percent) + '%' + sLineBreak +
+      'Среднедневной: ' + FormatFloat('0.00', AvgDaily) + ' TMT' + sLineBreak +
+      'ИТОГО К ВЫПЛАТЕ: ' + FormatFloat('0.00', TotalAmount) + ' TMT'
+    );
+
+  finally
+    Qry.Free;
+  end;
+end;
+
+
+
+procedure TFormSickLeaveCalc.FormShow(Sender: TObject);
+begin
+  ComboBox1.Items.Clear;
+
+  // Защита от ошибок, если модуль данных еще не создан
+  if not Assigned(dmMain) then Exit;
+
+  // Открываем таблицу сотрудников, если она вдруг закрыта
+  if not dmMain.qryEmployees.Active then
+    dmMain.qryEmployees.Open;
+
+  // Пробегаемся по всем сотрудникам и добавляем в список
+  dmMain.qryEmployees.First;
+  while not dmMain.qryEmployees.Eof do
+  begin
+    // Добавляем ФИО и скрыто привязываем к нему ID
+    ComboBox1.Items.AddObject(
+      dmMain.qryEmployees.FieldByName('fio').AsString,
+      TObject(dmMain.qryEmployees.FieldByName('id').AsInteger)
+    );
+    dmMain.qryEmployees.Next;
+  end;
+
+  // Автоматически выбираем первого человека в списке, чтобы поле не было пустым
+  if ComboBox1.Items.Count > 0 then
+    ComboBox1.ItemIndex := 0;
+end;
+
+end.

@@ -1,0 +1,396 @@
+object dmMain: TdmMain
+  OnCreate = DataModuleCreate
+  Height = 442
+  Width = 830
+  PixelsPerInch = 96
+  object conn: TFDConnection
+    Params.Strings = (
+      
+        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
+        'ary\Win32\Debug\database\salarydb.db'
+      'OpenMode=ReadWrite'
+      'DriverID=SQLite')
+    FormatOptions.AssignedValues = [fvMapRules]
+    FormatOptions.OwnMapRules = True
+    FormatOptions.MapRules = <
+      item
+        SourceDataType = dtWideMemo
+        TargetDataType = dtWideString
+      end>
+    Connected = True
+    LoginPrompt = False
+    BeforeConnect = connBeforeConnect
+    Left = 48
+    Top = 16
+  end
+  object FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink
+    Left = 168
+    Top = 16
+  end
+  object FDGUIxWaitCursor1: TFDGUIxWaitCursor
+    Provider = 'Forms'
+    Left = 336
+    Top = 24
+  end
+  object qryEmployees: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      
+        'SELECT e.*, d.dept_name, p.name as pos_name FROM employees e LEF' +
+        'T JOIN departments d ON e.dept_id = d.id LEFT JOIN positions p O' +
+        'N e.pos_id = p.id ORDER BY e.fio')
+    Left = 40
+    Top = 168
+    object qryEmployeesid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryEmployeestabno: TIntegerField
+      FieldName = 'tabno'
+      Origin = 'tabno'
+      Required = True
+    end
+    object qryEmployeesfio: TWideStringField
+      FieldName = 'fio'
+      Origin = 'fio'
+      Required = True
+      Size = 32767
+    end
+    object qryEmployeeshire_date: TDateField
+      FieldName = 'hire_date'
+      Origin = 'hire_date'
+    end
+    object qryEmployeesbase_salary: TCurrencyField
+      FieldName = 'base_salary'
+      Origin = 'base_salary'
+    end
+    object qryEmployeesdept_id: TIntegerField
+      FieldName = 'dept_id'
+      Origin = 'dept_id'
+    end
+    object qryEmployeespos_id: TIntegerField
+      FieldName = 'pos_id'
+      Origin = 'pos_id'
+    end
+    object qryEmployeesstatus: TIntegerField
+      FieldName = 'status'
+      Origin = 'status'
+    end
+    object qryEmployeesprior_exp_years: TIntegerField
+      FieldName = 'prior_exp_years'
+      Origin = 'prior_exp_years'
+    end
+    object qryEmployeesprior_exp_months: TIntegerField
+      FieldName = 'prior_exp_months'
+      Origin = 'prior_exp_months'
+    end
+    object qryEmployeesdept_name: TWideStringField
+      AutoGenerateValue = arDefault
+      FieldName = 'dept_name'
+      Origin = 'dept_name'
+      ProviderFlags = []
+      ReadOnly = True
+      Size = 32767
+    end
+    object qryEmployeespos_name: TWideStringField
+      AutoGenerateValue = arDefault
+      FieldName = 'pos_name'
+      Origin = 'name'
+      ProviderFlags = []
+      ReadOnly = True
+      Size = 32767
+    end
+  end
+  object dsEmployees: TDataSource
+    DataSet = qryEmployees
+    Left = 40
+    Top = 248
+  end
+  object qryDepts: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM departments ORDER BY dept_name')
+    Left = 160
+    Top = 168
+    object qryDeptsid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryDeptsdept_name: TWideStringField
+      FieldName = 'dept_name'
+      Origin = 'dept_name'
+      Required = True
+      Size = 32767
+    end
+  end
+  object dsDepts: TDataSource
+    DataSet = qryDepts
+    Left = 160
+    Top = 248
+  end
+  object qryPositions: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM positions ORDER BY name')
+    Left = 280
+    Top = 168
+  end
+  object dsPositions: TDataSource
+    DataSet = qryPositions
+    Left = 280
+    Top = 248
+  end
+  object qrySettings: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM settings ORDER BY key_name')
+    Left = 400
+    Top = 168
+    object qrySettingskey_name: TWideMemoField
+      FieldName = 'key_name'
+      Origin = 'key_name'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      OnGetText = qrySettingskey_nameGetText
+      BlobType = ftWideString
+      Size = 32767
+    end
+    object qrySettingskey_value: TFloatField
+      FieldName = 'key_value'
+      Origin = 'key_value'
+    end
+  end
+  object dsSettings: TDataSource
+    DataSet = qrySettings
+    Left = 400
+    Top = 248
+  end
+  object qryConstSettings: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM const_settings ORDER BY key_name')
+    Left = 496
+    Top = 168
+  end
+  object dsConstSettings: TDataSource
+    DataSet = qryConstSettings
+    Left = 496
+    Top = 248
+  end
+  object qryProdCalendar: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM production_calendar ORDER BY cal_date DESC')
+    Left = 608
+    Top = 168
+  end
+  object dsProdCalendar: TDataSource
+    DataSet = qryProdCalendar
+    Left = 608
+    Top = 248
+  end
+  object qrySickLeaveRates: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM sick_leave_rates ORDER BY min_years')
+    Left = 720
+    Top = 168
+  end
+  object dsSickLeaveRates: TDataSource
+    DataSet = qrySickLeaveRates
+    Left = 720
+    Top = 248
+  end
+  object qryHistory: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT h.id, h.emp_id, e.fio, h.period_date, h.amount '
+      'FROM salary_history h'
+      'JOIN employees e ON h.emp_id = e.id'
+      'ORDER BY h.period_date DESC, e.fio')
+    Left = 32
+    Top = 320
+    object qryHistoryid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryHistoryemp_id: TIntegerField
+      FieldName = 'emp_id'
+      Origin = 'emp_id'
+      Required = True
+    end
+    object qryHistoryfio: TWideStringField
+      AutoGenerateValue = arDefault
+      FieldName = 'fio'
+      Origin = 'fio'
+      ProviderFlags = []
+      ReadOnly = True
+      Size = 32767
+    end
+    object qryHistoryperiod_date: TDateField
+      FieldName = 'period_date'
+      Origin = 'period_date'
+      Required = True
+    end
+    object qryHistoryamount: TFMTBCDField
+      FieldName = 'amount'
+      Origin = 'amount'
+      Precision = 18
+      Size = 2
+    end
+  end
+  object dsHistory: TDataSource
+    DataSet = qryHistory
+    Left = 32
+    Top = 384
+  end
+  object qryVacation: TFDQuery
+    ConstraintsEnabled = True
+    Connection = conn
+    SQL.Strings = (
+      'SELECT v.*, CAST(e.fio AS VARCHAR(150)) AS fio '
+      'FROM vacation_journal v '
+      'JOIN employees e ON v.emp_id = e.id ORDER BY v.calc_date DESC')
+    Left = 136
+    Top = 320
+    object qryVacationid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryVacationemp_id: TIntegerField
+      FieldName = 'emp_id'
+      Origin = 'emp_id'
+      Required = True
+    end
+    object qryVacationcalc_date: TDateField
+      FieldName = 'calc_date'
+      Origin = 'calc_date'
+      Required = True
+    end
+    object qryVacationstart_date: TDateField
+      FieldName = 'start_date'
+      Origin = 'start_date'
+      Required = True
+    end
+    object qryVacationend_date: TDateField
+      FieldName = 'end_date'
+      Origin = 'end_date'
+      Required = True
+    end
+    object qryVacationdays_count: TIntegerField
+      FieldName = 'days_count'
+      Origin = 'days_count'
+      Required = True
+    end
+    object qryVacationavg_monthly_salary: TFMTBCDField
+      FieldName = 'avg_monthly_salary'
+      Origin = 'avg_monthly_salary'
+      Precision = 18
+      Size = 2
+    end
+    object qryVacationavg_daily_salary: TFMTBCDField
+      FieldName = 'avg_daily_salary'
+      Origin = 'avg_daily_salary'
+      Precision = 18
+      Size = 2
+    end
+    object qryVacationtotal_amount: TFMTBCDField
+      FieldName = 'total_amount'
+      Origin = 'total_amount'
+      Precision = 18
+      Size = 2
+    end
+    object qryVacationfio: TWideStringField
+      AutoGenerateValue = arDefault
+      FieldName = 'fio'
+      Origin = 'fio'
+      ProviderFlags = []
+      ReadOnly = True
+      Size = 32767
+    end
+  end
+  object dsVacation: TDataSource
+    DataSet = qryVacation
+    Left = 136
+    Top = 384
+  end
+  object qrySickLeave: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT s.*, '
+      '       CAST(e.fio AS VARCHAR(150)) AS fio '
+      'FROM sick_leave_journal s '
+      'JOIN employees e ON s.emp_id = e.id '
+      'ORDER BY s.calc_date DESC')
+    Left = 240
+    Top = 320
+    object qrySickLeaveid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qrySickLeaveemp_id: TIntegerField
+      FieldName = 'emp_id'
+      Origin = 'emp_id'
+      Required = True
+    end
+    object qrySickLeavecalc_date: TDateField
+      FieldName = 'calc_date'
+      Origin = 'calc_date'
+      Required = True
+    end
+    object qrySickLeavestart_date: TDateField
+      FieldName = 'start_date'
+      Origin = 'start_date'
+      Required = True
+    end
+    object qrySickLeaveend_date: TDateField
+      FieldName = 'end_date'
+      Origin = 'end_date'
+      Required = True
+    end
+    object qrySickLeavedays_count: TIntegerField
+      FieldName = 'days_count'
+      Origin = 'days_count'
+      Required = True
+    end
+    object qrySickLeaveavg_daily_salary: TFMTBCDField
+      FieldName = 'avg_daily_salary'
+      Origin = 'avg_daily_salary'
+      Precision = 18
+      Size = 2
+    end
+    object qrySickLeaveexperience_years: TIntegerField
+      FieldName = 'experience_years'
+      Origin = 'experience_years'
+    end
+    object qrySickLeavepayment_percent: TBCDField
+      FieldName = 'payment_percent'
+      Origin = 'payment_percent'
+      Precision = 5
+      Size = 2
+    end
+    object qrySickLeavetotal_amount: TFMTBCDField
+      FieldName = 'total_amount'
+      Origin = 'total_amount'
+      Precision = 18
+      Size = 2
+    end
+    object qrySickLeavefio: TWideStringField
+      AutoGenerateValue = arDefault
+      FieldName = 'fio'
+      Origin = 'fio'
+      ProviderFlags = []
+      ReadOnly = True
+      OnGetText = qrySickLeavefioGetText
+      Size = 32767
+    end
+  end
+  object dsSickLeave: TDataSource
+    Left = 240
+    Top = 384
+  end
+end

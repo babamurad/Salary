@@ -24,12 +24,13 @@ object framePayroll: TframePayroll
       TabOrder = 0
     end
     object btnCalc: TButton
-      Left = 256
-      Top = 8
+      Left = 288
+      Top = 10
       Width = 169
       Height = 25
-      Caption = #1056#1072#1089#1089#1095#1080#1090#1072#1090#1100' '#1079#1072#1088#1087#1083#1072#1090#1091
+      Caption = #1053#1072#1095#1080#1089#1083#1080#1090#1100' '#1079#1072#1088#1087#1083#1072#1090#1091
       TabOrder = 1
+      OnClick = btnCalcClick
     end
   end
   object DBGrid1: TDBGrid
@@ -38,6 +39,7 @@ object framePayroll: TframePayroll
     Width = 800
     Height = 459
     Align = alClient
+    DataSource = dmMain.dsVacation
     TabOrder = 1
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText

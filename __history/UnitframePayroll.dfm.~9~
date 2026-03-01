@@ -1,0 +1,49 @@
+object framePayroll: TframePayroll
+  Left = 0
+  Top = 0
+  Width = 800
+  Height = 500
+  Align = alClient
+  TabOrder = 0
+  PixelsPerInch = 96
+  object PanelTop: TPanel
+    Left = 0
+    Top = 0
+    Width = 800
+    Height = 41
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    object DBNavigator1: TDBNavigator
+      Left = 0
+      Top = 0
+      Width = 240
+      Height = 41
+      Align = alLeft
+      Flat = True
+      TabOrder = 0
+    end
+    object btnCalc: TButton
+      Left = 256
+      Top = 8
+      Width = 169
+      Height = 25
+      Caption = #1056#1072#1089#1089#1095#1080#1090#1072#1090#1100' '#1079#1072#1088#1087#1083#1072#1090#1091
+      TabOrder = 1
+      OnClick = btnCalcClick
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Top = 41
+    Width = 800
+    Height = 459
+    Align = alClient
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+end

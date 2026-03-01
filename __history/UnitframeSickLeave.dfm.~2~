@@ -1,0 +1,42 @@
+object frameSickLeave: TframeSickLeave
+  Left = 0
+  Top = 0
+  Width = 830
+  Height = 465
+  TabOrder = 0
+  PixelsPerInch = 96
+  object Panel1: TPanel
+    Left = 0
+    Top = 0
+    Width = 830
+    Height = 41
+    Align = alTop
+    TabOrder = 0
+    ExplicitLeft = 184
+    ExplicitTop = 112
+    ExplicitWidth = 185
+    object btnNewCalc: TButton
+      Left = 40
+      Top = 9
+      Width = 113
+      Height = 25
+      Caption = #1053#1086#1074#1099#1081' '#1088#1072#1089#1095#1077#1090
+      TabOrder = 0
+      OnClick = btnNewCalcClick
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Top = 41
+    Width = 830
+    Height = 424
+    Align = alClient
+    DataSource = dmMain.dsSickLeave
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+end

@@ -23,7 +23,6 @@ object frameEmployees: TframeEmployees
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitWidth = 800
     object DBNavigator1: TDBNavigator
       Left = 0
       Top = 0
@@ -42,8 +41,6 @@ object frameEmployees: TframeEmployees
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitLeft = 64
-    ExplicitTop = 356
     object lblTabNo: TLabel
       Left = 16
       Top = 16

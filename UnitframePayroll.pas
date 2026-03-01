@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids,
-  Vcl.DBGrids, Vcl.ExtCtrls, Vcl.DBCtrls, Vcl.StdCtrls, System.Math,
+  Vcl.DBGrids, Vcl.ExtCtrls, Vcl.DBCtrls, Vcl.StdCtrls, System.Math, System.DateUtils,
   FireDAC.Comp.Client, FireDAC.Comp.DataSet, FireDAC.Stan.Param;
 
 type
@@ -14,12 +14,18 @@ type
     DBNavigator1: TDBNavigator;
     DBGrid1: TDBGrid;
     btnCalc: TButton;
+    cmbMonth: TComboBox;
+    cmbYear: TComboBox;
+    btnCloseMonth: TButton;
     procedure btnCalcClick(Sender: TObject);
+    procedure btnCloseMonthClick(Sender: TObject);
+    procedure FilterChange(Sender: TObject); // Общий обработчик для смены фильтра
   private
     qryPayroll: TFDQuery;
     dsPayroll: TDataSource;
-    // 1. Объявляем нашу процедуру настройки колонок
     procedure qryPayrollAfterOpen(DataSet: TDataSet);
+    procedure RefreshData; // Метод для пересборки SQL с учетом фильтра
+    function IsPeriodClosed(APeriod: string): Boolean; // Проверка замка
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -29,175 +35,33 @@ implementation
 
 {$R *.dfm}
 
-uses
-  UnitdmMain;
+uses UnitdmMain;
 
-procedure TframePayroll.btnCalcClick(Sender: TObject);
-var
-  QryEmp, QrySet, QryExec: TFDQuery;
-  TaxRate, PensionRate, DepDeduction: Double;
-  EmpId, DepCount: Integer;
-  Gross, Tax, Pension, Net, TaxBase: Double;
-  CalcDateStr: string;
-begin
-  if MessageDlg('Рассчитать зарплату за текущий месяц для всех активных сотрудников?',
-     mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
-
-  CalcDateStr := FormatDateTime('yyyy-mm-dd', Date);
-
-  QryEmp := TFDQuery.Create(nil);
-  QrySet := TFDQuery.Create(nil);
-  QryExec := TFDQuery.Create(nil);
-  try
-    QryEmp.Connection := dmMain.conn;
-    QrySet.Connection := dmMain.conn;
-    QryExec.Connection := dmMain.conn;
-
-    TaxRate := 10.0;
-    PensionRate := 2.0;
-    DepDeduction := 50.0;
-
-    QrySet.SQL.Text := 'SELECT key_name, key_value FROM settings';
-    QrySet.Open;
-    while not QrySet.Eof do
-    begin
-      if QrySet.FieldByName('key_name').AsString = 'income_tax' then
-        TaxRate := QrySet.FieldByName('key_value').AsFloat
-      else if QrySet.FieldByName('key_name').AsString = 'pension_fund' then
-        PensionRate := QrySet.FieldByName('key_value').AsFloat
-      else if QrySet.FieldByName('key_name').AsString = 'dependent_deduction' then
-        DepDeduction := QrySet.FieldByName('key_value').AsFloat;
-      QrySet.Next;
-    end;
-
-    QryEmp.SQL.Text := 'SELECT id, base_salary, IFNULL(dependents_count, 0) as dep_count FROM employees WHERE status = 1';
-    QryEmp.Open;
-
-    if QryEmp.IsEmpty then
-    begin
-      ShowMessage('Нет активных сотрудников для расчета!');
-      Exit;
-    end;
-
-    dmMain.conn.StartTransaction;
-    try
-      QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = strftime(''%Y-%m'', :D)';
-      QryExec.ParamByName('D').AsString := CalcDateStr;
-      QryExec.ExecSQL;
-
-      QryExec.SQL.Text := 'INSERT INTO payroll_journal (emp_id, period_date, gross_amount, tax_amount, pension_amount, net_amount) ' +
-                          'VALUES (:emp, :dt, :gross, :tax, :pens, :net)';
-
-      while not QryEmp.Eof do
-      begin
-        EmpId := QryEmp.FieldByName('id').AsInteger;
-        Gross := QryEmp.FieldByName('base_salary').AsFloat;
-        DepCount := QryEmp.FieldByName('dep_count').AsInteger;
-
-        Pension := SimpleRoundTo((Gross * PensionRate) / 100.0, -2);
-
-        TaxBase := Gross - (DepCount * DepDeduction);
-        if TaxBase < 0 then TaxBase := 0;
-
-        Tax := SimpleRoundTo((TaxBase * TaxRate) / 100.0, -2);
-        Net := SimpleRoundTo(Gross - Tax - Pension, -2);
-
-        QryExec.ParamByName('emp').AsInteger := EmpId;
-        QryExec.ParamByName('dt').AsString := CalcDateStr;
-        QryExec.ParamByName('gross').AsFloat := Gross;
-        QryExec.ParamByName('tax').AsFloat := Tax;
-        QryExec.ParamByName('pens').AsFloat := Pension;
-        QryExec.ParamByName('net').AsFloat := Net;
-
-        QryExec.ExecSQL;
-        QryEmp.Next;
-      end;
-
-      dmMain.conn.Commit;
-
-      // Обновляем таблицу на экране
-      qryPayroll.Close;
-      qryPayroll.Open;
-
-      if dmMain.qryHistory.Active then dmMain.qryHistory.Refresh;
-      ShowMessage('Расчет зарплаты успешно завершен!');
-
-    except
-      on E: Exception do
-      begin
-        dmMain.conn.Rollback;
-        ShowMessage('Ошибка при расчете: ' + E.Message);
-      end;
-    end;
-
-  finally
-    QryEmp.Free;
-    QrySet.Free;
-    QryExec.Free;
-  end;
-end;
-
-// 2. РЕАЛИЗАЦИЯ ПРОЦЕДУРЫ НАСТРОЙКИ КОЛОНОК
-procedure TframePayroll.qryPayrollAfterOpen(DataSet: TDataSet);
-begin
-  if DBGrid1.Columns.Count > 0 then
-  begin
-    DBGrid1.Columns[0].Visible := False; // Скрываем id
-    DBGrid1.Columns[1].Visible := False; // Скрываем emp_id
-
-    DBGrid1.Columns[2].Title.Caption := 'Период (Дата)';
-    DBGrid1.Columns[2].Width := 120;
-
-    DBGrid1.Columns[3].Title.Caption := 'Начислено (Грязными)';
-    DBGrid1.Columns[3].Width := 180;
-
-    DBGrid1.Columns[4].Title.Caption := 'Подоходный налог';
-    DBGrid1.Columns[4].Width := 140;
-
-    DBGrid1.Columns[5].Title.Caption := 'Пенсионный фонд';
-    DBGrid1.Columns[5].Width := 140;
-
-    DBGrid1.Columns[6].Title.Caption := 'К выплате (Чистыми)';
-    DBGrid1.Columns[6].Width := 180;
-
-    if DBGrid1.Columns.Count > 7 then
-    begin
-      DBGrid1.Columns[7].Title.Caption := 'Сотрудник';
-      DBGrid1.Columns[7].Width := 200;
-      DBGrid1.Columns[7].ReadOnly := True;
-      DBGrid1.Columns[7].Index := 0; // Перемещаем ФИО в начало
-    end;
-
-    if DBGrid1.Columns.Count > 8 then
-    begin
-      DBGrid1.Columns[8].Title.Caption := 'Оклад';
-      DBGrid1.Columns[8].Width := 100;
-      DBGrid1.Columns[8].ReadOnly := True;
-      DBGrid1.Columns[8].Index := 1; // Оклад ставим после ФИО
-    end;
-  end;
-end;
+{ TframePayroll }
 
 constructor TframePayroll.Create(AOwner: TComponent);
+var
+  i, CurrentYear: Integer;
 begin
   inherited;
 
-  btnCalc.OnClick := btnCalcClick;
+  // 1. Заполняем месяцы
+  cmbMonth.Items.CommaText := 'Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь';
+
+  // 2. Заполняем годы (текущий +/- 2 года)
+  CurrentYear := YearOf(Date);
+  for i := CurrentYear - 2 to CurrentYear + 2 do
+    cmbYear.Items.Add(IntToStr(i));
+
+  // 3. Ставим текущие значения
+  cmbMonth.ItemIndex := MonthOf(Date) - 1;
+  cmbYear.Text := IntToStr(CurrentYear);
 
   if Assigned(dmMain) then
   begin
     qryPayroll := TFDQuery.Create(Self);
     qryPayroll.Connection := dmMain.conn;
-
-    // 3. ПРИВЯЗЫВАЕМ СОБЫТИЕ ПРОГРАММНО (ОДНОЙ СТРОКОЙ!)
     qryPayroll.AfterOpen := qryPayrollAfterOpen;
-
-    qryPayroll.SQL.Text :=
-      'SELECT p.*, e.fio, e.base_salary ' +
-      'FROM payroll_journal p ' +
-      'JOIN employees e ON p.emp_id = e.id ' +
-      'ORDER BY p.period_date DESC, e.fio';
-
     qryPayroll.UpdateOptions.UpdateTableName := 'payroll_journal';
     qryPayroll.UpdateOptions.KeyFields := 'id';
 
@@ -207,7 +71,174 @@ begin
     DBGrid1.DataSource := dsPayroll;
     DBNavigator1.DataSource := dsPayroll;
 
-    qryPayroll.Open;
+    RefreshData; // Загружаем данные с учетом фильтра
+  end;
+
+  // Привязываем события
+  cmbMonth.OnChange := FilterChange;
+  cmbYear.OnChange := FilterChange;
+end;
+
+procedure TframePayroll.RefreshData;
+var
+  SelectedPeriod: string;
+begin
+  // Формируем строку периода 'YYYY-MM' (например, '2026-03')
+  SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
+
+  qryPayroll.Close;
+  qryPayroll.SQL.Text :=
+    'SELECT p.*, e.fio, e.base_salary ' +
+    'FROM payroll_journal p ' +
+    'JOIN employees e ON p.emp_id = e.id ' +
+    'WHERE strftime(''%Y-%m'', p.period_date) = :period ' +
+    'ORDER BY e.fio';
+  qryPayroll.ParamByName('period').AsString := SelectedPeriod;
+  qryPayroll.Open;
+end;
+
+procedure TframePayroll.FilterChange(Sender: TObject);
+begin
+  RefreshData;
+end;
+
+function TframePayroll.IsPeriodClosed(APeriod: string): Boolean;
+var
+  Q: TFDQuery;
+begin
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := dmMain.conn;
+    Q.SQL.Text := 'SELECT 1 FROM closed_periods WHERE period_str = :p';
+    Q.ParamByName('p').AsString := APeriod;
+    Q.Open;
+    Result := not Q.IsEmpty;
+  finally
+    Q.Free;
+  end;
+end;
+
+procedure TframePayroll.btnCalcClick(Sender: TObject);
+var
+  QryEmp, QrySet, QryExec: TFDQuery;
+  TaxRate, PensionRate, DepDeduction: Double;
+  EmpId, DepCount: Integer;
+  Gross, Tax, Pension, Net, TaxBase: Double;
+  SelectedPeriod, CalcDateStr: string;
+begin
+  SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
+
+  // ПРОВЕРКА ЗАМКА
+  if IsPeriodClosed(SelectedPeriod) then
+  begin
+    ShowMessage('Этот месяц уже закрыт для редактирования!');
+    Exit;
+  end;
+
+  if MessageDlg('Рассчитать зарплату за ' + cmbMonth.Text + ' ' + cmbYear.Text + '?',
+     mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
+
+  CalcDateStr := SelectedPeriod + '-01'; // Ставим на 1-е число месяца
+
+  QryEmp := TFDQuery.Create(nil);
+  QrySet := TFDQuery.Create(nil);
+  QryExec := TFDQuery.Create(nil);
+  try
+    QryEmp.Connection := dmMain.conn;
+    QrySet.Connection := dmMain.conn;
+    QryExec.Connection := dmMain.conn;
+
+    // (Код чтения настроек остается прежним...)
+    QrySet.SQL.Text := 'SELECT key_name, key_value FROM settings';
+    QrySet.Open;
+    TaxRate := 10.0; PensionRate := 2.0; DepDeduction := 50.0;
+    while not QrySet.Eof do
+    begin
+      if QrySet.FieldByName('key_name').AsString = 'income_tax' then TaxRate := QrySet.FieldByName('key_value').AsFloat
+      else if QrySet.FieldByName('key_name').AsString = 'pension_fund' then PensionRate := QrySet.FieldByName('key_value').AsFloat
+      else if QrySet.FieldByName('key_name').AsString = 'dependent_deduction' then DepDeduction := QrySet.FieldByName('key_value').AsFloat;
+      QrySet.Next;
+    end;
+
+    QryEmp.SQL.Text := 'SELECT id, base_salary, IFNULL(dependents_count, 0) as dep_count FROM employees WHERE status = 1';
+    QryEmp.Open;
+
+    dmMain.conn.StartTransaction;
+    try
+      // Удаляем записи только за ВЫБРАННЫЙ период
+      QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
+      QryExec.ParamByName('P').AsString := SelectedPeriod;
+      QryExec.ExecSQL;
+
+      QryExec.SQL.Text := 'INSERT INTO payroll_journal (emp_id, period_date, gross_amount, tax_amount, pension_amount, net_amount) ' +
+                          'VALUES (:emp, :dt, :gross, :tax, :pens, :net)';
+
+      while not QryEmp.Eof do
+      begin
+        // (Код расчета остается прежним...)
+        Gross := QryEmp.FieldByName('base_salary').AsFloat;
+        DepCount := QryEmp.FieldByName('dep_count').AsInteger;
+        Pension := SimpleRoundTo((Gross * PensionRate) / 100.0, -2);
+        TaxBase := Gross - (DepCount * DepDeduction);
+        Tax := SimpleRoundTo(Max(0, TaxBase * TaxRate / 100.0), -2);
+        Net := SimpleRoundTo(Gross - Tax - Pension, -2);
+
+        QryExec.ParamByName('emp').AsInteger := QryEmp.FieldByName('id').AsInteger;
+        QryExec.ParamByName('dt').AsString := CalcDateStr;
+        QryExec.ParamByName('gross').AsFloat := Gross;
+        QryExec.ParamByName('tax').AsFloat := Tax;
+        QryExec.ParamByName('pens').AsFloat := Pension;
+        QryExec.ParamByName('net').AsFloat := Net;
+        QryExec.ExecSQL;
+        QryEmp.Next;
+      end;
+      dmMain.conn.Commit;
+      RefreshData;
+      ShowMessage('Расчет завершен!');
+    except
+      on E: Exception do begin dmMain.conn.Rollback; ShowMessage(E.Message); end;
+    end;
+  finally
+    QryEmp.Free; QrySet.Free; QryExec.Free;
+  end;
+end;
+
+procedure TframePayroll.btnCloseMonthClick(Sender: TObject);
+var
+  Period: string;
+begin
+  Period := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
+  if MessageDlg('Вы уверены, что хотите ЗАКРЫТЬ ' + cmbMonth.Text + ' для редактирования? Это действие нельзя отменить.',
+     mtWarning, [mbYes, mbNo], 0) = mrYes then
+  begin
+    try
+      dmMain.conn.ExecSQL('INSERT INTO closed_periods (period_str) VALUES (:p)', [Period]);
+      ShowMessage('Период заблокирован!');
+    except
+      ShowMessage('Этот период уже был закрыт ранее.');
+    end;
+  end;
+end;
+
+procedure TframePayroll.qryPayrollAfterOpen(DataSet: TDataSet);
+begin
+  if DBGrid1.Columns.Count > 0 then
+  begin
+    DBGrid1.Columns[0].Visible := False; // id
+    DBGrid1.Columns[1].Visible := False; // emp_id
+    DBGrid1.Columns[2].Title.Caption := 'Дата';
+    DBGrid1.Columns[3].Title.Caption := 'Начислено';
+    DBGrid1.Columns[3].Width := 150;
+    DBGrid1.Columns[4].Title.Caption := 'Налог';
+    DBGrid1.Columns[4].Width := 150;
+    DBGrid1.Columns[5].Title.Caption := 'Пенс. фонд';
+    DBGrid1.Columns[6].Title.Caption := 'На руки';
+    DBGrid1.Columns[7].Title.Caption := 'Сотрудник';
+    DBGrid1.Columns[7].Width := 220;
+    DBGrid1.Columns[7].Index := 0;
+    DBGrid1.Columns[8].Title.Caption := 'Оклад';
+    DBGrid1.Columns[8].Width := 180;
+    DBGrid1.Columns[8].Index := 1;
   end;
 end;
 

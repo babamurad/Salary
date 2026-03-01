@@ -17,13 +17,13 @@ object frameReports: TframeReports
     object lblPeriod: TLabel
       Left = 16
       Top = 18
-      Width = 73
+      Width = 39
       Height = 15
-      Caption = 'Select Month:'
+      Caption = #1052#1077#1089#1103#1094':'
     end
     object dtpPeriod: TDateTimePicker
-      Left = 120
-      Top = 14
+      Left = 88
+      Top = 10
       Width = 100
       Height = 23
       Date = 46081.000000000000000000
@@ -31,19 +31,19 @@ object frameReports: TframeReports
       TabOrder = 0
     end
     object btnGenerate: TButton
-      Left = 240
-      Top = 13
+      Left = 224
+      Top = 8
       Width = 150
       Height = 25
-      Caption = 'Generate Report'
+      Caption = #1057#1086#1079#1076#1072#1090#1100' '#1086#1090#1095#1077#1090
       TabOrder = 1
     end
     object btnExport: TButton
-      Left = 410
-      Top = 13
+      Left = 418
+      Top = 8
       Width = 150
       Height = 25
-      Caption = 'Export to Excel'
+      Caption = #1069#1082#1089#1087#1086#1088#1090' '#1074' Excel'
       TabOrder = 2
     end
   end

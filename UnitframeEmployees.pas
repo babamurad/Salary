@@ -32,6 +32,7 @@ type
     procedure dsLocalDataChange(Sender: TObject; Field: TField);
     procedure dtpHireDateChange(Sender: TObject);
     procedure DBGrid1TitleClick(Column: TColumn);
+    procedure SetupGrid;
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -49,68 +50,106 @@ var
 begin
   inherited;
 
-  if Assigned(dmMain) then
+  if not Assigned(dmMain) then Exit;
+
+  if not dmMain.qryDepts.Active then dmMain.qryDepts.Open;
+  if not dmMain.qryPositions.Active then dmMain.qryPositions.Open;
+  if not dmMain.qryEmployees.Active then dmMain.qryEmployees.Open;
+
+  // Формат табельного номера
+  FldTab := dmMain.qryEmployees.FindField('tabno');
+  if (FldTab <> nil) and (FldTab is TIntegerField) then
+    TIntegerField(FldTab).DisplayFormat := '000';
+
+  // Локальный DataSource для синхронизации даты
+  dsLocal := TDataSource.Create(Self);
+  dsLocal.DataSet := dmMain.qryEmployees;
+  dsLocal.OnDataChange := dsLocalDataChange;
+
+  dtpHireDate.OnChange := dtpHireDateChange;
+
+  // Привязки
+  DBGrid1.DataSource := dmMain.dsEmployees;
+  DBNavigator1.DataSource := dmMain.dsEmployees;
+  dbeTabNo.DataSource := dmMain.dsEmployees;
+  dbeFIO.DataSource := dmMain.dsEmployees;
+  dbeSalary.DataSource := dmMain.dsEmployees;
+
+  dblcbDept.DataSource := dmMain.dsEmployees;
+  dblcbDept.ListSource := dmMain.dsDepts;
+
+  dblcbPos.DataSource := dmMain.dsEmployees;
+  dblcbPos.ListSource := dmMain.dsPositions;
+
+  SetupGrid;
+
+  DBGrid1.OnTitleClick := DBGrid1TitleClick;
+
+  // Подписи
+  lblTabNo.Caption := 'Табельный №';
+  lblFIO.Caption := 'Ф.И.О.';
+  lblDept.Caption := 'Отдел';
+  lblPos.Caption := 'Должность';
+  lblHireDate.Caption := 'Дата приема';
+  lblSalary.Caption := 'Оклад (базовый)';
+end;
+
+procedure TframeEmployees.SetupGrid;
+var
+  DS: TDataSet;
+begin
+  DS := DBGrid1.DataSource.DataSet;
+  if not Assigned(DS) or not DS.Active then Exit;
+
+  // --- Скрываем технические поля ---
+  if DS.FindField('id') <> nil then
+    DS.FieldByName('id').Visible := False;
+
+  if DS.FindField('dept_id') <> nil then
+    DS.FieldByName('dept_id').Visible := False;
+
+  if DS.FindField('pos_id') <> nil then
+    DS.FieldByName('pos_id').Visible := False;
+
+  if DS.FindField('status') <> nil then
+    DS.FieldByName('status').Visible := False;
+
+  // --- Настраиваем отображение ---
+  if DS.FindField('tabno') <> nil then
   begin
-    if not dmMain.qryDepts.Active then dmMain.qryDepts.Open;
-    if not dmMain.qryPositions.Active then dmMain.qryPositions.Open;
-    if not dmMain.qryEmployees.Active then dmMain.qryEmployees.Open;
+    DS.FieldByName('tabno').DisplayLabel := 'Таб. №';
+    DS.FieldByName('tabno').DisplayWidth := 6;
+  end;
 
-    FldTab := dmMain.qryEmployees.FieldByName('tabno');
-    if FldTab is TIntegerField then
-      TIntegerField(FldTab).DisplayFormat := '000';
+  if DS.FindField('fio') <> nil then
+  begin
+    DS.FieldByName('fio').DisplayLabel := 'Ф.И.О.';
+    DS.FieldByName('fio').DisplayWidth := 25;
+  end;
 
-    dsLocal := TDataSource.Create(Self);
-    dsLocal.DataSet := dmMain.qryEmployees;
-    dsLocal.OnDataChange := dsLocalDataChange;
-    dtpHireDate.OnChange := dtpHireDateChange;
+  if DS.FindField('hire_date') <> nil then
+  begin
+    DS.FieldByName('hire_date').DisplayLabel := 'Дата приема';
+    DS.FieldByName('hire_date').DisplayWidth := 12;
+  end;
 
-    DBGrid1.DataSource := dmMain.dsEmployees;
-    DBNavigator1.DataSource := dmMain.dsEmployees;
-    dbeTabNo.DataSource := dmMain.dsEmployees;
-    dbeFIO.DataSource := dmMain.dsEmployees;
-    dbeSalary.DataSource := dmMain.dsEmployees;
+  if DS.FindField('base_salary') <> nil then
+  begin
+    DS.FieldByName('base_salary').DisplayLabel := 'Оклад';
+//    DS.FieldByName('base_salary').DisplayFormat := '#,##0.00';
+    DS.FieldByName('base_salary').DisplayWidth := 12;
+  end;
 
-    dblcbDept.DataSource := dmMain.dsEmployees;
-    dblcbDept.ListSource := dmMain.dsDepts;
-    dblcbPos.DataSource := dmMain.dsEmployees;
-    dblcbPos.ListSource := dmMain.dsPositions;
+  if DS.FindField('dept_name') <> nil then
+  begin
+    DS.FieldByName('dept_name').DisplayLabel := 'Отдел';
+    DS.FieldByName('dept_name').DisplayWidth := 20;
+  end;
 
-    if DBGrid1.Columns.Count > 0 then
-    begin
-      DBGrid1.Columns[0].Visible := False;
-      DBGrid1.Columns[5].Visible := False;
-      DBGrid1.Columns[6].Visible := False;
-      DBGrid1.Columns[7].Visible := False;
-
-      DBGrid1.Columns[1].Title.Caption := 'Таб. №';
-      DBGrid1.Columns[1].Width := 60;
-      DBGrid1.Columns[2].Title.Caption := 'Ф.И.О.';
-      DBGrid1.Columns[2].Width := 200;
-      DBGrid1.Columns[3].Title.Caption := 'Дата приема';
-      DBGrid1.Columns[3].Width := 90;
-      DBGrid1.Columns[4].Title.Caption := 'Оклад';
-      DBGrid1.Columns[4].Width := 90;
-
-      if DBGrid1.Columns.Count > 8 then
-      begin
-        DBGrid1.Columns[8].Title.Caption := 'Отдел';
-        DBGrid1.Columns[8].Width := 150;
-      end;
-      if DBGrid1.Columns.Count > 9 then
-      begin
-        DBGrid1.Columns[9].Title.Caption := 'Должность';
-        DBGrid1.Columns[9].Width := 150;
-      end;
-    end;
-
-    DBGrid1.OnTitleClick := DBGrid1TitleClick;
-
-    lblTabNo.Caption := 'Табельный №';
-    lblFIO.Caption := 'Ф.И.О.';
-    lblDept.Caption := 'Отдел';
-    lblPos.Caption := 'Должность';
-    lblHireDate.Caption := 'Дата приема';
-    lblSalary.Caption := 'Оклад (базовый)';
+  if DS.FindField('pos_name') <> nil then
+  begin
+    DS.FieldByName('pos_name').DisplayLabel := 'Должность';
+    DS.FieldByName('pos_name').DisplayWidth := 20;
   end;
 end;
 
@@ -120,7 +159,8 @@ begin
   begin
     dtpHireDate.OnChange := nil;
     try
-      if dmMain.qryEmployees.Active and not dmMain.qryEmployees.FieldByName('hire_date').IsNull then
+      if dmMain.qryEmployees.Active and
+         not dmMain.qryEmployees.FieldByName('hire_date').IsNull then
         dtpHireDate.Date := dmMain.qryEmployees.FieldByName('hire_date').AsDateTime
       else
         dtpHireDate.Date := Date;
@@ -135,7 +175,8 @@ begin
   if not (dmMain.qryEmployees.State in [dsEdit, dsInsert]) then
     dmMain.qryEmployees.Edit;
 
-  dmMain.qryEmployees.FieldByName('hire_date').AsDateTime := dtpHireDate.Date;
+  dmMain.qryEmployees.FieldByName('hire_date').AsDateTime :=
+    dtpHireDate.Date;
 end;
 
 procedure TframeEmployees.DBGrid1TitleClick(Column: TColumn);
@@ -145,7 +186,6 @@ var
   CleanTitle: string;
 begin
   if not Assigned(Column.Field) then Exit;
-  if not Assigned(DBGrid1.DataSource) or not Assigned(DBGrid1.DataSource.DataSet) then Exit;
 
   FDDataSet := DBGrid1.DataSource.DataSet as TFDDataSet;
 

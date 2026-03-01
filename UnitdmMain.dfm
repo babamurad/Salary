@@ -33,11 +33,15 @@ object dmMain: TdmMain
   end
   object qryEmployees: TFDQuery
     Connection = conn
+    UpdateOptions.UpdateTableName = 'employees'
+    UpdateOptions.KeyFields = 'id'
     SQL.Strings = (
-      
-        'SELECT e.*, d.dept_name, p.name as pos_name FROM employees e LEF' +
-        'T JOIN departments d ON e.dept_id = d.id LEFT JOIN positions p O' +
-        'N e.pos_id = p.id ORDER BY e.fio')
+      'SELECT e.*, '
+      '       d.dept_name as dept_name, '
+      '       p.name as pos_name'
+      'FROM employees e'
+      'LEFT JOIN departments d ON e.dept_id = d.id'
+      'LEFT JOIN positions p ON e.pos_id = p.id')
     Left = 40
     Top = 168
     object qryEmployeesid: TFDAutoIncField

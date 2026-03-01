@@ -48,6 +48,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryEmployeestabno: TIntegerField
       FieldName = 'tabno'
@@ -104,6 +105,10 @@ object dmMain: TdmMain
       ReadOnly = True
       Size = 32767
     end
+    object qryEmployeesdependents_count: TIntegerField
+      FieldName = 'dependents_count'
+      Origin = 'dependents_count'
+    end
   end
   object dsEmployees: TDataSource
     DataSet = qryEmployees
@@ -120,6 +125,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryDeptsdept_name: TWideStringField
       FieldName = 'dept_name'
@@ -227,6 +233,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryHistoryemp_id: TIntegerField
       FieldName = 'emp_id'
@@ -271,6 +278,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryVacationemp_id: TIntegerField
       FieldName = 'emp_id'
@@ -343,6 +351,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qrySickLeaveemp_id: TIntegerField
       FieldName = 'emp_id'

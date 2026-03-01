@@ -27,6 +27,7 @@ type
     lblSalary: TLabel;
     dbeSalary: TDBEdit;
     dtpHireDate: TDateTimePicker;
+    procedure DBGrid1DblClick(Sender: TObject);
   private
     dsLocal: TDataSource;
     procedure dsLocalDataChange(Sender: TObject; Field: TField);
@@ -42,7 +43,7 @@ implementation
 {$R *.dfm}
 
 uses
-  UnitdmMain;
+  UnitdmMain, UnitBaseEditForm;
 
 constructor TframeEmployees.Create(AOwner: TComponent);
 var
@@ -177,6 +178,27 @@ begin
 
   dmMain.qryEmployees.FieldByName('hire_date').AsDateTime :=
     dtpHireDate.Date;
+end;
+
+procedure TframeEmployees.DBGrid1DblClick(Sender: TObject);
+var
+  Frm: TfrmBaseEdit;
+begin
+  Frm := TfrmBaseEdit.Create(Self);
+  try
+    // 1. Передаем данные из текущей строки базы в форму
+    Frm.LoadFromDataset(dmMain.qryEmployees);
+
+    // 2. Показываем форму модально
+    if Frm.ShowModal = mrOk then
+    begin
+      dmMain.qryEmployees.Edit; // Переводим базу в режим правки
+      Frm.SaveToDataset(dmMain.qryEmployees); // Забираем данные из формы
+      dmMain.qryEmployees.Post; // Сохраняем
+    end;
+  finally
+    Frm.Free;
+  end;
 end;
 
 procedure TframeEmployees.DBGrid1TitleClick(Column: TColumn);

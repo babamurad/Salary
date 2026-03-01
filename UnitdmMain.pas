@@ -86,6 +86,7 @@ type
     qryVacationfio: TWideStringField;
     qrySickLeaveRatesmin_years: TIntegerField;
     qrySickLeaveRatespercent: TFloatField;
+    qryEmployeesdependents_count: TIntegerField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

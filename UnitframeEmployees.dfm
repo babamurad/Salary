@@ -151,5 +151,6 @@ object frameEmployees: TframeEmployees
     TitleFont.Height = -12
     TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
+    OnDblClick = DBGrid1DblClick
   end
 end

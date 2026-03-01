@@ -29,13 +29,14 @@
     <Transaction>1899.12.30 00:00:00.000.388,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePositions.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.166,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.861,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeDepts.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.838,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeVacation.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.525,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeSettings.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.388,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePositions.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.861,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeDepts.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.838,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeVacation.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.680,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEdit.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.523,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.351,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitMusor.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.243,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeEmployees.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.680,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEdit.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.861,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeDepts.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.943,C:\Users\user\Documents\Embarcadero\Studio\Projects\Project1.dproj=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Salary.dproj</Transaction>
     <Transaction>1899.12.30 00:00:00.000.946,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.656,C:\Users\user\Documents\Embarcadero\Studio\Projects\Unit1.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Main.pas</Transaction>
@@ -43,7 +44,6 @@
     <Transaction>1899.12.30 00:00:00.000.918,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.144,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeReports.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.283,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframePayroll.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.523,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.996,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.756,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitVacationCalc.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.680,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEditForm.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitBaseEdit.dfm</Transaction>
@@ -54,10 +54,11 @@
     <Transaction>1899.12.30 00:00:00.000.715,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.582,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>2026.03.01 10:31:28.213,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
-    <Transaction>2026.03.01 10:31:56.432,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitSickLeaveCalc.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>2026.03.01 10:31:56.432,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitSickLeaveCalc.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.dfm</Transaction>
+    <Transaction>2026.03.01 10:31:56.432,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitSickLeaveCalc.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
     <Transaction>2026.03.01 10:47:47.250,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
     <Transaction>2026.03.01 10:48:00.076,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeSickLeave.pas=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.pas</Transaction>
     <Transaction>2026.03.01 10:48:00.076,C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\UnitframeSickLeave.dfm=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit1.dfm</Transaction>
+    <Transaction>2026.03.01 14:58:35.739,=C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Unit3.pas</Transaction>
   </Transactions>
 </BorlandProject>

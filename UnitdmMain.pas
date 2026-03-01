@@ -46,6 +46,8 @@ type
     qryHistoryperiod_date: TDateField;
     qryHistoryamount: TFMTBCDField;
     qryHistoryEmployeeName: TStringField;
+    qryVacation: TFDQuery;
+    dsVacation: TDataSource;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -53,6 +55,7 @@ type
       DisplayText: Boolean);
   private
     { Private declarations }
+    function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
   public
     { Public declarations }
     procedure OpenDictionaries;
@@ -120,6 +123,40 @@ begin
   end;
 end;
 
+function TdmMain.GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
+var
+  Qry: TFDQuery;
+  StartDate: string;
+begin
+  Result := 0;
+  // ќпредел€ем дату "12 мес€цев назад" от даты расчета
+  StartDate := FormatDateTime('yyyy-mm-dd', IncMonth(ACalcDate, -12));
+
+  Qry := TFDQuery.Create(nil);
+  try
+    Qry.Connection := conn;
+    Qry.SQL.Text :=
+      'SELECT SUM(TotalAmount) as SumTotal ' +
+      'FROM ( ' +
+      '  SELECT gross_amount AS TotalAmount FROM payroll_journal ' +
+      '  WHERE emp_id = :id1 AND period_date >= :dt1 ' +
+      '  UNION ALL ' +
+      '  SELECT amount AS TotalAmount FROM salary_history ' +
+      '  WHERE emp_id = :id2 AND period_date >= :dt2 ' +
+      ')';
+    Qry.ParamByName('id1').AsInteger := AEmpID;
+    Qry.ParamByName('id2').AsInteger := AEmpID;
+    Qry.ParamByName('dt1').AsString := StartDate;
+    Qry.ParamByName('dt2').AsString := StartDate;
+    Qry.Open;
+
+    if not Qry.FieldByName('SumTotal').IsNull then
+      Result := Qry.FieldByName('SumTotal').AsFloat / 12; // —реднемес€чна€
+  finally
+    Qry.Free;
+  end;
+end;
+
 procedure TdmMain.OpenDictionaries;
 begin
   if not conn.Connected then Exit;
@@ -131,6 +168,8 @@ begin
   qryProdCalendar.Open;
   qrySickLeaveRates.Open;
   qryHistory.Open;
+  qryVacation.Open;
+
 end;
 
 procedure TdmMain.qrySettingskey_nameGetText(Sender: TField; var Text: string;

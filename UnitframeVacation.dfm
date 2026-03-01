@@ -22,6 +22,7 @@ object frameVacation: TframeVacation
       Height = 25
       Caption = #1053#1086#1074#1099#1081' '#1088#1072#1089#1095#1077#1090
       TabOrder = 0
+      OnClick = Button1Click
     end
   end
   object DBGrid1: TDBGrid
@@ -30,6 +31,7 @@ object frameVacation: TframeVacation
     Width = 640
     Height = 439
     Align = alClient
+    DataSource = dmMain.dsVacation
     TabOrder = 1
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText

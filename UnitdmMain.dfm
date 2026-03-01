@@ -75,6 +75,7 @@ object dmMain: TdmMain
       ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
       OnGetText = qrySettingskey_nameGetText
       BlobType = ftWideString
+      Size = 32767
     end
     object qrySettingskey_value: TFloatField
       FieldName = 'key_value'
@@ -180,6 +181,21 @@ object dmMain: TdmMain
   object dsHistory: TDataSource
     DataSet = qryHistory
     Left = 32
+    Top = 384
+  end
+  object qryVacation: TFDQuery
+    ConstraintsEnabled = True
+    Connection = conn
+    SQL.Strings = (
+      
+        'SELECT v.*, e.fio FROM vacation_journal v JOIN employees e ON v.' +
+        'emp_id = e.id ORDER BY v.calc_date DESC')
+    Left = 136
+    Top = 320
+  end
+  object dsVacation: TDataSource
+    DataSet = qryVacation
+    Left = 136
     Top = 384
   end
 end

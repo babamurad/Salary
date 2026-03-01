@@ -48,7 +48,7 @@ uses
   UnitframeEmployees,
   UnitframePayroll,
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
-  UnitframeDepts, UnitframePositions, UnitframeSettings;
+  UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation;
 
 { ================= TREE ================= }
 
@@ -82,6 +82,7 @@ begin
   Child.Data := TframePayroll;
 
   Child := TreeView1.Items.AddChild(Root, 'Расчет отпускных');
+  Child.Data := TframeVacation;
 
   Root.Expand(True);
 

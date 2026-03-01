@@ -12,6 +12,7 @@ type
     Panel1: TPanel;
     Button1: TButton;
     DBGrid1: TDBGrid;
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -21,5 +22,12 @@ type
 implementation
 
 {$R *.dfm}
+
+uses UnitVacationCalc, UnitdmMain;
+
+procedure TframeVacation.Button1Click(Sender: TObject);
+begin
+FormVacationCalc.ShowModal;
+end;
 
 end.

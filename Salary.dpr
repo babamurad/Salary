@@ -13,7 +13,8 @@ uses
   UnitframeDepts in 'UnitframeDepts.pas' {frameDepts: TFrame},
   UnitframePositions in 'UnitframePositions.pas' {framePositions: TFrame},
   UnitframeSettings in 'UnitframeSettings.pas' {frameSettings: TFrame},
-  UnitframeVacation in 'UnitframeVacation.pas' {frameVacation: TFrame};
+  UnitframeVacation in 'UnitframeVacation.pas' {frameVacation: TFrame},
+  UnitVacationCalc in 'UnitVacationCalc.pas' {FormVacationCalc};
 
 {$R *.res}
 
@@ -25,5 +26,6 @@ begin
   Application.CreateForm(TForm2, Form2);
   Application.CreateForm(TfrmBaseEdit, frmBaseEdit);
   Application.CreateForm(TfrmEditEmployee, frmEditEmployee);
+  Application.CreateForm(TFormVacationCalc, FormVacationCalc);
   Application.Run;
 end.

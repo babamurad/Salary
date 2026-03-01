@@ -28,7 +28,6 @@ object framePayroll: TframePayroll
       Align = alLeft
       Flat = True
       TabOrder = 0
-      ExplicitHeight = 41
     end
     object btnCalc: TButton
       Left = 752

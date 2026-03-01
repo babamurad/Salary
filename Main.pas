@@ -11,17 +11,23 @@ uses
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
   FireDAC.Stan.Async, FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet,
   Vcl.Graphics,
-  FireDAC.Comp.Client, System.ImageList;
+  FireDAC.Comp.Client, System.ImageList, Vcl.Menus;
 
 type
   TFrameClass = class of TFrame;
 
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     Splitter1: TSplitter;
     TreeView1: TTreeView;
     PageControl1: TPageControl;
     ImageList1: TImageList;
     Panel1: TPanel;
+    MainMenu1: TMainMenu;
+    dlgOpenDb: TOpenDialog;
+    dlgSaveDb: TSaveDialog;
+    N1: TMenuItem;
+    N2: TMenuItem;
+    N3: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure PageControl1DrawTab(Control: TCustomTabControl;
@@ -30,15 +36,22 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure PageControl1MouseMove(Sender: TObject; Shift: TShiftState;
       X, Y: Integer);
+    procedure FormShow(Sender: TObject);
+    procedure N2Click(Sender: TObject);
+    procedure N3Click(Sender: TObject);
   private
      FHoverCloseTab: Integer;  // можно раскомментировать, если нужен hover-эффект
     procedure BuildTree;
     procedure OpenTab(AFrameClass: TFrameClass; const ACaption: string);
     procedure CloseTab(Index: Integer);
+    procedure CloseAllTabsExceptFirst;
+
+  public
+    procedure RefreshDashboard;
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
@@ -49,15 +62,20 @@ uses
   UnitframePayroll,
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
-  UnitframeSickLeave;
+  UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar;
 
 { ================= TREE ================= }
 
-procedure TForm1.BuildTree;
+procedure TMainForm.BuildTree;
 var
   Root, Child: TTreeNode;
 begin
   TreeView1.Items.Clear;
+
+  // --- БЛОК : Главная ---
+  Root := TreeView1.Items.Add(nil, 'Главная');
+  Root.Data := TframeDashboard;
+
   // --- БЛОК 1: Справочники ---
   Root := TreeView1.Items.Add(nil, 'Справочники');
   Child := TreeView1.Items.AddChild(Root, 'Отделы');
@@ -67,7 +85,10 @@ begin
   Child := TreeView1.Items.AddChild(Root, 'Сотрудники');
   Child.Data := TframeEmployees;
   Child := TreeView1.Items.AddChild(Root, 'Настройки');
-  Child.Data := TframeSettings; // Сюда можно вывести settings, const_settings и ставки
+  Child.Data := TframeSettings;
+  Child := TreeView1.Items.AddChild(Root, 'Пр. календарь');
+  Child.Data := TframeCalendar;
+
   Root.Expand(True);
   // --- БЛОК 2: Документы ---
   Root := TreeView1.Items.Add(nil, 'Документы');
@@ -87,9 +108,13 @@ end;
 
 { ================= FORM CREATE ================= }
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
   BuildTree;
+
+  dmMain.LoadConfig;
+
+  TreeView1.FullExpand;
 
   PageControl1.OwnerDraw := True;
   PageControl1.DoubleBuffered := True;
@@ -99,9 +124,64 @@ begin
   FHoverCloseTab := -1;
 end;
 
+procedure TMainForm.FormShow(Sender: TObject);
+var
+  TabSheet: TTabSheet;
+  DashFrame: TframeDashboard;
+begin
+  // 1. Создаем новую вкладку
+  TabSheet := TTabSheet.Create(PageControl1);
+  TabSheet.PageControl := PageControl1;
+  TabSheet.Caption := 'Главная';
+  // 2. Создаем наш фрейм Дашборда и кладем его на вкладку
+  DashFrame := TframeDashboard.Create(TabSheet);
+  DashFrame.Parent := TabSheet;
+  DashFrame.Align := alClient; // Чтобы растянулся на всё окно
+  // 3. Делаем эту вкладку активной
+  PageControl1.ActivePage := TabSheet;
+  // (Опционально) Раскрываем ветки дерева, чтобы было видно меню
+  TreeView1.FullExpand;
+end;
+
+procedure TMainForm.N2Click(Sender: TObject);
+begin
+if dlgOpenDb.Execute then
+  begin
+    // Закрываем все вкладки, кроме первой (Дашборда)
+    CloseAllTabsExceptFirst;
+
+    // Подключаем новую базу
+    dmMain.ApplyDatabase(dlgOpenDb.FileName);
+
+    // Обновляем цифры на Дашборде (если он открыт)
+    RefreshDashboard;
+
+    ShowMessage('База данных успешно загружена!');
+  end;
+end;
+
+procedure TMainForm.N3Click(Sender: TObject);
+begin
+if dlgSaveDb.Execute then
+  begin
+
+    // Вызываем метод создания из ДатаМодуля
+    if ExtractFileExt(dlgSaveDb.FileName) = '' then
+      dlgSaveDb.FileName := dlgSaveDb.FileName + '.db';
+
+    // Закрываем лишние вкладки
+    CloseAllTabsExceptFirst;
+
+    // Создаем базу
+    dmMain.CreateNewDb(dlgSaveDb.FileName);
+
+    RefreshDashboard;
+  end;
+end;
+
 { ================= OPEN TAB ================= }
 
-procedure TForm1.OpenTab(AFrameClass: TFrameClass; const ACaption: string);
+procedure TMainForm.OpenTab(AFrameClass: TFrameClass; const ACaption: string);
 var
   i: Integer;
   Tab: TTabSheet;
@@ -127,15 +207,23 @@ end;
 
 { ================= CLOSE TAB ================= }
 
-procedure TForm1.CloseTab(Index: Integer);
+procedure TMainForm.CloseAllTabsExceptFirst;
+begin
+  // Удаляем все вкладки в PageControl, начиная со второй (индекс 1)
+  while PageControl1.PageCount > 1 do
+    PageControl1.Pages[1].Free;
+end;
+
+procedure TMainForm.CloseTab(Index: Integer);
 begin
   if (Index >= 0) and (Index < PageControl1.PageCount) then
     PageControl1.Pages[Index].Free;
 end;
 
+
 { ================= TREE CLICK ================= }
 
-procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
+procedure TMainForm.TreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
   if Assigned(Node.Data) then
     OpenTab(TFrameClass(Node.Data), Node.Text);
@@ -143,7 +231,7 @@ end;
 
 { ================= DRAW TAB ================= }
 
-procedure TForm1.PageControl1DrawTab(Control: TCustomTabControl;
+procedure TMainForm.PageControl1DrawTab(Control: TCustomTabControl;
   TabIndex: Integer; const Rect: TRect; Active: Boolean);
 var
   C: TCanvas;
@@ -185,7 +273,7 @@ end;
 
 { ================= MOUSE DOWN ================= }
 
-procedure TForm1.PageControl1MouseDown(Sender: TObject;
+procedure TMainForm.PageControl1MouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   i: Integer;
@@ -210,7 +298,7 @@ end;
 
 { ================= MOUSE MOVE ================= }
 
-procedure TForm1.PageControl1MouseMove(Sender: TObject;
+procedure TMainForm.PageControl1MouseMove(Sender: TObject;
   Shift: TShiftState; X, Y: Integer);
 var
   i: Integer;
@@ -234,6 +322,30 @@ begin
   begin
     FHoverCloseTab := NewHover;
     PageControl1.Invalidate; // Перерисовываем только если поменялся ховер
+  end;
+end;
+
+procedure TMainForm.RefreshDashboard;
+var
+  i, j: Integer;
+begin
+  // Проверка, что PageControl готов
+  if (PageControl1 = nil) or (PageControl1.PageCount = 0) then Exit;
+
+  for i := 0 to PageControl1.PageCount - 1 do
+  begin
+    if PageControl1.Pages[i].Caption = 'Главная' then
+    begin
+      for j := 0 to PageControl1.Pages[i].ControlCount - 1 do
+      begin
+        if PageControl1.Pages[i].Controls[j] is TframeDashboard then
+        begin
+          // Обновляем статистику (она будет по нулям в новой базе)
+          TframeDashboard(PageControl1.Pages[i].Controls[j]).UpdateStats;
+          Exit;
+        end;
+      end;
+    end;
   end;
 end;
 

@@ -32,6 +32,8 @@ object dmMain: TdmMain
     Top = 24
   end
   object qryEmployees: TFDQuery
+    AfterOpen = qryEmployeesAfterOpen
+    BeforeDelete = qryEmployeesBeforeDelete
     Connection = conn
     UpdateOptions.UpdateTableName = 'employees'
     UpdateOptions.KeyFields = 'id'
@@ -190,7 +192,7 @@ object dmMain: TdmMain
   object qryProdCalendar: TFDQuery
     Connection = conn
     SQL.Strings = (
-      'SELECT * FROM production_calendar ORDER BY cal_date DESC')
+      'SELECT * FROM production_calendar')
     Left = 608
     Top = 168
   end
@@ -414,5 +416,144 @@ object dmMain: TdmMain
     DataSet = qrySickLeave
     Left = 240
     Top = 384
+  end
+  object scrCreateDb: TFDScript
+    SQLScripts = <
+      item
+        SQL.Strings = (
+          'BEGIN TRANSACTION;'
+          'CREATE TABLE IF NOT EXISTS "closed_periods" ('
+          #9'"period_str"'#9'TEXT,'
+          #9'PRIMARY KEY("period_str")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "const_settings" ('
+          #9'"key_name"'#9'TEXT,'
+          #9'"key_value"'#9'REAL,'
+          #9'PRIMARY KEY("key_name")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "departments" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"dept_name"'#9'TEXT NOT NULL UNIQUE,'
+          #9'PRIMARY KEY("id" AUTOINCREMENT)'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "emp_adjustments" ('
+          #9'"emp_id"'#9'INTEGER,'
+          #9'"adj_name"'#9'TEXT,'
+          #9'"adj_value"'#9'REAL,'
+          #9'"is_percent"'#9'BOOLEAN,'
+          #9'FOREIGN KEY("emp_id") REFERENCES "employees"("id")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "employees" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"tabno"'#9'INTEGER NOT NULL UNIQUE,'
+          #9'"fio"'#9'TEXT NOT NULL,'
+          #9'"hire_date"'#9'DATE,'
+          #9'"base_salary"'#9'CURRENCY DEFAULT 0,'
+          #9'"dept_id"'#9'INTEGER,'
+          #9'"pos_id"'#9'INTEGER,'
+          #9'"status"'#9'INTEGER DEFAULT 1,'
+          #9'"prior_exp_years"'#9'INTEGER DEFAULT 0,'
+          #9'"prior_exp_months"'#9'INTEGER DEFAULT 0,'
+          #9'"dependents_count"'#9'INTEGER DEFAULT 0,'
+          #9'PRIMARY KEY("id" AUTOINCREMENT),'
+          
+            #9'FOREIGN KEY("dept_id") REFERENCES "departments"("id") ON DELETE' +
+            ' SET NULL,'
+          
+            #9'FOREIGN KEY("pos_id") REFERENCES "positions"("id") ON DELETE SE' +
+            'T NULL'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "payroll_journal" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"emp_id"'#9'INTEGER,'
+          #9'"period_date"'#9'DATE,'
+          #9'"gross_amount"'#9'CURRENCY,'
+          #9'"tax_amount"'#9'CURRENCY,'
+          #9'"pension_amount"'#9'CURRENCY,'
+          #9'"net_amount"'#9'CURRENCY,'
+          #9'PRIMARY KEY("id" AUTOINCREMENT),'
+          #9'FOREIGN KEY("emp_id") REFERENCES "employees"("id")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "positions" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"name"'#9'TEXT NOT NULL UNIQUE,'
+          #9'"category"'#9'TEXT,'
+          #9'PRIMARY KEY("id" AUTOINCREMENT)'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "production_calendar" ('
+          #9'"year"'#9'INTEGER,'
+          #9'"month"'#9'INTEGER,'
+          #9'"working_days"'#9'INTEGER,'
+          #9'"working_hours"'#9'INTEGER,'
+          #9'PRIMARY KEY("year","month")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "salary_history" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"emp_id"'#9'INTEGER NOT NULL,'
+          #9'"period_date"'#9'DATE NOT NULL,'
+          #9'"amount"'#9'DECIMAL(18, 2) DEFAULT 0,'
+          #9'PRIMARY KEY("id" AUTOINCREMENT),'
+          
+            #9'FOREIGN KEY("emp_id") REFERENCES "employees"("id") ON DELETE CA' +
+            'SCADE'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "settings" ('
+          #9'"key_name"'#9'TEXT,'
+          #9'"key_value"'#9'REAL,'
+          #9'PRIMARY KEY("key_name")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "sick_leave_journal" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"emp_id"'#9'INTEGER NOT NULL,'
+          #9'"calc_date"'#9'DATE NOT NULL,'
+          #9'"start_date"'#9'DATE NOT NULL,'
+          #9'"end_date"'#9'DATE NOT NULL,'
+          #9'"days_count"'#9'INTEGER NOT NULL,'
+          #9'"avg_daily_salary"'#9'DECIMAL(18, 2),'
+          #9'"experience_years"'#9'INTEGER,'
+          #9'"payment_percent"'#9'DECIMAL(5, 2),'
+          #9'"total_amount"'#9'DECIMAL(18, 2),'
+          #9'PRIMARY KEY("id" AUTOINCREMENT),'
+          #9'FOREIGN KEY("emp_id") REFERENCES "employees"("id")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "sick_leave_rates" ('
+          #9'"min_years"'#9'INTEGER,'
+          #9'"percent"'#9'REAL,'
+          #9'PRIMARY KEY("min_years")'
+          ');'
+          'CREATE TABLE IF NOT EXISTS "vacation_journal" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"emp_id"'#9'INTEGER NOT NULL,'
+          #9'"calc_date"'#9'DATE NOT NULL,'
+          #9'"start_date"'#9'DATE NOT NULL,'
+          #9'"end_date"'#9'DATE NOT NULL,'
+          #9'"days_count"'#9'INTEGER NOT NULL,'
+          #9'"avg_monthly_salary"'#9'DECIMAL(18, 2),'
+          #9'"avg_daily_salary"'#9'DECIMAL(18, 2),'
+          #9'"total_amount"'#9'DECIMAL(18, 2),'
+          #9'PRIMARY KEY("id" AUTOINCREMENT),'
+          #9'FOREIGN KEY("emp_id") REFERENCES "employees"("id")'
+          ');'
+          
+            'CREATE UNIQUE INDEX IF NOT EXISTS "idx_salary_history_emp_period' +
+            '" ON "salary_history" ('
+          #9'"emp_id",'
+          #9'"period_date"'
+          ');'
+          'COMMIT;')
+      end>
+    Connection = conn
+    Params = <>
+    Macros = <>
+    Left = 480
+    Top = 24
+  end
+  object MainMenu1: TMainMenu
+    Left = 400
+    Top = 208
+  end
+  object MainMenu2: TMainMenu
+    Left = 408
+    Top = 216
   end
 end

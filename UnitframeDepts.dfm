@@ -1,19 +1,20 @@
 object frameDepts: TframeDepts
   Left = 0
   Top = 0
-  Width = 600
-  Height = 400
+  Width = 669
+  Height = 434
   Align = alClient
   TabOrder = 0
   PixelsPerInch = 96
   object PanelTop: TPanel
     Left = 0
     Top = 0
-    Width = 600
+    Width = 669
     Height = 41
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitWidth = 600
     object DBNavigator1: TDBNavigator
       Left = 0
       Top = 0
@@ -27,8 +28,8 @@ object frameDepts: TframeDepts
   object DBGrid1: TDBGrid
     Left = 0
     Top = 41
-    Width = 600
-    Height = 359
+    Width = 669
+    Height = 393
     Align = alClient
     DataSource = dmMain.dsDepts
     TabOrder = 1

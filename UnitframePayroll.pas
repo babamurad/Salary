@@ -240,6 +240,21 @@ begin
     DBGrid1.Columns[8].Width := 180;
     DBGrid1.Columns[8].Index := 1;
   end;
+  //  расивое форматирование денег (с пробелами тыс€чных и TMT)
+  if DataSet.FindField('gross_amount') <> nil then
+    TFloatField(DataSet.FieldByName('gross_amount')).DisplayFormat := '#,##0.00 TMT';
+
+  if DataSet.FindField('tax_amount') <> nil then
+    TFloatField(DataSet.FieldByName('tax_amount')).DisplayFormat := '#,##0.00 TMT';
+
+  if DataSet.FindField('pension_amount') <> nil then
+    TFloatField(DataSet.FieldByName('pension_amount')).DisplayFormat := '#,##0.00 TMT';
+
+  if DataSet.FindField('net_amount') <> nil then
+    TFloatField(DataSet.FieldByName('net_amount')).DisplayFormat := '#,##0.00 TMT';
+
+  if DataSet.FindField('base_salary') <> nil then
+    TFloatField(DataSet.FieldByName('base_salary')).DisplayFormat := '#,##0.00 TMT';
 end;
 
 destructor TframePayroll.Destroy;

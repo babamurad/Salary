@@ -65,17 +65,14 @@ begin
   // Проверяем, есть ли поле и подключен ли DataSet
   if not Assigned(Column.Field) then Exit;
   if not Assigned(DBGrid1.DataSource) or not Assigned(DBGrid1.DataSource.DataSet) then Exit;
-
   // Приводим текущий DataSet к типу FireDAC
   FDDataSet := DBGrid1.DataSource.DataSet as TFDDataSet;
-
   // 1. ПЕРЕКЛЮЧАЕМ СОРТИРОВКУ В ПАМЯТИ
   // В FireDAC суффикс ':D' означает Descending (по убыванию)
   if FDDataSet.IndexFieldNames = Column.FieldName then
     FDDataSet.IndexFieldNames := Column.FieldName + ':D' // Если кликнули второй раз - по убыванию
   else
     FDDataSet.IndexFieldNames := Column.FieldName;       // По умолчанию по возрастанию
-
   // 2. РИСУЕМ СТРЕЛОЧКИ ДЛЯ КРАСОТЫ
   // Сначала очищаем старые стрелочки у всех колонок
   for i := 0 to DBGrid1.Columns.Count - 1 do
@@ -84,7 +81,6 @@ begin
     CleanTitle := StringReplace(CleanTitle, ' ▼', '', [rfReplaceAll]);
     DBGrid1.Columns[i].Title.Caption := CleanTitle;
   end;
-
   // Добавляем нужную стрелочку к той колонке, по которой кликнули
   if Pos(':D', FDDataSet.IndexFieldNames) > 0 then
     Column.Title.Caption := Column.Title.Caption + ' ▼'

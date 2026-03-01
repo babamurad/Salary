@@ -2,7 +2,7 @@ program Salary;
 
 uses
   Vcl.Forms,
-  Main in 'Main.pas' {Form1},
+  Main in 'Main.pas' {MainForm},
   UnitdmMain in 'UnitdmMain.pas' {dmMain: TDataModule},
   UnitframeEmployees in 'UnitframeEmployees.pas' {frameEmployees: TFrame},
   UnitMusor in 'UnitMusor.pas' {Form2},
@@ -16,14 +16,17 @@ uses
   UnitframeVacation in 'UnitframeVacation.pas' {frameVacation: TFrame},
   UnitVacationCalc in 'UnitVacationCalc.pas' {FormVacationCalc},
   UnitSickLeaveCalc in 'UnitSickLeaveCalc.pas' {FormSickLeaveCalc},
-  UnitframeSickLeave in 'UnitframeSickLeave.pas' {frameSickLeave: TFrame};
+  UnitframeSickLeave in 'UnitframeSickLeave.pas' {frameSickLeave: TFrame},
+  UnitframeDashboard in 'UnitframeDashboard.pas' {frameDashboard: TFrame},
+  UnitframeCalendar in 'UnitframeCalendar.pas' {frameCalendar: TFrame};
 
 {$R *.res}
 
 begin
   Application.Initialize;
+  Application.CreateForm(TdmMain, dmMain);
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TdmMain, dmMain);
   Application.CreateForm(TForm2, Form2);
   Application.CreateForm(TfrmBaseEdit, frmBaseEdit);

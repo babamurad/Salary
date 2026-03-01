@@ -9,7 +9,9 @@ uses
   FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
   FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.VCLUI.Wait, FireDAC.Comp.UI, Data.DB,
   FireDAC.Comp.Client, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
-  FireDAC.DApt, FireDAC.Comp.DataSet, Vcl.Dialogs;
+  Vcl.Controls, System.IniFiles,
+  FireDAC.DApt, FireDAC.Comp.DataSet, Vcl.Dialogs, FireDAC.Comp.ScriptCommands,
+  FireDAC.Stan.Util, FireDAC.Comp.Script, Vcl.Menus;
 
 type
   TdmMain = class(TDataModule)
@@ -87,6 +89,9 @@ type
     qrySickLeaveRatesmin_years: TIntegerField;
     qrySickLeaveRatespercent: TFloatField;
     qryEmployeesdependents_count: TIntegerField;
+    scrCreateDb: TFDScript;
+    MainMenu1: TMainMenu;
+    MainMenu2: TMainMenu;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -98,12 +103,19 @@ type
       DisplayText: Boolean);
     procedure qrySickLeavefioGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
+    procedure qryEmployeesAfterOpen(DataSet: TDataSet);
+    procedure qryEmployeesBeforeDelete(DataSet: TDataSet);
   private
     { Private declarations }
   public
     { Public declarations }
     procedure OpenDictionaries;
     function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
+    procedure SwitchDatabase(const ANewPath: string);
+    procedure ApplyDatabase(const APath: string);
+    procedure CreateNewDb(const APath: string);
+    procedure LoadConfig;
+    procedure SaveConfig(const APath: string);
   end;
 
 var
@@ -113,59 +125,106 @@ implementation
 
 {%CLASSGROUP 'Vcl.Controls.TControl'}
 
+uses Main;
+
 {$R *.dfm}
+
+procedure TdmMain.ApplyDatabase(const APath: string);
+begin
+  try
+    conn.Close;
+
+    conn.Params.Values['Database'] := APath;
+    // Для существующих баз возвращаем обычный режим
+    conn.Params.Values['OpenMode'] := 'ReadWrite';
+
+    conn.Connected := True;
+
+    OpenDictionaries;
+    SaveConfig(APath);
+
+    // Обновляем дашборд на MainForm
+    if Assigned(MainForm) then
+      MainForm.RefreshDashboard;
+
+  except
+    on E: Exception do
+      ShowMessage('Ошибка подключения к базе данных:' + sLineBreak + APath +
+                  sLineBreak + 'Детали: ' + E.Message);
+  end;
+end;
 
 procedure TdmMain.connBeforeConnect(Sender: TObject);
 begin
   // Динамическая установка пути к базе (файл должен лежать рядом с .exe)
-  conn.Params.Values['Database'] := ExtractFilePath(ParamStr(0)) + 'database\salarydb.db';
+  //conn.Params.Values['Database'] := ExtractFilePath(ParamStr(0)) + 'database\salarydb.db';
+end;
+
+procedure TdmMain.CreateNewDb(const APath: string);
+begin
+  try
+    // 1. Создаем папки, если их нет
+    ForceDirectories(ExtractFilePath(APath));
+
+    // 2. Полностью закрываем текущее подключение
+    conn.Close; // Используем Close вместо Connected := False - это надежнее
+
+    // 3. Устанавливаем новые параметры
+    conn.Params.Values['Database'] := APath;
+
+    // --- САМОЕ ГЛАВНОЕ: Разрешаем FireDAC создавать файл! ---
+    conn.Params.Values['OpenMode'] := 'CreateUTF8';
+
+    // 4. Подключаемся (в эту секунду физически создается пустой .db файл)
+    conn.Connected := True;
+
+    // 5. Запускаем скрипт создания структуры (таблицы)
+    scrCreateDb.ExecuteAll;
+
+    // 6. Открываем наши справочники
+    OpenDictionaries;
+
+    // 7. Сохраняем путь в конфигурацию
+    SaveConfig(APath);
+
+    // 8. Обновляем Дашборд на переименованной форме MainForm
+    if Assigned(MainForm) then
+      MainForm.RefreshDashboard;
+
+    ShowMessage('Новая база данных успешно создана!' + sLineBreak + APath);
+  except
+    on E: Exception do
+      ShowMessage('Ошибка при создании базы: ' + E.Message);
+  end;
 end;
 
 procedure TdmMain.DataModuleCreate(Sender: TObject);
-var
-  DbPath: string;
 begin
-  // --- НАСТРОЙКА ВАЛЮТЫ ---
-  FormatSettings.CurrencyString := ' TMT'; // Можно написать ' манат' или ' m.'
-  FormatSettings.CurrencyFormat := 3;      // Формат "3" означает: Число + Пробел + Символ (1000,00 TMT)
+  // 1. НАСТРОЙКА ОКРУЖЕНИЯ (Валюта и форматы)
+  // Это нужно сделать в первую очередь, чтобы суммы в сетках сразу выглядели правильно
+  FormatSettings.CurrencyString := ' TMT';
+  FormatSettings.CurrencyFormat := 3; // Формат: 1 000,00 TMT
 
-  // 1. Формируем путь (используем обратный слеш для Windows)
-  DbPath := ExtractFilePath(ParamStr(0)) + 'database\salarydb.db';
+  // 2. НАСТРОЙКА ПРАВИЛ ОТОБРАЖЕНИЯ (MapRules)
+  // Без этого SQLite поля TEXT будут отображаться в DBGrid как (WIDEMEMO)
+  conn.FormatOptions.OwnMapRules := True;
+  conn.FormatOptions.MapRules.Clear;
 
-  // 2. Проверяем физическое наличие файла
-  if not FileExists(DbPath) then
+  with conn.FormatOptions.MapRules.Add do
   begin
-    ShowMessage('Файл базы данных не найден по пути: ' + sLineBreak + DbPath);
-    Exit;
+    SourceDataType := dtWideMemo;
+    TargetDataType := dtWideString;
   end;
 
-  try
-    // 3. ПЕРЕДАЕМ ПРАВИЛЬНЫЙ ПУТЬ В FIREDUC!
-    conn.Params.Values['Database'] := DbPath;
-
-    // --- ДОБАВЛЯЕМ ПРАВИЛА ЧТЕНИЯ ТЕКСТА ---
-    // Указываем FireDAC отображать безлимитные поля TEXT как обычные строки
-    conn.FormatOptions.OwnMapRules := True;
-    with conn.FormatOptions.MapRules.Add do
-    begin
-      SourceDataType := dtWideMemo;
-      TargetDataType := dtWideString;
-    end;
-    with conn.FormatOptions.MapRules.Add do
-    begin
-      SourceDataType := dtMemo;
-      TargetDataType := dtAnsiString;
-    end;
-
-    // 4. Только теперь подключаемся
-    conn.Connected := True;
-
-    // Если подключились, можно открывать таблицы
-    OpenDictionaries;
-  except
-    on E: Exception do
-      ShowMessage('Ошибка при запуске базы данных: ' + E.Message);
+  with conn.FormatOptions.MapRules.Add do
+  begin
+    SourceDataType := dtMemo;
+    TargetDataType := dtAnsiString;
   end;
+
+  // 3. ЗАПУСК ЛОГИКИ ПОДКЛЮЧЕНИЯ
+  // Мы не пишем здесь пути, а просто командуем: "Загрузи настройки и подключись"
+  LoadConfig;
 end;
 
 function TdmMain.GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
@@ -218,6 +277,36 @@ begin
   end;
 end;
 
+procedure TdmMain.LoadConfig;
+var
+  Ini: TIniFile;
+  SavedPath: string;
+  DefaultPath: string;
+begin
+  // Путь к базе по умолчанию (рядом с EXE)
+  DefaultPath := ExtractFilePath(ParamStr(0)) + 'salarydb.db';
+
+  Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'config.ini');
+  try
+    // Читаем путь из секции [Database]. Если там пусто — берем DefaultPath
+    SavedPath := Ini.ReadString('Database', 'Path', DefaultPath);
+
+    // Пытаемся применить этот путь
+    ApplyDatabase(SavedPath);
+  finally
+    Ini.Free;
+  end;
+end;
+
+procedure TdmMain.SaveConfig(const APath: string);
+var Ini: TIniFile;
+begin
+  Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'config.ini');
+  try
+    Ini.WriteString('Database', 'Path', APath);
+  finally Ini.Free; end;
+end;
+
 procedure TdmMain.OpenDictionaries;
 begin
   if not conn.Connected then Exit;
@@ -232,6 +321,49 @@ begin
   qryVacation.Open;
   qrySickLeave.Open;
 
+end;
+
+procedure TdmMain.qryEmployeesAfterOpen(DataSet: TDataSet);
+var
+  Fld: TField;
+begin
+  Fld := DataSet.FieldByName('base_salary');
+  if Fld is TFloatField then
+    TFloatField(Fld).DisplayFormat := '#,##0.00 TMT';
+end;
+
+procedure TdmMain.qryEmployeesBeforeDelete(DataSet: TDataSet);
+var
+  HistoryCount: Integer;
+  EmpID: Integer;
+begin
+  EmpID := DataSet.FieldByName('id').AsInteger;
+
+  // 1. Проверяем, есть ли у сотрудника история начислений в журналах
+  HistoryCount := conn.ExecSQLScalar(
+    'SELECT COUNT(*) FROM payroll_journal WHERE emp_id = :id', [EmpID]);
+
+  // 2. Если история есть — включаем защиту!
+  if HistoryCount > 0 then
+  begin
+    if MessageDlg('У этого сотрудника уже есть история начислений! ' +
+                  'Физическое удаление удалит и его зарплату, что нарушит учет.' + sLineBreak + sLineBreak +
+                  'Хотите вместо этого перевести его в статус "Уволен" (сделать неактивным)?',
+                  mtWarning, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // Делаем мягкое удаление (меняем статус на 0)
+      conn.ExecSQL('UPDATE employees SET status = 0 WHERE id = :id', [EmpID]);
+
+      // Обновляем таблицу, чтобы сотрудник стал серым (как мы делали в OnDrawColumnCell)
+      DataSet.Refresh;
+    end;
+
+    // 3. ОБЯЗАТЕЛЬНО прерываем стандартную команду DELETE, чтобы не было той самой ошибки
+    Abort;
+  end;
+
+  // Если HistoryCount = 0 (это новичок, которому еще ничего не начисляли),
+  // программа пойдет дальше и спокойно удалит его строку навсегда.
 end;
 
 procedure TdmMain.qryEmployeesfioGetText(Sender: TField; var Text: string;
@@ -261,6 +393,24 @@ procedure TdmMain.qryVacationfioGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
   Text := Sender.AsString;
+end;
+
+procedure TdmMain.SwitchDatabase(const ANewPath: string);
+begin
+  if conn.Connected then
+    conn.Connected := False;
+
+  // Указываем новый путь к файлу базы
+  conn.Params.Values['Database'] := ANewPath;
+
+  try
+    conn.Connected := True;
+    // После переключения нужно переоткрыть основные справочники, если они нужны
+    if qryDepts.Active then qryDepts.Open;
+  except
+    on E: Exception do
+      ShowMessage('Ошибка при подключении к базе: ' + E.Message);
+  end;
 end;
 
 end.

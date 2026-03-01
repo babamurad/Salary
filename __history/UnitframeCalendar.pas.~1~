@@ -1,0 +1,82 @@
+unit UnitframeCalendar;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.ExtCtrls,
+  Vcl.DBCtrls, Vcl.Grids, Vcl.DBGrids, FireDAC.Comp.Client, FireDAC.Comp.DataSet;
+
+type
+  TframeCalendar = class(TFrame)
+    DBNavigator1: TDBNavigator;
+  private
+    qryCalendar: TFDQuery;
+    dsCalendar: TDataSource;
+    procedure qryCalendarAfterOpen(DataSet: TDataSet);
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+  end;
+
+implementation
+
+{$R *.dfm}
+
+uses UnitdmMain;
+
+procedure TframeCalendar.qryCalendarAfterOpen(DataSet: TDataSet);
+begin
+  if DBGrid1.Columns.Count > 0 then
+  begin
+    DBGrid1.Columns[0].Title.Caption := 'Год';
+    DBGrid1.Columns[0].Width := 80;
+
+    DBGrid1.Columns[1].Title.Caption := 'Месяц (1-12)';
+    DBGrid1.Columns[1].Width := 100;
+
+    DBGrid1.Columns[2].Title.Caption := 'Рабочие дни';
+    DBGrid1.Columns[2].Width := 120;
+
+    DBGrid1.Columns[3].Title.Caption := 'Норма часов';
+    DBGrid1.Columns[3].Width := 120;
+  end;
+end;
+
+constructor TframeCalendar.Create(AOwner: TComponent);
+begin
+  inherited;
+  if Assigned(dmMain) then
+  begin
+    qryCalendar := TFDQuery.Create(Self);
+    qryCalendar.Connection := dmMain.conn;
+
+    // Привязываем событие перевода колонок
+    qryCalendar.AfterOpen := qryCalendarAfterOpen;
+
+    // Сортируем: сначала свежие года, затем месяцы по порядку
+    qryCalendar.SQL.Text := 'SELECT * FROM production_calendar ORDER BY year DESC, month ASC';
+
+    // Настройки для безопасного редактирования прямо в сетке
+    qryCalendar.UpdateOptions.UpdateTableName := 'production_calendar';
+    // Указываем ДВА поля как уникальный ключ через точку с запятой!
+    qryCalendar.UpdateOptions.KeyFields := 'year;month';
+
+    dsCalendar := TDataSource.Create(Self);
+    dsCalendar.DataSet := qryCalendar;
+
+    DBGrid1.DataSource := dsCalendar;
+    DBNavigator1.DataSource := dsCalendar;
+
+    qryCalendar.Open;
+  end;
+end;
+
+destructor TframeCalendar.Destroy;
+begin
+  if Assigned(qryCalendar) then qryCalendar.Free;
+  if Assigned(dsCalendar) then dsCalendar.Free;
+  inherited;
+end;
+
+end.

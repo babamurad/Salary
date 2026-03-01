@@ -12,26 +12,15 @@ type
   TframeEmployees = class(TFrame)
     PanelTop: TPanel;
     DBNavigator1: TDBNavigator;
-    PanelDetails: TPanel;
-    Splitter1: TSplitter;
     DBGrid1: TDBGrid;
-    lblTabNo: TLabel;
-    dbeTabNo: TDBEdit;
-    lblFIO: TLabel;
-    dbeFIO: TDBEdit;
-    lblDept: TLabel;
-    dblcbDept: TDBLookupComboBox;
-    lblPos: TLabel;
-    dblcbPos: TDBLookupComboBox;
-    lblHireDate: TLabel;
-    lblSalary: TLabel;
-    dbeSalary: TDBEdit;
-    dtpHireDate: TDateTimePicker;
+    edtSearch: TEdit;
+    Label1: TLabel;
     procedure DBGrid1DblClick(Sender: TObject);
+    procedure edtSearchChange(Sender: TObject);
+    procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
   private
     dsLocal: TDataSource;
-    procedure dsLocalDataChange(Sender: TObject; Field: TField);
-    procedure dtpHireDateChange(Sender: TObject);
     procedure DBGrid1TitleClick(Column: TColumn);
     procedure SetupGrid;
   public
@@ -65,34 +54,18 @@ begin
   // Локальный DataSource для синхронизации даты
   dsLocal := TDataSource.Create(Self);
   dsLocal.DataSet := dmMain.qryEmployees;
-  dsLocal.OnDataChange := dsLocalDataChange;
 
-  dtpHireDate.OnChange := dtpHireDateChange;
+
 
   // Привязки
   DBGrid1.DataSource := dmMain.dsEmployees;
   DBNavigator1.DataSource := dmMain.dsEmployees;
-  dbeTabNo.DataSource := dmMain.dsEmployees;
-  dbeFIO.DataSource := dmMain.dsEmployees;
-  dbeSalary.DataSource := dmMain.dsEmployees;
 
-  dblcbDept.DataSource := dmMain.dsEmployees;
-  dblcbDept.ListSource := dmMain.dsDepts;
-
-  dblcbPos.DataSource := dmMain.dsEmployees;
-  dblcbPos.ListSource := dmMain.dsPositions;
 
   SetupGrid;
 
   DBGrid1.OnTitleClick := DBGrid1TitleClick;
 
-  // Подписи
-  lblTabNo.Caption := 'Табельный №';
-  lblFIO.Caption := 'Ф.И.О.';
-  lblDept.Caption := 'Отдел';
-  lblPos.Caption := 'Должность';
-  lblHireDate.Caption := 'Дата приема';
-  lblSalary.Caption := 'Оклад (базовый)';
 end;
 
 procedure TframeEmployees.SetupGrid;
@@ -103,19 +76,12 @@ begin
   if not Assigned(DS) or not DS.Active then Exit;
 
   // --- Скрываем технические поля ---
-  if DS.FindField('id') <> nil then
-    DS.FieldByName('id').Visible := False;
+  if DS.FindField('id') <> nil then DS.FieldByName('id').Visible := False;
+  if DS.FindField('dept_id') <> nil then DS.FieldByName('dept_id').Visible := False;
+  if DS.FindField('pos_id') <> nil then DS.FieldByName('pos_id').Visible := False;
+  if DS.FindField('status') <> nil then DS.FieldByName('status').Visible := False;
 
-  if DS.FindField('dept_id') <> nil then
-    DS.FieldByName('dept_id').Visible := False;
-
-  if DS.FindField('pos_id') <> nil then
-    DS.FieldByName('pos_id').Visible := False;
-
-  if DS.FindField('status') <> nil then
-    DS.FieldByName('status').Visible := False;
-
-  // --- Настраиваем отображение ---
+  // --- Настраиваем отображение существующих полей ---
   if DS.FindField('tabno') <> nil then
   begin
     DS.FieldByName('tabno').DisplayLabel := 'Таб. №';
@@ -137,10 +103,32 @@ begin
   if DS.FindField('base_salary') <> nil then
   begin
     DS.FieldByName('base_salary').DisplayLabel := 'Оклад';
-//    DS.FieldByName('base_salary').DisplayFormat := '#,##0.00';
+    // Возвращаем форматирование валюты для единообразия
+    if DS.FieldByName('base_salary') is TFloatField then
+      TFloatField(DS.FieldByName('base_salary')).DisplayFormat := '#,##0.00 TMT';
     DS.FieldByName('base_salary').DisplayWidth := 12;
   end;
 
+  // --- ПЕРЕВОДИМ НОВЫЕ ПОЛЯ (Стаж и Иждивенцы) ---
+  if DS.FindField('prior_exp_years') <> nil then
+  begin
+    DS.FieldByName('prior_exp_years').DisplayLabel := 'Стаж (лет)';
+    DS.FieldByName('prior_exp_years').DisplayWidth := 10;
+  end;
+
+  if DS.FindField('prior_exp_months') <> nil then
+  begin
+    DS.FieldByName('prior_exp_months').DisplayLabel := 'Стаж (мес.)';
+    DS.FieldByName('prior_exp_months').DisplayWidth := 10;
+  end;
+
+  if DS.FindField('dependents_count') <> nil then
+  begin
+    DS.FieldByName('dependents_count').DisplayLabel := 'Иждивенцы';
+    DS.FieldByName('dependents_count').DisplayWidth := 10;
+  end;
+
+  // --- Отделы и Должности (из JOIN) ---
   if DS.FindField('dept_name') <> nil then
   begin
     DS.FieldByName('dept_name').DisplayLabel := 'Отдел';
@@ -154,30 +142,20 @@ begin
   end;
 end;
 
-procedure TframeEmployees.dsLocalDataChange(Sender: TObject; Field: TField);
+
+
+procedure TframeEmployees.edtSearchChange(Sender: TObject);
 begin
-  if (Field = nil) or (Field.FieldName = 'hire_date') then
+  if Trim(edtSearch.Text) = '' then
   begin
-    dtpHireDate.OnChange := nil;
-    try
-      if dmMain.qryEmployees.Active and
-         not dmMain.qryEmployees.FieldByName('hire_date').IsNull then
-        dtpHireDate.Date := dmMain.qryEmployees.FieldByName('hire_date').AsDateTime
-      else
-        dtpHireDate.Date := Date;
-    finally
-      dtpHireDate.OnChange := dtpHireDateChange;
-    end;
+    dmMain.qryEmployees.Filtered := False;
+  end
+  else
+  begin
+    // Фильтруем на лету (без учета регистра)
+    dmMain.qryEmployees.Filter := 'fio LIKE ' + QuotedStr('%' + edtSearch.Text + '%');
+    dmMain.qryEmployees.Filtered := True;
   end;
-end;
-
-procedure TframeEmployees.dtpHireDateChange(Sender: TObject);
-begin
-  if not (dmMain.qryEmployees.State in [dsEdit, dsInsert]) then
-    dmMain.qryEmployees.Edit;
-
-  dmMain.qryEmployees.FieldByName('hire_date').AsDateTime :=
-    dtpHireDate.Date;
 end;
 
 procedure TframeEmployees.DBGrid1DblClick(Sender: TObject);
@@ -188,7 +166,6 @@ begin
   try
     // 1. Передаем данные из текущей строки базы в форму
     Frm.LoadFromDataset(dmMain.qryEmployees);
-
     // 2. Показываем форму модально
     if Frm.ShowModal = mrOk then
     begin
@@ -199,6 +176,28 @@ begin
   finally
     Frm.Free;
   end;
+end;
+
+procedure TframeEmployees.DBGrid1DrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
+begin
+  if not dmMain.qryEmployees.IsEmpty then
+  begin
+    // 1. Если сотрудник уволен (status = 0) -> серый цвет
+    if dmMain.qryEmployees.FieldByName('status').AsInteger = 0 then
+    begin
+      DBGrid1.Canvas.Brush.Color := $00F0F0F0; // Светло-серый фон
+      DBGrid1.Canvas.Font.Color := clGray;      // Серый текст
+    end
+    // 2. Если оклад >= 7000 -> выделяем жирным
+    else if dmMain.qryEmployees.FieldByName('base_salary').AsFloat >= 7000 then
+    begin
+      DBGrid1.Canvas.Font.Style := [fsBold];
+      DBGrid1.Canvas.Font.Color := clNavy; // Темно-синий текст
+    end;
+  end;
+  // Отрисовываем ячейку с новыми цветами
+  DBGrid1.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
 
 procedure TframeEmployees.DBGrid1TitleClick(Column: TColumn);

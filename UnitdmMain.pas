@@ -90,6 +90,10 @@ type
     qrySickLeaveRatespercent: TFloatField;
     qryEmployeesdependents_count: TIntegerField;
     scrCreateDb: TFDScript;
+    qryEmployeespension_rate: TFloatField;
+    qryEmployeespay_type: TIntegerField;
+    qryEmployeesschedule_type: TIntegerField;
+    qryEmployeeshourly_rate: TFloatField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

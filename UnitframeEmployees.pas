@@ -145,17 +145,35 @@ end;
 
 
 procedure TframeEmployees.edtSearchChange(Sender: TObject);
+var
+  SearchText: string;
+  TabNum: Integer;
 begin
-  if Trim(edtSearch.Text) = '' then
+  if not Assigned(dmMain) then Exit;
+
+  SearchText := Trim(edtSearch.Text);
+
+  // Если поле очистили — показываем весь список
+  if SearchText = '' then
   begin
     dmMain.qryEmployees.Filtered := False;
-  end
-  else
-  begin
-    // Фильтруем на лету (без учета регистра)
-    dmMain.qryEmployees.Filter := 'fio LIKE ' + QuotedStr('%' + edtSearch.Text + '%');
-    dmMain.qryEmployees.Filtered := True;
+    Exit;
   end;
+  // Включаем поиск без учета регистра букв (А = а)
+  dmMain.qryEmployees.FilterOptions := [foCaseInsensitive];
+
+  // Проверяем: ввел пользователь число (табельный номер) или текст?
+  TabNum := StrToIntDef(SearchText, -1);
+
+  if TabNum <> -1 then
+    // Если ввели число: ищем точное совпадение по ID ИЛИ вхождение в ФИО
+    dmMain.qryEmployees.Filter := 'id = ' + IntToStr(TabNum) + ' OR fio LIKE ''%' + SearchText + '%'''
+  else
+    // Если ввели буквы: ищем только по ФИО
+    dmMain.qryEmployees.Filter := 'fio LIKE ''%' + SearchText + '%''';
+
+  // Включаем фильтрацию
+  dmMain.qryEmployees.Filtered := True;
 end;
 
 procedure TframeEmployees.DBGrid1DblClick(Sender: TObject);

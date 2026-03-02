@@ -1,13 +1,13 @@
 object dmMain: TdmMain
   OnCreate = DataModuleCreate
-  Height = 442
-  Width = 830
-  PixelsPerInch = 96
+  Height = 651
+  Width = 1017
+  PixelsPerInch = 120
   object conn: TFDConnection
     Params.Strings = (
       
-        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
-        'ary\Win32\Debug\database\salarydb.db'
+        'Database=C:\OSPanel\domains\Salary\Win32\Debug\database\salarydb' +
+        '.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
     FormatOptions.AssignedValues = [fvMapRules]
@@ -110,6 +110,24 @@ object dmMain: TdmMain
     object qryEmployeesdependents_count: TIntegerField
       FieldName = 'dependents_count'
       Origin = 'dependents_count'
+    end
+    object qryEmployeespension_rate: TFloatField
+      FieldName = 'pension_rate'
+      Origin = 'pension_rate'
+      DisplayFormat = '0.00'#39' %'#39
+    end
+    object qryEmployeespay_type: TIntegerField
+      FieldName = 'pay_type'
+      Origin = 'pay_type'
+    end
+    object qryEmployeesschedule_type: TIntegerField
+      FieldName = 'schedule_type'
+      Origin = 'schedule_type'
+    end
+    object qryEmployeeshourly_rate: TFloatField
+      FieldName = 'hourly_rate'
+      Origin = 'hourly_rate'
+      DisplayFormat = ',0.00 TMT'
     end
   end
   object dsEmployees: TDataSource
@@ -456,6 +474,10 @@ object dmMain: TdmMain
           #9'"prior_exp_years"'#9'INTEGER DEFAULT 0,'
           #9'"prior_exp_months"'#9'INTEGER DEFAULT 0,'
           #9'"dependents_count"'#9'INTEGER DEFAULT 0,'
+          #9'"pension_rate"'#9'REAL DEFAULT 2.0,'
+          #9'"pay_type"'#9'INTEGER DEFAULT 0,'
+          #9'"schedule_type"'#9'INTEGER DEFAULT 0,'
+          #9'"hourly_rate"'#9'REAL DEFAULT 0,'
           #9'PRIMARY KEY("id" AUTOINCREMENT),'
           
             #9'FOREIGN KEY("dept_id") REFERENCES "departments"("id") ON DELETE' +
@@ -522,6 +544,16 @@ object dmMain: TdmMain
           #9'"percent"'#9'REAL,'
           #9'PRIMARY KEY("min_years")'
           ');'
+          'CREATE TABLE IF NOT EXISTS "timesheet" ('
+          #9'"id"'#9'INTEGER,'
+          #9'"emp_id"'#9'INTEGER NOT NULL,'
+          #9'"work_date"'#9'DATE NOT NULL,'
+          #9'"hours_worked"'#9'REAL DEFAULT 0,'
+          #9'"status_code"'#9'TEXT(5) DEFAULT '#39#1071#39','
+          #9'"notes"'#9'TEXT,'
+          #9'PRIMARY KEY("id" AUTOINCREMENT),'
+          #9'FOREIGN KEY("emp_id") REFERENCES "employees"("id")'
+          ');'
           'CREATE TABLE IF NOT EXISTS "vacation_journal" ('
           #9'"id"'#9'INTEGER,'
           #9'"emp_id"'#9'INTEGER NOT NULL,'
@@ -540,6 +572,15 @@ object dmMain: TdmMain
             '" ON "salary_history" ('
           #9'"emp_id",'
           #9'"period_date"'
+          ');'
+          'CREATE INDEX IF NOT EXISTS "idx_timesheet_date" ON "timesheet" ('
+          #9'"work_date"'
+          ');'
+          
+            'CREATE INDEX IF NOT EXISTS "idx_timesheet_emp_date" ON "timeshee' +
+            't" ('
+          #9'"emp_id",'
+          #9'"work_date"'
           ');'
           'COMMIT;')
       end>

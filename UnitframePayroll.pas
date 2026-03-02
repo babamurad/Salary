@@ -139,13 +139,14 @@ procedure TframePayroll.btnCalcClick(Sender: TObject);
 var
   QryEmp, QrySet, QryExec: TFDQuery;
   TaxRate, PensionRate, DepDeduction: Double;
-  EmpId, DepCount, NormDays, FactDays: Integer;
+  EmpId, DepCount, NormDays: Integer;
+  NormHours, FactHours, HourlyRate, RegularHours, OvertimeHours: Double;
   BaseSal, Gross, Tax, Pension, Net, TaxBase: Double;
   SelectedPeriod, CalcDateStr: string;
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
-  // ПРОВЕРКА ЗАМКА
+  // ПРОВЕРКА ЗАМКА (закрыт ли месяц)
   if IsPeriodClosed(SelectedPeriod) then
   begin
     ShowMessage('Этот месяц уже закрыт для редактирования!');
@@ -155,9 +156,10 @@ begin
   if MessageDlg('Рассчитать зарплату за ' + cmbMonth.Text + ' ' + cmbYear.Text + '?',
      mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
 
-  // Узнаем НОРМУ рабочих дней в этом месяце
+  // Узнаем НОРМУ рабочих дней и переводим в НОРМУ ЧАСОВ (при 8-часовом графике)
   NormDays := GetWorkingDaysNorm(StrToIntDef(cmbYear.Text, YearOf(Now)), cmbMonth.ItemIndex + 1);
   if NormDays = 0 then NormDays := 1; // Защита от деления на ноль
+  NormHours := NormDays * 8.0;
 
   CalcDateStr := SelectedPeriod + '-01';
 
@@ -169,10 +171,10 @@ begin
     QrySet.Connection := dmMain.conn;
     QryExec.Connection := dmMain.conn;
 
-    // Читаем налоги
+    // Читаем налоги из таблицы настроек
     QrySet.SQL.Text := 'SELECT key_name, key_value FROM settings';
     QrySet.Open;
-    TaxRate := 10.0; PensionRate := 2.0; DepDeduction := 50.0;
+    TaxRate := 10.0; PensionRate := 2.0; DepDeduction := 50.0; // Значения по умолчанию
     while not QrySet.Eof do
     begin
       if QrySet.FieldByName('key_name').AsString = 'income_tax' then TaxRate := QrySet.FieldByName('key_value').AsFloat
@@ -181,20 +183,22 @@ begin
       QrySet.Next;
     end;
 
-    // --- МАГИЯ SQL: Достаем сотрудников и их ФАКТИЧЕСКИ отработанные дни из ТАБЕЛЯ ---
+    // --- МАГИЯ SQL: Достаем сотрудников и их ФАКТИЧЕСКИЕ ЧАСЫ из табеля ---
     QryEmp.SQL.Text :=
       'SELECT e.id, e.base_salary, IFNULL(e.dependents_count, 0) as dep_count, ' +
-      ' (SELECT COUNT(*) FROM timesheet t WHERE t.emp_id = e.id AND strftime(''%Y-%m'', t.work_date) = :p AND t.hours_worked > 0) as fact_days ' +
+      ' (SELECT IFNULL(SUM(t.hours_worked), 0) FROM timesheet t WHERE t.emp_id = e.id AND strftime(''%Y-%m'', t.work_date) = :p) as fact_hours ' +
       'FROM employees e WHERE e.status = 1';
     QryEmp.ParamByName('p').AsString := SelectedPeriod;
     QryEmp.Open;
 
     dmMain.conn.StartTransaction;
     try
+      // Очищаем старые начисления за этот месяц (если пересчитываем)
       QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
       QryExec.ParamByName('P').AsString := SelectedPeriod;
       QryExec.ExecSQL;
 
+      // Готовим команду на вставку новых результатов
       QryExec.SQL.Text := 'INSERT INTO payroll_journal (emp_id, period_date, gross_amount, tax_amount, pension_amount, net_amount) ' +
                           'VALUES (:emp, :dt, :gross, :tax, :pens, :net)';
 
@@ -202,16 +206,32 @@ begin
       begin
         BaseSal := QryEmp.FieldByName('base_salary').AsFloat;
         DepCount := QryEmp.FieldByName('dep_count').AsInteger;
-        FactDays := QryEmp.FieldByName('fact_days').AsInteger; // Дни из табеля
+        FactHours := QryEmp.FieldByName('fact_hours').AsFloat; // Берем часы из табеля
 
-        // --- НОВАЯ СПРАВЕДЛИВАЯ ФОРМУЛА НАЧИСЛЕНИЯ ---
-        Gross := SimpleRoundTo((BaseSal / NormDays) * FactDays, -2);
+        // --- РАСЧЕТ ОПЛАТЫ С УЧЕТОМ ДВОЙНЫХ СВЕРХУРОЧНЫХ ---
+        HourlyRate := BaseSal / NormHours; // Стоимость 1 часа работы
 
+        if FactHours > NormHours then
+        begin
+          RegularHours := NormHours;               // Обычные часы (не больше нормы)
+          OvertimeHours := FactHours - NormHours;  // Всё, что сверху - переработка
+        end
+        else
+        begin
+          RegularHours := FactHours;               // Недоработал или отработал ровно норму
+          OvertimeHours := 0;
+        end;
+
+        // Считаем Начислено: Обычные часы (x1) + Переработки (x2)
+        Gross := SimpleRoundTo((RegularHours * HourlyRate) + (OvertimeHours * HourlyRate * 2.0), -2);
+
+        // --- РАСЧЕТ НАЛОГОВ ---
         Pension := SimpleRoundTo((Gross * PensionRate) / 100.0, -2);
         TaxBase := Gross - (DepCount * DepDeduction);
         Tax := SimpleRoundTo(Max(0, TaxBase * TaxRate / 100.0), -2);
         Net := SimpleRoundTo(Gross - Tax - Pension, -2);
 
+        // --- СОХРАНЕНИЕ В БАЗУ ---
         QryExec.ParamByName('emp').AsInteger := QryEmp.FieldByName('id').AsInteger;
         QryExec.ParamByName('dt').AsString := CalcDateStr;
         QryExec.ParamByName('gross').AsFloat := Gross;
@@ -222,11 +242,18 @@ begin
 
         QryEmp.Next;
       end;
+
+      // Фиксируем транзакцию
       dmMain.conn.Commit;
-      RefreshData;
-      ShowMessage('Расчет успешно завершен! Зарплата начислена пропорционально табелю.');
+      RefreshData; // Обновляем сетку на экране
+      ShowMessage('Расчет успешно завершен! Зарплата и сверхурочные начислены.');
+
     except
-      on E: Exception do begin dmMain.conn.Rollback; ShowMessage('Ошибка: ' + E.Message); end;
+      on E: Exception do
+      begin
+        dmMain.conn.Rollback;
+        ShowMessage('Ошибка при расчете: ' + E.Message);
+      end;
     end;
   finally
     QryEmp.Free; QrySet.Free; QryExec.Free;

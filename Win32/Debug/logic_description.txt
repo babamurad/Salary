@@ -131,3 +131,5 @@
 импорт справочника сотрудники
 
 Project Salary.exe raised exception class EArgumentOutOfRangeException with message 'Argument out of range'.
+
+Создаем Расчетный листок (Карточку сотрудника)

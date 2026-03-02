@@ -96,6 +96,8 @@ type
     qryEmployeeshourly_rate: TFloatField;
     memTimesheet: TFDMemTable;
     dsTimesheet: TDataSource;
+    qryEmployeeswage_type: TIntegerField;
+    qryEmployeesis_rotation: TIntegerField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -173,7 +175,6 @@ begin
     if Components[i] is TFDQuery then
     begin
       Q := TFDQuery(Components[i]);
-
       if Q.Active then
         Q.Close;
     end;
@@ -191,7 +192,6 @@ begin
     if Components[i] is TFDQuery then
     begin
       Q := TFDQuery(Components[i]);
-
       if Q.Active then
         Q.Open;
     end;

@@ -7,8 +7,8 @@ object dmMain: TdmMain
   object conn: TFDConnection
     Params.Strings = (
       
-        'Database=C:\OSPanel\domains\Salary\Win32\Debug\database\salarydb' +
-        '.db'
+        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
+        'ary\Win32\Debug\database\salarydb.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
     FormatOptions.AssignedValues = [fvMapRules]
@@ -18,6 +18,7 @@ object dmMain: TdmMain
         SourceDataType = dtWideMemo
         TargetDataType = dtWideString
       end>
+    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 56
@@ -129,6 +130,16 @@ object dmMain: TdmMain
       FieldName = 'hourly_rate'
       Origin = 'hourly_rate'
       DisplayFormat = ',0.00 TMT'
+    end
+    object qryEmployeeswage_type: TIntegerField
+      FieldName = 'wage_type'
+      Origin = 'wage_type'
+      Required = True
+    end
+    object qryEmployeesis_rotation: TIntegerField
+      FieldName = 'is_rotation'
+      Origin = 'is_rotation'
+      Required = True
     end
   end
   object dsEmployees: TDataSource

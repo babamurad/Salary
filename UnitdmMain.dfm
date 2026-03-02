@@ -2,7 +2,7 @@ object dmMain: TdmMain
   OnCreate = DataModuleCreate
   Height = 651
   Width = 1017
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   object conn: TFDConnection
     Params.Strings = (
       
@@ -19,7 +19,7 @@ object dmMain: TdmMain
       end>
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
-    Left = 48
+    Left = 56
     Top = 16
   end
   object FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink

@@ -109,17 +109,19 @@ type
     procedure qryEmployeesBeforeDelete(DataSet: TDataSet);
     procedure qrySickLeaveRatesmin_yearsGetText(Sender: TField;
       var Text: string; DisplayText: Boolean);
+    procedure DataModuleDestroy(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
-    procedure OpenDictionaries;
     function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
     procedure SwitchDatabase(const ANewPath: string);
     procedure ApplyDatabase(const APath: string);
     procedure CreateNewDb(const APath: string);
     procedure LoadConfig;
     procedure SaveConfig(const APath: string);
+    procedure CloseAllQueries;
+    procedure OpenAllQueries;
   end;
 
 var
@@ -136,6 +138,7 @@ uses Main;
 procedure TdmMain.ApplyDatabase(const APath: string);
 begin
   try
+    CloseAllQueries;
     conn.Close;
 
     conn.Params.Values['Database'] := APath;
@@ -144,7 +147,7 @@ begin
 
     conn.Connected := True;
 
-    OpenDictionaries;
+    OpenAllQueries;
     SaveConfig(APath);
 
     // Обновляем дашборд на MainForm
@@ -155,6 +158,40 @@ begin
     on E: Exception do
       ShowMessage('Ошибка подключения к базе данных:' + sLineBreak + APath +
                   sLineBreak + 'Детали: ' + E.Message);
+  end;
+end;
+
+procedure TdmMain.CloseAllQueries;
+var
+  i: Integer;
+  Q: TFDQuery;
+begin
+  for i := 0 to ComponentCount - 1 do
+  begin
+    if Components[i] is TFDQuery then
+    begin
+      Q := TFDQuery(Components[i]);
+
+      if Q.Active then
+        Q.Close;
+    end;
+  end;
+end;
+
+procedure TdmMain.OpenAllQueries;
+var
+  i: Integer;
+  Q: TFDQuery;
+begin
+  for i := 0 to ComponentCount - 1 do
+  begin
+    if Components[i] is TFDQuery then
+    begin
+      Q := TFDQuery(Components[i]);
+
+      if Q.Active then
+        Q.Open;
+    end;
   end;
 end;
 
@@ -186,7 +223,7 @@ begin
     scrCreateDb.ExecuteAll;
 
     // 6. Открываем наши справочники
-    OpenDictionaries;
+    OpenAllQueries;
 
     // 7. Сохраняем путь в конфигурацию
     SaveConfig(APath);
@@ -229,6 +266,16 @@ begin
   // 3. ЗАПУСК ЛОГИКИ ПОДКЛЮЧЕНИЯ
   // Мы не пишем здесь пути, а просто командуем: "Загрузи настройки и подключись"
   LoadConfig;
+end;
+
+procedure TdmMain.DataModuleDestroy(Sender: TObject);
+begin
+  if conn.Connected then
+  begin
+    CloseAllQueries;
+    conn.Connected := False;
+    conn.Close;
+  end;
 end;
 
 function TdmMain.GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
@@ -309,22 +356,6 @@ begin
   try
     Ini.WriteString('Database', 'Path', APath);
   finally Ini.Free; end;
-end;
-
-procedure TdmMain.OpenDictionaries;
-begin
-  if not conn.Connected then Exit;
-
-  qryDepts.Open;
-  qryPositions.Open;
-  qrySettings.Open;
-  qryConstSettings.Open;
-  qryProdCalendar.Open;
-  qrySickLeaveRates.Open;
-  qryHistory.Open;
-  qryVacation.Open;
-  qrySickLeave.Open;
-
 end;
 
 procedure TdmMain.qryEmployeesAfterOpen(DataSet: TDataSet);

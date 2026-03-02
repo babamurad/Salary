@@ -1,5 +1,6 @@
 object dmMain: TdmMain
   OnCreate = DataModuleCreate
+  OnDestroy = DataModuleDestroy
   Height = 651
   Width = 1017
   PixelsPerInch = 96

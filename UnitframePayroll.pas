@@ -29,6 +29,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    function GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
   end;
 
 implementation
@@ -102,6 +103,22 @@ begin
   RefreshData;
 end;
 
+function TframePayroll.GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
+var
+  i, DaysCount: Integer;
+  D: TDateTime;
+begin
+  Result := 0;
+  DaysCount := DaysInAMonth(AYear, AMonth);
+  for i := 1 to DaysCount do
+  begin
+    D := EncodeDate(AYear, AMonth, i);
+    // Считаем все дни, кроме 6 (Суббота) и 7 (Воскресенье)
+    if not (DayOfTheWeek(D) in [6, 7]) then
+      Inc(Result);
+  end;
+end;
+
 function TframePayroll.IsPeriodClosed(APeriod: string): Boolean;
 var
   Q: TFDQuery;
@@ -122,8 +139,8 @@ procedure TframePayroll.btnCalcClick(Sender: TObject);
 var
   QryEmp, QrySet, QryExec: TFDQuery;
   TaxRate, PensionRate, DepDeduction: Double;
-  EmpId, DepCount: Integer;
-  Gross, Tax, Pension, Net, TaxBase: Double;
+  EmpId, DepCount, NormDays, FactDays: Integer;
+  BaseSal, Gross, Tax, Pension, Net, TaxBase: Double;
   SelectedPeriod, CalcDateStr: string;
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
@@ -138,7 +155,11 @@ begin
   if MessageDlg('Рассчитать зарплату за ' + cmbMonth.Text + ' ' + cmbYear.Text + '?',
      mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
 
-  CalcDateStr := SelectedPeriod + '-01'; // Ставим на 1-е число месяца
+  // Узнаем НОРМУ рабочих дней в этом месяце
+  NormDays := GetWorkingDaysNorm(StrToIntDef(cmbYear.Text, YearOf(Now)), cmbMonth.ItemIndex + 1);
+  if NormDays = 0 then NormDays := 1; // Защита от деления на ноль
+
+  CalcDateStr := SelectedPeriod + '-01';
 
   QryEmp := TFDQuery.Create(nil);
   QrySet := TFDQuery.Create(nil);
@@ -148,7 +169,7 @@ begin
     QrySet.Connection := dmMain.conn;
     QryExec.Connection := dmMain.conn;
 
-    // (Код чтения настроек остается прежним...)
+    // Читаем налоги
     QrySet.SQL.Text := 'SELECT key_name, key_value FROM settings';
     QrySet.Open;
     TaxRate := 10.0; PensionRate := 2.0; DepDeduction := 50.0;
@@ -160,12 +181,16 @@ begin
       QrySet.Next;
     end;
 
-    QryEmp.SQL.Text := 'SELECT id, base_salary, IFNULL(dependents_count, 0) as dep_count FROM employees WHERE status = 1';
+    // --- МАГИЯ SQL: Достаем сотрудников и их ФАКТИЧЕСКИ отработанные дни из ТАБЕЛЯ ---
+    QryEmp.SQL.Text :=
+      'SELECT e.id, e.base_salary, IFNULL(e.dependents_count, 0) as dep_count, ' +
+      ' (SELECT COUNT(*) FROM timesheet t WHERE t.emp_id = e.id AND strftime(''%Y-%m'', t.work_date) = :p AND t.hours_worked > 0) as fact_days ' +
+      'FROM employees e WHERE e.status = 1';
+    QryEmp.ParamByName('p').AsString := SelectedPeriod;
     QryEmp.Open;
 
     dmMain.conn.StartTransaction;
     try
-      // Удаляем записи только за ВЫБРАННЫЙ период
       QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
       QryExec.ParamByName('P').AsString := SelectedPeriod;
       QryExec.ExecSQL;
@@ -175,9 +200,13 @@ begin
 
       while not QryEmp.Eof do
       begin
-        // (Код расчета остается прежним...)
-        Gross := QryEmp.FieldByName('base_salary').AsFloat;
+        BaseSal := QryEmp.FieldByName('base_salary').AsFloat;
         DepCount := QryEmp.FieldByName('dep_count').AsInteger;
+        FactDays := QryEmp.FieldByName('fact_days').AsInteger; // Дни из табеля
+
+        // --- НОВАЯ СПРАВЕДЛИВАЯ ФОРМУЛА НАЧИСЛЕНИЯ ---
+        Gross := SimpleRoundTo((BaseSal / NormDays) * FactDays, -2);
+
         Pension := SimpleRoundTo((Gross * PensionRate) / 100.0, -2);
         TaxBase := Gross - (DepCount * DepDeduction);
         Tax := SimpleRoundTo(Max(0, TaxBase * TaxRate / 100.0), -2);
@@ -190,13 +219,14 @@ begin
         QryExec.ParamByName('pens').AsFloat := Pension;
         QryExec.ParamByName('net').AsFloat := Net;
         QryExec.ExecSQL;
+
         QryEmp.Next;
       end;
       dmMain.conn.Commit;
       RefreshData;
-      ShowMessage('Расчет завершен!');
+      ShowMessage('Расчет успешно завершен! Зарплата начислена пропорционально табелю.');
     except
-      on E: Exception do begin dmMain.conn.Rollback; ShowMessage(E.Message); end;
+      on E: Exception do begin dmMain.conn.Rollback; ShowMessage('Ошибка: ' + E.Message); end;
     end;
   finally
     QryEmp.Free; QrySet.Free; QryExec.Free;

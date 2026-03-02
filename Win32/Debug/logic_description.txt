@@ -133,3 +133,6 @@
 Project Salary.exe raised exception class EArgumentOutOfRangeException with message 'Argument out of range'.
 
 Создаем Расчетный листок (Карточку сотрудника)
+
+вахтовый метод работы
+оклад/тариф

@@ -1,7 +1,7 @@
 object framePayroll: TframePayroll
   Left = 0
   Top = 0
-  Width = 958
+  Width = 1103
   Height = 500
   Align = alClient
   Font.Charset = DEFAULT_CHARSET
@@ -15,11 +15,12 @@ object framePayroll: TframePayroll
   object PanelTop: TPanel
     Left = 0
     Top = 0
-    Width = 958
+    Width = 1103
     Height = 49
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitWidth = 958
     object DBNavigator1: TDBNavigator
       Left = 0
       Top = 0
@@ -63,11 +64,20 @@ object framePayroll: TframePayroll
       TabOrder = 4
       OnClick = btnCloseMonthClick
     end
+    object btnExport: TButton
+      Left = 943
+      Top = 13
+      Width = 106
+      Height = 25
+      Caption = 'Excel'
+      TabOrder = 5
+      OnClick = btnExportClick
+    end
   end
   object DBGrid1: TDBGrid
     Left = 0
     Top = 49
-    Width = 958
+    Width = 1103
     Height = 451
     Align = alClient
     DataSource = dmMain.dsVacation
@@ -77,5 +87,6 @@ object framePayroll: TframePayroll
     TitleFont.Height = -15
     TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
+    OnDblClick = DBGrid1DblClick
   end
 end

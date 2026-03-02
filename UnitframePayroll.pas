@@ -6,6 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids,
   Vcl.DBGrids, Vcl.ExtCtrls, Vcl.DBCtrls, Vcl.StdCtrls, System.Math, System.DateUtils,
+  ComObj,
   FireDAC.Comp.Client, FireDAC.Comp.DataSet, FireDAC.Stan.Param;
 
 type
@@ -17,9 +18,12 @@ type
     cmbMonth: TComboBox;
     cmbYear: TComboBox;
     btnCloseMonth: TButton;
+    btnExport: TButton;
     procedure btnCalcClick(Sender: TObject);
     procedure btnCloseMonthClick(Sender: TObject);
-    procedure FilterChange(Sender: TObject); // Общий обработчик для смены фильтра
+    procedure FilterChange(Sender: TObject);
+    procedure DBGrid1DblClick(Sender: TObject);
+    procedure btnExportClick(Sender: TObject); // Общий обработчик для смены фильтра
   private
     qryPayroll: TFDQuery;
     dsPayroll: TDataSource;
@@ -36,7 +40,7 @@ implementation
 
 {$R *.dfm}
 
-uses UnitdmMain;
+uses UnitdmMain, UnitPaySlip;
 
 { TframePayroll }
 
@@ -84,14 +88,17 @@ procedure TframePayroll.RefreshData;
 var
   SelectedPeriod: string;
 begin
-  // Формируем строку периода 'YYYY-MM' (например, '2026-03')
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
   qryPayroll.Close;
+  // Добавляем JOIN к таблицам departments и positions, чтобы вытащить их названия
   qryPayroll.SQL.Text :=
-    'SELECT p.*, e.fio, e.base_salary ' +
+    'SELECT p.*, e.fio, e.base_salary, ' +
+    '       d.dept_name, pos.name as pos_name ' + // <-- Забираем названия!
     'FROM payroll_journal p ' +
     'JOIN employees e ON p.emp_id = e.id ' +
+    'LEFT JOIN departments d ON e.dept_id = d.id ' + // LEFT JOIN на случай, если отдел не указан
+    'LEFT JOIN positions pos ON e.pos_id = pos.id ' +
     'WHERE strftime(''%Y-%m'', p.period_date) = :period ' +
     'ORDER BY e.fio';
   qryPayroll.ParamByName('period').AsString := SelectedPeriod;
@@ -277,6 +284,106 @@ begin
   end;
 end;
 
+procedure TframePayroll.btnExportClick(Sender: TObject);
+var
+  ExcelApp, Sheet: Variant;
+  Row: Integer;
+  TotalGross, TotalTax, TotalPension, TotalNet: Double;
+  Bookmark: TBookmark;
+begin
+  if not Assigned(qryPayroll) or not qryPayroll.Active or qryPayroll.IsEmpty then
+  begin
+    ShowMessage('Нет данных для выгрузки!');
+    Exit;
+  end;
+
+  // Пытаемся запустить Excel
+  try
+    ExcelApp := CreateOleObject('Excel.Application');
+  except
+    ShowMessage('Не удалось запустить Excel. Убедитесь, что он установлен на компьютере.');
+    Exit;
+  end;
+
+  // Замораживаем интерфейс, чтобы таблица не прыгала во время экспорта
+  qryPayroll.DisableControls;
+  // Запоминаем текущую строчку, где стоял курсор
+  Bookmark := qryPayroll.GetBookmark;
+  try
+    // Создаем новую книгу и лист
+    ExcelApp.Workbooks.Add;
+    Sheet := ExcelApp.ActiveSheet;
+    Sheet.Name := 'Зарплата за ' + cmbMonth.Text;
+
+    // --- ПЕЧАТАЕМ ЗАГОЛОВКИ ---
+    Sheet.Cells[1, 1].Value := 'Сотрудник';
+    Sheet.Cells[1, 2].Value := 'Отдел';
+    Sheet.Cells[1, 3].Value := 'Должность';
+    Sheet.Cells[1, 4].Value := 'Оклад';
+    Sheet.Cells[1, 5].Value := 'Начислено';
+    Sheet.Cells[1, 6].Value := 'Подоходный';
+    Sheet.Cells[1, 7].Value := 'Пенсионный';
+    Sheet.Cells[1, 8].Value := 'На руки';
+
+    // Делаем заголовки жирными
+    Sheet.Range['A1:H1'].Font.Bold := True;
+
+    Row := 2; // Данные начинаются со 2-й строки
+    TotalGross := 0; TotalTax := 0; TotalPension := 0; TotalNet := 0;
+
+    // --- ПЕРЕБИРАЕМ ДАННЫЕ ИЗ БАЗЫ ---
+    qryPayroll.First;
+    while not qryPayroll.Eof do
+    begin
+      Sheet.Cells[Row, 1].Value := qryPayroll.FieldByName('fio').AsString;
+      Sheet.Cells[Row, 2].Value := qryPayroll.FieldByName('dept_name').AsString;
+      Sheet.Cells[Row, 3].Value := qryPayroll.FieldByName('pos_name').AsString;
+
+      Sheet.Cells[Row, 4].Value := qryPayroll.FieldByName('base_salary').AsFloat;
+      Sheet.Cells[Row, 5].Value := qryPayroll.FieldByName('gross_amount').AsFloat;
+      Sheet.Cells[Row, 6].Value := qryPayroll.FieldByName('tax_amount').AsFloat;
+      Sheet.Cells[Row, 7].Value := qryPayroll.FieldByName('pension_amount').AsFloat;
+      Sheet.Cells[Row, 8].Value := qryPayroll.FieldByName('net_amount').AsFloat;
+
+      // Накапливаем итоги
+      TotalGross := TotalGross + qryPayroll.FieldByName('gross_amount').AsFloat;
+      TotalTax := TotalTax + qryPayroll.FieldByName('tax_amount').AsFloat;
+      TotalPension := TotalPension + qryPayroll.FieldByName('pension_amount').AsFloat;
+      TotalNet := TotalNet + qryPayroll.FieldByName('net_amount').AsFloat;
+
+      Inc(Row);
+      qryPayroll.Next;
+    end;
+
+    // --- ПОДБИВАЕМ ИТОГИ В КОНЦЕ ---
+    Sheet.Cells[Row, 1].Value := 'ИТОГО ПО ВЕДОМОСТИ:';
+    Sheet.Cells[Row, 5].Value := TotalGross;
+    Sheet.Cells[Row, 6].Value := TotalTax;
+    Sheet.Cells[Row, 7].Value := TotalPension;
+    Sheet.Cells[Row, 8].Value := TotalNet;
+
+    // Красиво форматируем строку итогов (Жирный шрифт, красный цвет для налогов)
+    Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Font.Bold := True;
+    Sheet.Cells[Row, 6].Font.Color := $0000FF; // Красный в Excel (BGR формат)
+    Sheet.Cells[Row, 7].Font.Color := $0000FF;
+
+    // Делаем автоширину всех колонок, чтобы текст не обрезался
+    Sheet.Columns.AutoFit;
+
+  finally
+    // Возвращаем курсор на место и включаем интерфейс
+    if qryPayroll.BookmarkValid(Bookmark) then
+    begin
+      qryPayroll.GotoBookmark(Bookmark);
+      qryPayroll.FreeBookmark(Bookmark);
+    end;
+    qryPayroll.EnableControls;
+  end;
+
+  // --- ЭФФЕКТНО ПОКАЗЫВАЕМ EXCEL ПОЛЬЗОВАТЕЛЮ ---
+  ExcelApp.Visible := True;
+end;
+
 procedure TframePayroll.qryPayrollAfterOpen(DataSet: TDataSet);
 begin
   if DBGrid1.Columns.Count > 0 then
@@ -312,6 +419,28 @@ begin
 
   if DataSet.FindField('base_salary') <> nil then
     TFloatField(DataSet.FieldByName('base_salary')).DisplayFormat := '#,##0.00 TMT';
+end;
+
+procedure TframePayroll.DBGrid1DblClick(Sender: TObject);
+var
+  SlipForm: TfrmPaySlip;
+  Period: string;
+begin
+  if qryPayroll.IsEmpty then Exit;
+
+  // Формируем красивую строку периода (например "Март 2026")
+  Period := cmbMonth.Text + ' ' + cmbYear.Text;
+
+  SlipForm := TfrmPaySlip.Create(Self);
+  try
+    // Передаем текущую строку запроса и период в форму листка
+    SlipForm.LoadFromDataset(qryPayroll, Period);
+
+    // Показываем окно
+    SlipForm.ShowModal;
+  finally
+    SlipForm.Free;
+  end;
 end;
 
 destructor TframePayroll.Destroy;

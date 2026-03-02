@@ -136,3 +136,5 @@ Project Salary.exe raised exception class EArgumentOutOfRangeException with mess
 
 вахтовый метод работы
 оклад/тариф
+
+на стр начисления з/п нужен фильтр по отделам

@@ -148,8 +148,12 @@ var
   TaxRate, PensionRate, DepDeduction: Double;
   EmpId, DepCount, NormDays: Integer;
   NormHours, FactHours, HourlyRate, RegularHours, OvertimeHours: Double;
-  BaseSal, Gross, Tax, Pension, Net, TaxBase: Double;
+  BaseSal, Tax, Pension, Net, TaxBase: Double;
   SelectedPeriod, CalcDateStr: string;
+  // --- НОВЫЕ ПЕРЕМЕННЫЕ ---
+  HourlyRateDB: Double;
+  WageType, IsRotation: Integer;
+  BaseGross, RotationBonus, TotalGross: Double;
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
@@ -190,9 +194,10 @@ begin
       QrySet.Next;
     end;
 
-    // --- МАГИЯ SQL: Достаем сотрудников и их ФАКТИЧЕСКИЕ ЧАСЫ из табеля ---
+    // Достаем сотрудников и их часы из табеля
     QryEmp.SQL.Text :=
-      'SELECT e.id, e.base_salary, IFNULL(e.dependents_count, 0) as dep_count, ' +
+      'SELECT e.id, e.base_salary, e.hourly_rate, IFNULL(e.dependents_count, 0) as dep_count, ' +
+      ' e.wage_type, e.is_rotation, ' +
       ' (SELECT IFNULL(SUM(t.hours_worked), 0) FROM timesheet t WHERE t.emp_id = e.id AND strftime(''%Y-%m'', t.work_date) = :p) as fact_hours ' +
       'FROM employees e WHERE e.status = 1';
     QryEmp.ParamByName('p').AsString := SelectedPeriod;
@@ -200,48 +205,68 @@ begin
 
     dmMain.conn.StartTransaction;
     try
-      // Очищаем старые начисления за этот месяц (если пересчитываем)
+      // Очищаем старые начисления
       QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
       QryExec.ParamByName('P').AsString := SelectedPeriod;
       QryExec.ExecSQL;
 
-      // Готовим команду на вставку новых результатов
       QryExec.SQL.Text := 'INSERT INTO payroll_journal (emp_id, period_date, gross_amount, tax_amount, pension_amount, net_amount) ' +
                           'VALUES (:emp, :dt, :gross, :tax, :pens, :net)';
 
       while not QryEmp.Eof do
       begin
+        // Читаем данные из запроса
         BaseSal := QryEmp.FieldByName('base_salary').AsFloat;
+        HourlyRateDB := QryEmp.FieldByName('hourly_rate').AsFloat;
         DepCount := QryEmp.FieldByName('dep_count').AsInteger;
-        FactHours := QryEmp.FieldByName('fact_hours').AsFloat; // Берем часы из табеля
+        FactHours := QryEmp.FieldByName('fact_hours').AsFloat;
+        WageType := QryEmp.FieldByName('wage_type').AsInteger;
+        IsRotation := QryEmp.FieldByName('is_rotation').AsInteger;
 
-        // --- РАСЧЕТ ОПЛАТЫ С УЧЕТОМ ДВОЙНЫХ СВЕРХУРОЧНЫХ ---
-        HourlyRate := BaseSal / NormHours; // Стоимость 1 часа работы
+        // --- 1. ОПРЕДЕЛЯЕМ СТОИМОСТЬ ЧАСА (Оклад или Тариф) ---
+        if WageType = 1 then
+          HourlyRate := HourlyRateDB            // Если Тариф, берем ставку из hourly_rate
+        else
+          HourlyRate := BaseSal / NormHours;    // Если Оклад, считаем стоимость часа
 
+        // --- 2. РАСЧЕТ ЧАСОВ (Обычные и Сверхурочные) ---
         if FactHours > NormHours then
         begin
-          RegularHours := NormHours;               // Обычные часы (не больше нормы)
-          OvertimeHours := FactHours - NormHours;  // Всё, что сверху - переработка
+          RegularHours := NormHours;
+          OvertimeHours := FactHours - NormHours;
         end
         else
         begin
-          RegularHours := FactHours;               // Недоработал или отработал ровно норму
+          RegularHours := FactHours;
           OvertimeHours := 0;
         end;
 
-        // Считаем Начислено: Обычные часы (x1) + Переработки (x2)
-        Gross := SimpleRoundTo((RegularHours * HourlyRate) + (OvertimeHours * HourlyRate * 2.0), -2);
+        // --- 3. БАЗОВОЕ НАЧИСЛЕНИЕ (Обычные часы + Сверхурочные х2) ---
+        BaseGross := SimpleRoundTo((RegularHours * HourlyRate) + (OvertimeHours * HourlyRate * 2.0), -2);
 
-        // --- РАСЧЕТ НАЛОГОВ ---
-        Pension := SimpleRoundTo((Gross * PensionRate) / 100.0, -2);
-        TaxBase := Gross - (DepCount * DepDeduction);
+        // --- 4. ВАХТОВАЯ НАДБАВКА (75%) ---
+        if IsRotation = 1 then
+          RotationBonus := SimpleRoundTo(BaseGross * 0.75, -2)
+        else
+          RotationBonus := 0;
+
+        TotalGross := BaseGross + RotationBonus; // Итого начислено (грязными)
+
+        // --- 5. РАСЧЕТ НАЛОГОВ ---
+        // Пенсионный берется со ВСЕЙ суммы
+        Pension := SimpleRoundTo((TotalGross * PensionRate) / 100.0, -2);
+
+        // Подоходный налог берется ТОЛЬКО с базы (без учета вахтовых 75%)
+        TaxBase := BaseGross - (DepCount * DepDeduction);
         Tax := SimpleRoundTo(Max(0, TaxBase * TaxRate / 100.0), -2);
-        Net := SimpleRoundTo(Gross - Tax - Pension, -2);
+
+        // --- 6. НА РУКИ ---
+        Net := SimpleRoundTo(TotalGross - Tax - Pension, -2);
 
         // --- СОХРАНЕНИЕ В БАЗУ ---
         QryExec.ParamByName('emp').AsInteger := QryEmp.FieldByName('id').AsInteger;
         QryExec.ParamByName('dt').AsString := CalcDateStr;
-        QryExec.ParamByName('gross').AsFloat := Gross;
+        QryExec.ParamByName('gross').AsFloat := TotalGross; // Сохраняем итоговую сумму с надбавками
         QryExec.ParamByName('tax').AsFloat := Tax;
         QryExec.ParamByName('pens').AsFloat := Pension;
         QryExec.ParamByName('net').AsFloat := Net;
@@ -252,8 +277,8 @@ begin
 
       // Фиксируем транзакцию
       dmMain.conn.Commit;
-      RefreshData; // Обновляем сетку на экране
-      ShowMessage('Расчет успешно завершен! Зарплата и сверхурочные начислены.');
+      RefreshData;
+      ShowMessage('Расчет успешно завершен! Зарплата, тарифы, сверхурочные и вахтовые начислены.');
 
     except
       on E: Exception do

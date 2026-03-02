@@ -55,7 +55,6 @@ object MainForm: TMainForm
         Indent = 19
         TabOrder = 0
         OnChange = TreeView1Change
-        ExplicitWidth = 254
       end
     end
     object PageControl1: TPageControl
@@ -68,8 +67,6 @@ object MainForm: TMainForm
       OnDrawTab = PageControl1DrawTab
       OnMouseDown = PageControl1MouseDown
       OnMouseMove = PageControl1MouseMove
-      ExplicitLeft = 260
-      ExplicitWidth = 731
     end
   end
   object ImageList1: TImageList

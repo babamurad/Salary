@@ -19,7 +19,8 @@ uses
   UnitframeSickLeave in 'UnitframeSickLeave.pas' {frameSickLeave: TFrame},
   UnitframeDashboard in 'UnitframeDashboard.pas' {frameDashboard: TFrame},
   UnitframeCalendar in 'UnitframeCalendar.pas' {frameCalendar: TFrame},
-  UnitFormHelp in 'UnitFormHelp.pas' {FormHelp};
+  UnitFormHelp in 'UnitFormHelp.pas' {FormHelp},
+  UnitframeTimesheet in 'UnitframeTimesheet.pas' {frameTimesheet: TFrame};
 
 {$R *.res}
 

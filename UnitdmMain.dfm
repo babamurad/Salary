@@ -591,4 +591,20 @@ object dmMain: TdmMain
     Left = 480
     Top = 24
   end
+  object memTimesheet: TFDMemTable
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    Left = 360
+    Top = 328
+  end
+  object dsTimesheet: TDataSource
+    DataSet = memTimesheet
+    Left = 360
+    Top = 392
+  end
 end

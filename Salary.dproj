@@ -185,6 +185,11 @@
             <Form>FormHelp</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="UnitframeTimesheet.pas">
+            <Form>frameTimesheet</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

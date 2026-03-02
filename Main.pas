@@ -65,7 +65,8 @@ uses
   UnitframePayroll,
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
-  UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp;
+  UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp,
+  UnitframeTimesheet;
 
 { ================= TREE ================= }
 
@@ -101,6 +102,8 @@ begin
   Child.Data := TframeVacation;
   Child := TreeView1.Items.AddChild(Root, 'Расчет больничных');
   Child.Data := TframeSickLeave;
+  Child := TreeView1.Items.AddChild(Root, 'Табель');
+  Child.Data := TframeTimesheet;
   Root.Expand(True);
   // --- БЛОК 3: Отчеты ---
   Root := TreeView1.Items.Add(nil, 'Отчеты');

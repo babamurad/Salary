@@ -94,6 +94,8 @@ type
     qryEmployeespay_type: TIntegerField;
     qryEmployeesschedule_type: TIntegerField;
     qryEmployeeshourly_rate: TFloatField;
+    memTimesheet: TFDMemTable;
+    dsTimesheet: TDataSource;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -176,6 +178,7 @@ begin
         Q.Close;
     end;
   end;
+  //memTimesheet.Close;
 end;
 
 procedure TdmMain.OpenAllQueries;
@@ -193,6 +196,7 @@ begin
         Q.Open;
     end;
   end;
+  //memTimesheet.Open;
 end;
 
 procedure TdmMain.connBeforeConnect(Sender: TObject);

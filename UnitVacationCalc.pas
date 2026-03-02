@@ -5,8 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.DBCtrls,
-  Vcl.ComCtrls, DBGridEhGrouping, ToolCtrlsEh, DBGridEhToolCtrls, DynVarsEh,
-  DBGridEh, DBLookupEh, Vcl.Mask, DBCtrlsEh, EhLibVCL, GridsEh, DBAxisGridsEh;
+  Vcl.ComCtrls, Vcl.Mask;
 
 type
   TFormVacationCalc = class(TForm)

@@ -67,7 +67,7 @@ object FormVacationCalc: TFormVacationCalc
     object lbResult: TLabel
       Left = 16
       Top = 19
-      Width = 40
+      Width = 4
       Height = 20
     end
   end

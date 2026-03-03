@@ -19,6 +19,7 @@ type
     cmbYear: TComboBox;
     btnCloseMonth: TButton;
     btnExport: TButton;
+    cmbDept: TComboBox;
     procedure btnCalcClick(Sender: TObject);
     procedure btnCloseMonthClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
@@ -30,6 +31,7 @@ type
     procedure qryPayrollAfterOpen(DataSet: TDataSet);
     procedure RefreshData; // Метод для пересборки SQL с учетом фильтра
     function IsPeriodClosed(APeriod: string): Boolean; // Проверка замка
+    procedure LoadDepartments;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -76,31 +78,44 @@ begin
     DBGrid1.DataSource := dsPayroll;
     DBNavigator1.DataSource := dsPayroll;
 
+    LoadDepartments; // Загружаем список отделов
     RefreshData; // Загружаем данные с учетом фильтра
   end;
 
   // Привязываем события
   cmbMonth.OnChange := FilterChange;
   cmbYear.OnChange := FilterChange;
+  cmbDept.OnChange := FilterChange;
 end;
 
 procedure TframePayroll.RefreshData;
 var
   SelectedPeriod: string;
+  DeptID: Integer;
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
+  // Узнаем ID выбранного отдела
+  DeptID := 0;
+  if (cmbDept.ItemIndex <> -1) and (cmbDept.Items.Count > 0) then
+    DeptID := Integer(cmbDept.Items.Objects[cmbDept.ItemIndex]);
+
   qryPayroll.Close;
-  // Добавляем JOIN к таблицам departments и positions, чтобы вытащить их названия
   qryPayroll.SQL.Text :=
     'SELECT p.*, e.fio, e.base_salary, ' +
-    '       d.dept_name, pos.name as pos_name ' + // <-- Забираем названия!
+    '       d.dept_name, pos.name as pos_name ' +
     'FROM payroll_journal p ' +
     'JOIN employees e ON p.emp_id = e.id ' +
-    'LEFT JOIN departments d ON e.dept_id = d.id ' + // LEFT JOIN на случай, если отдел не указан
+    'LEFT JOIN departments d ON e.dept_id = d.id ' +
     'LEFT JOIN positions pos ON e.pos_id = pos.id ' +
-    'WHERE strftime(''%Y-%m'', p.period_date) = :period ' +
-    'ORDER BY e.fio';
+    'WHERE strftime(''%Y-%m'', p.period_date) = :period ';
+
+  // Если выбран конкретный отдел — добавляем фильтр
+  if DeptID > 0 then
+    qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' AND e.dept_id = ' + IntToStr(DeptID);
+
+  qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' ORDER BY e.fio';
+
   qryPayroll.ParamByName('period').AsString := SelectedPeriod;
   qryPayroll.Open;
 end;
@@ -142,6 +157,26 @@ begin
   end;
 end;
 
+procedure TframePayroll.LoadDepartments;
+begin
+  if not Assigned(dmMain) then Exit;
+
+  cmbDept.Items.Clear;
+  cmbDept.Items.AddObject('--- Все отделы ---', TObject(0));
+
+  if not dmMain.qryDepts.Active then dmMain.qryDepts.Open;
+
+  dmMain.qryDepts.First;
+  while not dmMain.qryDepts.Eof do
+  begin
+    cmbDept.Items.AddObject(dmMain.qryDepts.FieldByName('dept_name').AsString,
+                            TObject(dmMain.qryDepts.FieldByName('id').AsInteger));
+    dmMain.qryDepts.Next;
+  end;
+
+  cmbDept.ItemIndex := 0;
+end;
+
 procedure TframePayroll.btnCalcClick(Sender: TObject);
 var
   QryEmp, QrySet, QryExec: TFDQuery;
@@ -154,6 +189,7 @@ var
   HourlyRateDB: Double;
   WageType, IsRotation: Integer;
   BaseGross, RotationBonus, TotalGross: Double;
+  DeptID: Integer;
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
@@ -173,6 +209,12 @@ begin
   NormHours := NormDays * 8.0;
 
   CalcDateStr := SelectedPeriod + '-01';
+
+  // --- УЗНАЕМ ВЫБРАННЫЙ ОТДЕЛ ---
+  DeptID := 0;
+
+  if (cmbDept.ItemIndex <> -1) and (cmbDept.Items.Count > 0) then
+    DeptID := Integer(cmbDept.Items.Objects[cmbDept.ItemIndex]);
 
   QryEmp := TFDQuery.Create(nil);
   QrySet := TFDQuery.Create(nil);
@@ -200,13 +242,21 @@ begin
       ' e.wage_type, e.is_rotation, ' +
       ' (SELECT IFNULL(SUM(t.hours_worked), 0) FROM timesheet t WHERE t.emp_id = e.id AND strftime(''%Y-%m'', t.work_date) = :p) as fact_hours ' +
       'FROM employees e WHERE e.status = 1';
+
+    if DeptID > 0 then
+      QryEmp.SQL.Text := QryEmp.SQL.Text + ' AND e.dept_id = ' + IntToStr(DeptID);
+
     QryEmp.ParamByName('p').AsString := SelectedPeriod;
     QryEmp.Open;
 
     dmMain.conn.StartTransaction;
     try
       // Очищаем старые начисления
-      QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
+      if DeptID > 0 then
+        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + ')'
+      else
+        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
+
       QryExec.ParamByName('P').AsString := SelectedPeriod;
       QryExec.ExecSQL;
 
@@ -452,15 +502,12 @@ var
   Period: string;
 begin
   if qryPayroll.IsEmpty then Exit;
-
   // Формируем красивую строку периода (например "Март 2026")
   Period := cmbMonth.Text + ' ' + cmbYear.Text;
-
   SlipForm := TfrmPaySlip.Create(Self);
   try
     // Передаем текущую строку запроса и период в форму листка
     SlipForm.LoadFromDataset(qryPayroll, Period);
-
     // Показываем окно
     SlipForm.ShowModal;
   finally

@@ -96,14 +96,15 @@ begin
   Root.Expand(True);
   // --- БЛОК 2: Документы ---
   Root := TreeView1.Items.Add(nil, 'Документы');
+  Child := TreeView1.Items.AddChild(Root, 'Табель');
+  Child.Data := TframeTimesheet;
   Child := TreeView1.Items.AddChild(Root, 'Начисление зарплаты');
   Child.Data := TframePayroll;
   Child := TreeView1.Items.AddChild(Root, 'Расчет отпускных');
   Child.Data := TframeVacation;
   Child := TreeView1.Items.AddChild(Root, 'Расчет больничных');
   Child.Data := TframeSickLeave;
-  Child := TreeView1.Items.AddChild(Root, 'Табель');
-  Child.Data := TframeTimesheet;
+
   Root.Expand(True);
   // --- БЛОК 3: Отчеты ---
   Root := TreeView1.Items.Add(nil, 'Отчеты');

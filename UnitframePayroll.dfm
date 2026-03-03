@@ -20,7 +20,6 @@ object framePayroll: TframePayroll
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitWidth = 958
     object DBNavigator1: TDBNavigator
       Left = 0
       Top = 0
@@ -31,8 +30,8 @@ object framePayroll: TframePayroll
       TabOrder = 0
     end
     object btnCalc: TButton
-      Left = 752
-      Top = 13
+      Left = 856
+      Top = 18
       Width = 169
       Height = 25
       Caption = #1053#1072#1095#1080#1089#1083#1080#1090#1100' '#1079#1072#1088#1087#1083#1072#1090#1091
@@ -56,8 +55,8 @@ object framePayroll: TframePayroll
       Text = 'cmbYear'
     end
     object btnCloseMonth: TButton
-      Left = 584
-      Top = 13
+      Left = 736
+      Top = 18
       Width = 121
       Height = 25
       Caption = #1047#1072#1082#1088#1099#1090#1100' '#1084#1077#1089#1103#1094
@@ -65,13 +64,21 @@ object framePayroll: TframePayroll
       OnClick = btnCloseMonthClick
     end
     object btnExport: TButton
-      Left = 943
-      Top = 13
+      Left = 1023
+      Top = 18
       Width = 106
       Height = 25
       Caption = 'Excel'
       TabOrder = 5
       OnClick = btnExportClick
+    end
+    object cmbDept: TComboBox
+      Left = 544
+      Top = 15
+      Width = 145
+      Height = 28
+      TabOrder = 6
+      Text = 'cmbDept'
     end
   end
   object DBGrid1: TDBGrid

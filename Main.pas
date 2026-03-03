@@ -52,6 +52,8 @@ type
     // Функция, которая делает всю грязную работу за нас
     function AddMenuNode(ParentNode: TTreeNode; const NodeText: string;
                        FrameClass: Pointer; IconIndex: Integer): TTreeNode;
+    // Изменили заголовок: добавили AImageIndex
+    procedure OpenTab(AFrameClass: TFrameClass; const ACaption: string; AImageIndex: Integer);
 
   public
     procedure RefreshDashboard;
@@ -140,6 +142,7 @@ begin
   PageControl1.DoubleBuffered := True;
   PageControl1.HotTrack := True;
   PageControl1.TabWidth := 200;
+  PageControl1.Images := ImageList2;
 
   FHoverCloseTab := -1;
 end;
@@ -211,6 +214,39 @@ begin
     // 3. Удаляем из памяти после закрытия крестиком
     FormHelp.Free;
   end;
+end;
+
+procedure TMainForm.OpenTab(AFrameClass: TFrameClass; const ACaption: string; AImageIndex: Integer);
+var
+  i: Integer;
+  Tab: TTabSheet;
+  Frame: TFrame;
+begin
+  // 1. Проверяем, не открыта ли уже такая вкладка
+  for i := 0 to PageControl1.PageCount - 1 do
+    if PageControl1.Pages[i].Caption := ACaption then
+    begin
+      // Если открыта - просто активируем её
+      PageControl1.ActivePage := PageControl1.Pages[i];
+      // (Опционально) Обновляем иконку, если вдруг она поменялась в дереве
+      PageControl1.Pages[i].ImageIndex := AImageIndex;
+      Exit;
+    end;
+
+  // 2. Создаем новую вкладку
+  Tab := TTabSheet.Create(PageControl1);
+  Tab.PageControl := PageControl1;
+  Tab.Caption := ACaption;
+
+  // --- МАГИЯ ЗДЕСЬ: Назначаем иконку вкладке ---
+  Tab.ImageIndex := AImageIndex;
+
+  // 3. Создаем фрейм
+  Frame := AFrameClass.Create(Tab);
+  Frame.Parent := Tab;
+  Frame.Align := alClient;
+
+  PageControl1.ActivePage := Tab;
 end;
 
 { ================= OPEN TAB ================= }

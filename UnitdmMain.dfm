@@ -2,13 +2,13 @@ object dmMain: TdmMain
   OnCreate = DataModuleCreate
   OnDestroy = DataModuleDestroy
   Height = 651
-  Width = 1017
-  PixelsPerInch = 96
+  Width = 960
+  PixelsPerInch = 120
   object conn: TFDConnection
     Params.Strings = (
       
-        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
-        'ary\Win32\Debug\database\salarydb.db'
+        'Database=C:\OSPanel\domains\Salary\Win32\Debug\database\salarydb' +
+        '.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
     FormatOptions.AssignedValues = [fvMapRules]
@@ -18,7 +18,6 @@ object dmMain: TdmMain
         SourceDataType = dtWideMemo
         TargetDataType = dtWideString
       end>
-    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 56
@@ -617,5 +616,9 @@ object dmMain: TdmMain
     DataSet = memTimesheet
     Left = 360
     Top = 392
+  end
+  object FDConnection1: TFDConnection
+    Left = 592
+    Top = 512
   end
 end

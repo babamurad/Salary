@@ -31,7 +31,6 @@ type
     N4: TMenuItem;
     N5: TMenuItem;
     ImageList2: TImageList;
-    TreeView2: TTreeView;
     procedure FormCreate(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure PageControl1DrawTab(Control: TCustomTabControl;

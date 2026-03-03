@@ -68,16 +68,10 @@ object MainForm: TMainForm
       OnMouseDown = PageControl1MouseDown
       OnMouseMove = PageControl1MouseMove
     end
-    object TreeView2: TTreeView
-      Left = 448
-      Top = 224
-      Width = 121
-      Height = 97
-      Indent = 19
-      TabOrder = 2
-    end
   end
   object ImageList1: TImageList
+    Height = 20
+    Width = 20
     Left = 848
     Top = 472
   end

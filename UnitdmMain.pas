@@ -98,6 +98,7 @@ type
     dsTimesheet: TDataSource;
     qryEmployeeswage_type: TIntegerField;
     qryEmployeesis_rotation: TIntegerField;
+    FDConnection1: TFDConnection;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -336,30 +337,47 @@ procedure TdmMain.LoadConfig;
 var
   Ini: TIniFile;
   SavedPath: string;
-  DefaultPath: string;
+  FullPath: string;
+  ExePath: string;
 begin
-  // Путь к базе по умолчанию (рядом с EXE)
-  DefaultPath := ExtractFilePath(ParamStr(0)) + 'salarydb.db';
+  ExePath := ExtractFilePath(ParamStr(0)); // Путь к папке с нашим EXE
 
-  Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'config.ini');
+  Ini := TIniFile.Create(ExePath + 'config.ini');
   try
-    // Читаем путь из секции [Database]. Если там пусто — берем DefaultPath
-    SavedPath := Ini.ReadString('Database', 'Path', DefaultPath);
+    // Читаем путь из INI. По умолчанию ищем просто 'salarydb.db'
+    SavedPath := Ini.ReadString('Database', 'Path', 'salarydb.db');
 
-    // Пытаемся применить этот путь
-    ApplyDatabase(SavedPath);
+    // ПРОВЕРКА: Это относительный путь или абсолютный?
+    // Функция ExtractFileDrive вернет пустоту, если это просто имя файла (без C:\ или D:\)
+    if ExtractFileDrive(SavedPath) = '' then
+      FullPath := ExePath + SavedPath // Приклеиваем путь к EXE
+    else
+      FullPath := SavedPath;          // Если путь абсолютный (например, сетевой диск), оставляем как есть
+
+    // Пытаемся применить этот собранный путь
+    ApplyDatabase(FullPath);
   finally
     Ini.Free;
   end;
 end;
 
 procedure TdmMain.SaveConfig(const APath: string);
-var Ini: TIniFile;
+var
+  Ini: TIniFile;
+  ExePath: string;
+  PathToSave: string;
 begin
-  Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'config.ini');
+  ExePath := ExtractFilePath(ParamStr(0));
+  Ini := TIniFile.Create(ExePath + 'config.ini');
   try
-    Ini.WriteString('Database', 'Path', APath);
-  finally Ini.Free; end;
+    // МАГИЯ ЗДЕСЬ: Превращаем абсолютный путь в относительный!
+    // Если база лежит рядом с EXE, останется только имя файла 'salarydb.db'
+    PathToSave := ExtractRelativePath(ExePath, APath);
+
+    Ini.WriteString('Database', 'Path', PathToSave);
+  finally
+    Ini.Free;
+  end;
 end;
 
 procedure TdmMain.qryEmployeesAfterOpen(DataSet: TDataSet);

@@ -7,8 +7,8 @@ object dmMain: TdmMain
   object conn: TFDConnection
     Params.Strings = (
       
-        'Database=C:\OSPanel\domains\Salary\Win32\Debug\database\salarydb' +
-        '.db'
+        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
+        'ary\Win32\Debug\database\salarydb.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
     FormatOptions.AssignedValues = [fvMapRules]
@@ -18,6 +18,7 @@ object dmMain: TdmMain
         SourceDataType = dtWideMemo
         TargetDataType = dtWideString
       end>
+    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 56
@@ -182,30 +183,6 @@ object dmMain: TdmMain
     Left = 280
     Top = 248
   end
-  object qrySettings: TFDQuery
-    Connection = conn
-    SQL.Strings = (
-      'SELECT * FROM settings ORDER BY key_name')
-    Left = 400
-    Top = 168
-    object qrySettingskey_name: TWideMemoField
-      FieldName = 'key_name'
-      Origin = 'key_name'
-      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
-      OnGetText = qrySettingskey_nameGetText
-      BlobType = ftWideString
-      Size = 32767
-    end
-    object qrySettingskey_value: TFloatField
-      FieldName = 'key_value'
-      Origin = 'key_value'
-    end
-  end
-  object dsSettings: TDataSource
-    DataSet = qrySettings
-    Left = 400
-    Top = 240
-  end
   object qryConstSettings: TFDQuery
     Connection = conn
     SQL.Strings = (
@@ -260,7 +237,7 @@ object dmMain: TdmMain
       'JOIN employees e ON h.emp_id = e.id'
       'ORDER BY h.period_date DESC, e.fio')
     Left = 32
-    Top = 320
+    Top = 328
     object qryHistoryid: TFDAutoIncField
       FieldName = 'id'
       Origin = 'id'
@@ -295,7 +272,7 @@ object dmMain: TdmMain
   object dsHistory: TDataSource
     DataSet = qryHistory
     Left = 32
-    Top = 384
+    Top = 392
   end
   object qryVacation: TFDQuery
     ConstraintsEnabled = True
@@ -305,7 +282,7 @@ object dmMain: TdmMain
       'FROM vacation_journal v '
       'JOIN employees e ON v.emp_id = e.id ORDER BY v.calc_date DESC')
     Left = 136
-    Top = 320
+    Top = 328
     object qryVacationid: TFDAutoIncField
       FieldName = 'id'
       Origin = 'id'
@@ -367,7 +344,7 @@ object dmMain: TdmMain
   object dsVacation: TDataSource
     DataSet = qryVacation
     Left = 136
-    Top = 384
+    Top = 392
   end
   object qrySickLeave: TFDQuery
     Connection = conn
@@ -617,8 +594,46 @@ object dmMain: TdmMain
     Left = 360
     Top = 392
   end
-  object FDConnection1: TFDConnection
-    Left = 592
-    Top = 512
+  object dsSettings: TDataSource
+    DataSet = qrySettings
+    Left = 376
+    Top = 240
+  end
+  object qrySettings: TFDQuery
+    Connection = conn
+    UpdateOptions.AssignedValues = [uvRefreshMode, uvAutoCommitUpdates]
+    UpdateOptions.RefreshMode = rmAll
+    UpdateOptions.AutoCommitUpdates = True
+    SQL.Strings = (
+      'SELECT * FROM settings')
+    Left = 376
+    Top = 168
+    object qrySettingsid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qrySettingssys_name: TWideStringField
+      FieldName = 'sys_name'
+      Origin = 'sys_name'
+      Size = 32767
+    end
+    object qrySettingsdisplay_name: TWideStringField
+      FieldName = 'display_name'
+      Origin = 'display_name'
+      Size = 32767
+    end
+    object qrySettingscalc_type: TIntegerField
+      FieldName = 'calc_type'
+      Origin = 'calc_type'
+    end
+    object qrySettingskey_value: TFloatField
+      FieldName = 'key_value'
+      Origin = 'key_value'
+    end
+    object qrySettingsis_active: TIntegerField
+      FieldName = 'is_active'
+      Origin = 'is_active'
+    end
   end
 end

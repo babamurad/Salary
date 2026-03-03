@@ -28,10 +28,6 @@ type
     dsDepts: TDataSource;
     qryPositions: TFDQuery;
     dsPositions: TDataSource;
-
-    { Дополнительные справочники и настройки }
-    qrySettings: TFDQuery;
-    dsSettings: TDataSource;
     qryConstSettings: TFDQuery;
     dsConstSettings: TDataSource;
     qryProdCalendar: TFDQuery;
@@ -40,8 +36,6 @@ type
     dsSickLeaveRates: TDataSource;
     qryHistory: TFDQuery;
     dsHistory: TDataSource;
-    qrySettingskey_name: TWideMemoField;
-    qrySettingskey_value: TFloatField;
     qryVacation: TFDQuery;
     dsVacation: TDataSource;
     qrySickLeave: TFDQuery;
@@ -98,7 +92,14 @@ type
     dsTimesheet: TDataSource;
     qryEmployeeswage_type: TIntegerField;
     qryEmployeesis_rotation: TIntegerField;
-    FDConnection1: TFDConnection;
+    dsSettings: TDataSource;
+    qrySettings: TFDQuery;
+    qrySettingsid: TFDAutoIncField;
+    qrySettingssys_name: TWideStringField;
+    qrySettingsdisplay_name: TWideStringField;
+    qrySettingscalc_type: TIntegerField;
+    qrySettingskey_value: TFloatField;
+    qrySettingsis_active: TIntegerField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

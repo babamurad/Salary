@@ -37,12 +37,9 @@ object frameSettings: TframeSettings
         Height = 41
         Align = alTop
         TabOrder = 1
-        ExplicitLeft = 392
-        ExplicitTop = 216
-        ExplicitWidth = 185
         object DBNavigator1: TDBNavigator
-          Left = 16
-          Top = 0
+          Left = 8
+          Top = 7
           Width = 240
           Height = 25
           DataSource = dmMain.dsSettings

@@ -141,7 +141,7 @@ begin
   PageControl1.OwnerDraw := True;
   PageControl1.DoubleBuffered := True;
   PageControl1.HotTrack := True;
-  PageControl1.TabWidth := 270;
+  PageControl1.TabWidth := 235;
 
   FHoverCloseTab := -1;
 end;
@@ -222,7 +222,6 @@ begin
   Tab.PageControl := PageControl1;
   Tab.Caption := ACaption;
   Tab.ImageIndex := AImageIndex; // Записываем индекс иконки!
-//  Tab.Width :=250;
 
   Frame := AFrameClass.Create(Tab);
   Frame.Parent := Tab;

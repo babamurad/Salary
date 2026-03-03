@@ -141,4 +141,8 @@ Project Salary.exe raised exception class EArgumentOutOfRangeException with mess
 
 password: DownloadDevTools.ir
 
-MainForm.Caption := dmMain.FullPath;
+CREATE TABLE "settings" (
+	"key_name"	TEXT,
+	"key_value"	REAL,
+	PRIMARY KEY("key_name")
+);

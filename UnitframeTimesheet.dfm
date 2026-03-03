@@ -12,7 +12,6 @@ object frameTimesheet: TframeTimesheet
     Height = 81
     Align = alTop
     TabOrder = 0
-    ExplicitTop = -6
     object Label1: TLabel
       Left = 40
       Top = 19
@@ -115,9 +114,6 @@ object frameTimesheet: TframeTimesheet
     Height = 41
     Align = alBottom
     TabOrder = 2
-    ExplicitLeft = 432
-    ExplicitTop = 240
-    ExplicitWidth = 185
     object btnSave: TButton
       Left = 480
       Top = 8

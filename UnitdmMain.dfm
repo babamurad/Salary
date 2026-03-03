@@ -3,7 +3,7 @@ object dmMain: TdmMain
   OnDestroy = DataModuleDestroy
   Height = 651
   Width = 960
-  PixelsPerInch = 120
+  PixelsPerInch = 96
   object conn: TFDConnection
     Params.Strings = (
       
@@ -204,7 +204,7 @@ object dmMain: TdmMain
   object dsSettings: TDataSource
     DataSet = qrySettings
     Left = 400
-    Top = 248
+    Top = 240
   end
   object qryConstSettings: TFDQuery
     Connection = conn

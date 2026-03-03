@@ -18,9 +18,9 @@ object frameSettings: TframeSettings
       Caption = #1043#1083#1086#1073#1072#1083#1100#1085#1099#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
       object DBGrid1: TDBGrid
         Left = 0
-        Top = 0
+        Top = 41
         Width = 971
-        Height = 470
+        Height = 429
         Align = alClient
         DataSource = dmMain.dsSettings
         TabOrder = 0
@@ -29,6 +29,25 @@ object frameSettings: TframeSettings
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+      end
+      object Panel2: TPanel
+        Left = 0
+        Top = 0
+        Width = 971
+        Height = 41
+        Align = alTop
+        TabOrder = 1
+        ExplicitLeft = 392
+        ExplicitTop = 216
+        ExplicitWidth = 185
+        object DBNavigator1: TDBNavigator
+          Left = 16
+          Top = 0
+          Width = 240
+          Height = 25
+          DataSource = dmMain.dsSettings
+          TabOrder = 0
+        end
       end
     end
     object tsSickLeave: TTabSheet
@@ -53,9 +72,9 @@ object frameSettings: TframeSettings
       ImageIndex = 2
       object DBGridHistory: TDBGrid
         Left = 0
-        Top = 41
+        Top = 0
         Width = 971
-        Height = 429
+        Height = 470
         Align = alClient
         DataSource = dmMain.dsHistory
         TabOrder = 0
@@ -95,22 +114,6 @@ object frameSettings: TframeSettings
             Title.Caption = #1057#1091#1084#1084#1072
             Visible = True
           end>
-      end
-      object Panel1: TPanel
-        Left = 0
-        Top = 0
-        Width = 971
-        Height = 41
-        Align = alTop
-        TabOrder = 1
-        object DBNavigator1: TDBNavigator
-          Left = 8
-          Top = 8
-          Width = 240
-          Height = 25
-          DataSource = dmMain.dsHistory
-          TabOrder = 0
-        end
       end
     end
   end

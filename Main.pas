@@ -44,16 +44,15 @@ type
     procedure N3Click(Sender: TObject);
     procedure N5Click(Sender: TObject);
   private
-     FHoverCloseTab: Integer;  // можно раскомментировать, если нужен hover-эффект
+    FHoverCloseTab: Integer;  // для hover-эффекта крестика
     procedure BuildTree;
-    procedure OpenTab(AFrameClass: TFrameClass; const ACaption: string);
+    // ВНИМАНИЕ: Изменили заголовок OpenTab, добавив AImageIndex
+    procedure OpenTab(AFrameClass: TFrameClass; const ACaption: string; AImageIndex: Integer);
     procedure CloseTab(Index: Integer);
     procedure CloseAllTabsExceptFirst;
     // Функция, которая делает всю грязную работу за нас
     function AddMenuNode(ParentNode: TTreeNode; const NodeText: string;
                        FrameClass: Pointer; IconIndex: Integer): TTreeNode;
-    // Изменили заголовок: добавили AImageIndex
-    procedure OpenTab(AFrameClass: TFrameClass; const ACaption: string; AImageIndex: Integer);
 
   public
     procedure RefreshDashboard;
@@ -79,19 +78,16 @@ uses
 function TMainForm.AddMenuNode(ParentNode: TTreeNode; const NodeText: string;
   FrameClass: Pointer; IconIndex: Integer): TTreeNode;
 begin
-  // 1. Создаем узел (если ParentNode пустой - значит это корень, иначе - дочерняя ветка)
   if ParentNode = nil then
     Result := TreeView1.Items.Add(nil, NodeText)
   else
     Result := TreeView1.Items.AddChild(ParentNode, NodeText);
 
-  // 2. Привязываем класс фрейма
   Result.Data := FrameClass;
 
-  // 3. Магия картинок: применяем один индекс ко всем состояниям разом!
   Result.ImageIndex := IconIndex;
-  Result.SelectedIndex := IconIndex; // Картинка не будет меняться при клике
-  //Result.ExpandedIndex := IconIndex; // Картинка не будет меняться при разворачивании
+  Result.SelectedIndex := IconIndex;
+  // Result.ExpandedIndex := IconIndex;
 end;
 
 procedure TMainForm.BuildTree;
@@ -101,28 +97,23 @@ begin
   TreeView1.Items.Clear;
   TreeView1.Images := ImageList2;
 
-  // --- БЛОК : Главная ---
-  // (nil = корень, 0 = иконка календарика)
   AddMenuNode(nil, 'Главная', TframeDashboard, 0);
 
-  // --- БЛОК 1: Справочники ---
-  Root := AddMenuNode(nil, 'Справочники', nil, 5); // 5 = Желтая папка
-  AddMenuNode(Root, 'Отделы', TframeDepts, 1);     // 1 = Структура
+  Root := AddMenuNode(nil, 'Справочники', nil, 5);
+  AddMenuNode(Root, 'Отделы', TframeDepts, 1);
   AddMenuNode(Root, 'Должности', TframePositions, 13);
-  AddMenuNode(Root, 'Сотрудники', TframeEmployees, 9); // 2 = Люди
-  AddMenuNode(Root, 'Настройки', TframeSettings, 14);  // 14 = Шестеренка
+  AddMenuNode(Root, 'Сотрудники', TframeEmployees, 9);
+  AddMenuNode(Root, 'Настройки', TframeSettings, 14);
   AddMenuNode(Root, 'Пр. календарь', TframeCalendar, 7);
   Root.Expand(True);
 
-  // --- БЛОК 2: Документы ---
   Root := AddMenuNode(nil, 'Документы', nil, 5);
   AddMenuNode(Root, 'Табель', TframeTimesheet, 17);
-  AddMenuNode(Root, 'Начисление зарплаты', TframePayroll, 6); // 6 = Деньги в руке
-  AddMenuNode(Root, 'Расчет отпускных', TframeVacation, 18);   // 7 = Домик
-  AddMenuNode(Root, 'Расчет больничных', TframeSickLeave, 3); // 3 = Чемоданчик с крестом
+  AddMenuNode(Root, 'Начисление зарплаты', TframePayroll, 6);
+  AddMenuNode(Root, 'Расчет отпускных', TframeVacation, 18);
+  AddMenuNode(Root, 'Расчет больничных', TframeSickLeave, 3);
   Root.Expand(True);
 
-  // --- БЛОК 3: Отчеты ---
   Root := AddMenuNode(nil, 'Отчеты', nil, 5);
   AddMenuNode(Root, 'Ведомость', TframeReports, 12);
   Root.Expand(True);
@@ -138,11 +129,13 @@ begin
 
   TreeView1.FullExpand;
 
+  // ОБЯЗАТЕЛЬНО: Привязываем картинки к вкладкам
+  PageControl1.Images := ImageList2;
+
   PageControl1.OwnerDraw := True;
   PageControl1.DoubleBuffered := True;
   PageControl1.HotTrack := True;
-  PageControl1.TabWidth := 200;
-  PageControl1.Images := ImageList2;
+  PageControl1.TabWidth := 270;
 
   FHoverCloseTab := -1;
 end;
@@ -152,106 +145,60 @@ var
   TabSheet: TTabSheet;
   DashFrame: TframeDashboard;
 begin
-  // 1. Создаем новую вкладку
   TabSheet := TTabSheet.Create(PageControl1);
   TabSheet.PageControl := PageControl1;
   TabSheet.Caption := 'Главная';
-  // 2. Создаем наш фрейм Дашборда и кладем его на вкладку
+  // Назначаем иконку для стартовой вкладки (0 - календарик)
+  TabSheet.ImageIndex := 0;
+
   DashFrame := TframeDashboard.Create(TabSheet);
   DashFrame.Parent := TabSheet;
-  DashFrame.Align := alClient; // Чтобы растянулся на всё окно
-  // 3. Делаем эту вкладку активной
+  DashFrame.Align := alClient;
+
   PageControl1.ActivePage := TabSheet;
-  // (Опционально) Раскрываем ветки дерева, чтобы было видно меню
   TreeView1.FullExpand;
 end;
 
+{ ================= MENU ACTIONS ================= }
+
 procedure TMainForm.N2Click(Sender: TObject);
 begin
-if dlgOpenDb.Execute then
+  if dlgOpenDb.Execute then
   begin
-    // Закрываем все вкладки, кроме первой (Дашборда)
     CloseAllTabsExceptFirst;
-
-    // Подключаем новую базу
     dmMain.ApplyDatabase(dlgOpenDb.FileName);
-
-    // Обновляем цифры на Дашборде (если он открыт)
     RefreshDashboard;
-
     ShowMessage('База данных успешно загружена!');
   end;
 end;
 
 procedure TMainForm.N3Click(Sender: TObject);
 begin
-if dlgSaveDb.Execute then
+  if dlgSaveDb.Execute then
   begin
-
-    // Вызываем метод создания из ДатаМодуля
     if ExtractFileExt(dlgSaveDb.FileName) = '' then
       dlgSaveDb.FileName := dlgSaveDb.FileName + '.db';
 
-    // Закрываем лишние вкладки
     CloseAllTabsExceptFirst;
-
-    // Создаем базу
     dmMain.CreateNewDb(dlgSaveDb.FileName);
-
     RefreshDashboard;
   end;
 end;
 
 procedure TMainForm.N5Click(Sender: TObject);
 begin
-  // Открываем окно справки поверх всех остальных окон
-  // 1. Создаем форму в памяти
   FormHelp := TFormHelp.Create(Self);
   try
-    // 2. Показываем её пользователю
     FormHelp.ShowModal;
   finally
-    // 3. Удаляем из памяти после закрытия крестиком
     FormHelp.Free;
   end;
 end;
 
-procedure TMainForm.OpenTab(AFrameClass: TFrameClass; const ACaption: string; AImageIndex: Integer);
-var
-  i: Integer;
-  Tab: TTabSheet;
-  Frame: TFrame;
-begin
-  // 1. Проверяем, не открыта ли уже такая вкладка
-  for i := 0 to PageControl1.PageCount - 1 do
-    if PageControl1.Pages[i].Caption := ACaption then
-    begin
-      // Если открыта - просто активируем её
-      PageControl1.ActivePage := PageControl1.Pages[i];
-      // (Опционально) Обновляем иконку, если вдруг она поменялась в дереве
-      PageControl1.Pages[i].ImageIndex := AImageIndex;
-      Exit;
-    end;
-
-  // 2. Создаем новую вкладку
-  Tab := TTabSheet.Create(PageControl1);
-  Tab.PageControl := PageControl1;
-  Tab.Caption := ACaption;
-
-  // --- МАГИЯ ЗДЕСЬ: Назначаем иконку вкладке ---
-  Tab.ImageIndex := AImageIndex;
-
-  // 3. Создаем фрейм
-  Frame := AFrameClass.Create(Tab);
-  Frame.Parent := Tab;
-  Frame.Align := alClient;
-
-  PageControl1.ActivePage := Tab;
-end;
-
 { ================= OPEN TAB ================= }
 
-procedure TMainForm.OpenTab(AFrameClass: TFrameClass; const ACaption: string);
+// Передаем AImageIndex, чтобы вкладка знала свою картинку
+procedure TMainForm.OpenTab(AFrameClass: TFrameClass; const ACaption: string; AImageIndex: Integer);
 var
   i: Integer;
   Tab: TTabSheet;
@@ -261,12 +208,15 @@ begin
     if PageControl1.Pages[i].Caption = ACaption then
     begin
       PageControl1.ActivePage := PageControl1.Pages[i];
+      PageControl1.Pages[i].ImageIndex := AImageIndex; // Обновляем картинку на всякий случай
       Exit;
     end;
 
   Tab := TTabSheet.Create(PageControl1);
   Tab.PageControl := PageControl1;
   Tab.Caption := ACaption;
+  Tab.ImageIndex := AImageIndex; // Записываем индекс иконки!
+//  Tab.Width :=250;
 
   Frame := AFrameClass.Create(Tab);
   Frame.Parent := Tab;
@@ -279,7 +229,6 @@ end;
 
 procedure TMainForm.CloseAllTabsExceptFirst;
 begin
-  // Удаляем все вкладки в PageControl, начиная со второй (индекс 1)
   while PageControl1.PageCount > 1 do
     PageControl1.Pages[1].Free;
 end;
@@ -290,16 +239,16 @@ begin
     PageControl1.Pages[Index].Free;
 end;
 
-
 { ================= TREE CLICK ================= }
 
 procedure TMainForm.TreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
   if Assigned(Node.Data) then
-    OpenTab(TFrameClass(Node.Data), Node.Text);
+    // Передаем в OpenTab не только класс и имя, но и картинку узла!
+    OpenTab(TFrameClass(Node.Data), Node.Text, Node.ImageIndex);
 end;
 
-{ ================= DRAW TAB ================= }
+{ ================= DRAW TAB (МАГИЯ ОТРИСОВКИ ИКОНОК И КРЕСТИКОВ) ================= }
 
 procedure TMainForm.PageControl1DrawTab(Control: TCustomTabControl;
   TabIndex: Integer; const Rect: TRect; Active: Boolean);
@@ -307,37 +256,60 @@ var
   C: TCanvas;
   CloseRect: TRect;
   Hovered: Boolean;
+  ImgIdx, IconY, TextLeft: Integer;
 begin
   C := PageControl1.Canvas;
-  // Единые координаты крестика для всех 3-х методов!
   CloseRect := System.Types.Rect(Rect.Right - 22, Rect.Top + 6, Rect.Right - 6, Rect.Bottom - 6);
-  // Отрисовка фона вкладки
+
+  // 1. Рисуем фон
   if Active then
     C.Brush.Color := clWhite
   else
     C.Brush.Color := $00F0F0F0;
   C.FillRect(Rect);
-  // Делаем фон текста прозрачным, чтобы не было "грязных" квадратов вокруг букв
+
   SetBkMode(C.Handle, TRANSPARENT);
-  // Цвет текста вкладки
+
   if Active then
-    C.Font.Color := clBlack
+  begin
+    C.Font.Color := clBlack;
+    C.Font.Style := [fsBold];
+  end
   else
+  begin
     C.Font.Color := clDkGray;
-  // Текст заголовка
-  C.TextOut(Rect.Left + 10, Rect.Top + 6, PageControl1.Pages[TabIndex].Caption);
-  // Определяем, наведена ли мышь на крестик
+    C.Font.Style := [];
+  end;
+
+  TextLeft := Rect.Left + 8; // Начальный отступ слева
+
+  // 2. Рисуем иконку (если она есть)
+  if Assigned(PageControl1.Images) then
+  begin
+    ImgIdx := PageControl1.Pages[TabIndex].ImageIndex;
+    if (ImgIdx >= 0) and (ImgIdx < PageControl1.Images.Count) then
+    begin
+      // Вычисляем вертикальный центр для иконки
+      IconY := Rect.Top + ((Rect.Bottom - Rect.Top) - PageControl1.Images.Height) div 2;
+      PageControl1.Images.Draw(C, TextLeft, IconY, ImgIdx);
+      // Сдвигаем текст правее, чтобы он не налез на иконку
+      TextLeft := TextLeft + PageControl1.Images.Width + 6;
+    end;
+  end;
+
+  // 3. Рисуем текст заголовка
+  C.TextOut(TextLeft, Rect.Top + 6, PageControl1.Pages[TabIndex].Caption);
+
+  // 4. Рисуем крестик закрытия
   Hovered := (FHoverCloseTab = TabIndex);
-  // Выбор цвета крестика
   if Hovered then
     C.Font.Color := clRed
   else
     C.Font.Color := clGray;
-  // Рисуем крестик
-  C.Font.Name := 'Arial'; // Arial гарантированно есть на всех ПК Windows и содержит базовые символы
+
+  C.Font.Name := 'Arial';
   C.Font.Size := 10;
   C.Font.Style := [fsBold];
-  // Рисуем обычную "X" или спецсимвол
   C.TextOut(CloseRect.Left + 2, CloseRect.Top + 1, 'x');
 end;
 
@@ -354,12 +326,10 @@ begin
     for i := 0 to PageControl1.PageCount - 1 do
     begin
       TabR := PageControl1.TabRect(i);
-      // Используем строго те же координаты (22 и 6), что и при отрисовке!
       CloseRect := System.Types.Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
       if PtInRect(CloseRect, Point(X, Y)) then
       begin
         CloseTab(i);
-        // Сбрасываем Hover, иначе при удалении вкладки крестик может "зависнуть"
         FHoverCloseTab := -1;
         Break;
       end;
@@ -380,7 +350,6 @@ begin
   for i := 0 to PageControl1.PageCount - 1 do
   begin
     TabR := PageControl1.TabRect(i);
-    // И тут те же самые координаты
     CloseRect := System.Types.Rect(TabR.Right - 22, TabR.Top + 6, TabR.Right - 6, TabR.Bottom - 6);
     if PtInRect(CloseRect, Point(X, Y)) then
     begin
@@ -391,15 +360,16 @@ begin
   if NewHover <> FHoverCloseTab then
   begin
     FHoverCloseTab := NewHover;
-    PageControl1.Invalidate; // Перерисовываем только если поменялся ховер
+    PageControl1.Invalidate;
   end;
 end;
+
+{ ================= REFRESH DASHBOARD ================= }
 
 procedure TMainForm.RefreshDashboard;
 var
   i, j: Integer;
 begin
-  // Проверка, что PageControl готов
   if (PageControl1 = nil) or (PageControl1.PageCount = 0) then Exit;
 
   for i := 0 to PageControl1.PageCount - 1 do
@@ -410,7 +380,6 @@ begin
       begin
         if PageControl1.Pages[i].Controls[j] is TframeDashboard then
         begin
-          // Обновляем статистику (она будет по нулям в новой базе)
           TframeDashboard(PageControl1.Pages[i].Controls[j]).UpdateStats;
           Exit;
         end;

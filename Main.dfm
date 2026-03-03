@@ -64,6 +64,7 @@ object MainForm: TMainForm
       Height = 543
       Align = alClient
       TabOrder = 1
+      TabWidth = 250
       OnDrawTab = PageControl1DrawTab
       OnMouseDown = PageControl1MouseDown
       OnMouseMove = PageControl1MouseMove

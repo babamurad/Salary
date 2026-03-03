@@ -30,6 +30,8 @@ type
     N3: TMenuItem;
     N4: TMenuItem;
     N5: TMenuItem;
+    ImageList2: TImageList;
+    TreeView2: TTreeView;
     procedure FormCreate(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure PageControl1DrawTab(Control: TCustomTabControl;
@@ -48,6 +50,9 @@ type
     procedure OpenTab(AFrameClass: TFrameClass; const ACaption: string);
     procedure CloseTab(Index: Integer);
     procedure CloseAllTabsExceptFirst;
+    // Функция, которая делает всю грязную работу за нас
+    function AddMenuNode(ParentNode: TTreeNode; const NodeText: string;
+                       FrameClass: Pointer; IconIndex: Integer): TTreeNode;
 
   public
     procedure RefreshDashboard;
@@ -70,46 +75,55 @@ uses
 
 { ================= TREE ================= }
 
+function TMainForm.AddMenuNode(ParentNode: TTreeNode; const NodeText: string;
+  FrameClass: Pointer; IconIndex: Integer): TTreeNode;
+begin
+  // 1. Создаем узел (если ParentNode пустой - значит это корень, иначе - дочерняя ветка)
+  if ParentNode = nil then
+    Result := TreeView1.Items.Add(nil, NodeText)
+  else
+    Result := TreeView1.Items.AddChild(ParentNode, NodeText);
+
+  // 2. Привязываем класс фрейма
+  Result.Data := FrameClass;
+
+  // 3. Магия картинок: применяем один индекс ко всем состояниям разом!
+  Result.ImageIndex := IconIndex;
+  Result.SelectedIndex := IconIndex; // Картинка не будет меняться при клике
+  //Result.ExpandedIndex := IconIndex; // Картинка не будет меняться при разворачивании
+end;
+
 procedure TMainForm.BuildTree;
 var
-  Root, Child: TTreeNode;
+  Root: TTreeNode;
 begin
   TreeView1.Items.Clear;
+  TreeView1.Images := ImageList2;
 
   // --- БЛОК : Главная ---
-  Root := TreeView1.Items.Add(nil, 'Главная');
-  Root.Data := TframeDashboard;
+  // (nil = корень, 0 = иконка календарика)
+  AddMenuNode(nil, 'Главная', TframeDashboard, 0);
 
   // --- БЛОК 1: Справочники ---
-  Root := TreeView1.Items.Add(nil, 'Справочники');
-  Child := TreeView1.Items.AddChild(Root, 'Отделы');
-  Child.Data := TframeDepts; // Твой будущий фрейм
-  Child := TreeView1.Items.AddChild(Root, 'Должности');
-  Child.Data := TframePositions; // Твой будущий фрейм
-  Child := TreeView1.Items.AddChild(Root, 'Сотрудники');
-  Child.Data := TframeEmployees;
-  Child := TreeView1.Items.AddChild(Root, 'Настройки');
-  Child.Data := TframeSettings;
-  Child := TreeView1.Items.AddChild(Root, 'Пр. календарь');
-  Child.Data := TframeCalendar;
-
+  Root := AddMenuNode(nil, 'Справочники', nil, 5); // 5 = Желтая папка
+  AddMenuNode(Root, 'Отделы', TframeDepts, 1);     // 1 = Структура
+  AddMenuNode(Root, 'Должности', TframePositions, 13);
+  AddMenuNode(Root, 'Сотрудники', TframeEmployees, 9); // 2 = Люди
+  AddMenuNode(Root, 'Настройки', TframeSettings, 14);  // 14 = Шестеренка
+  AddMenuNode(Root, 'Пр. календарь', TframeCalendar, 7);
   Root.Expand(True);
+
   // --- БЛОК 2: Документы ---
-  Root := TreeView1.Items.Add(nil, 'Документы');
-  Child := TreeView1.Items.AddChild(Root, 'Табель');
-  Child.Data := TframeTimesheet;
-  Child := TreeView1.Items.AddChild(Root, 'Начисление зарплаты');
-  Child.Data := TframePayroll;
-  Child := TreeView1.Items.AddChild(Root, 'Расчет отпускных');
-  Child.Data := TframeVacation;
-  Child := TreeView1.Items.AddChild(Root, 'Расчет больничных');
-  Child.Data := TframeSickLeave;
-
+  Root := AddMenuNode(nil, 'Документы', nil, 5);
+  AddMenuNode(Root, 'Табель', TframeTimesheet, 17);
+  AddMenuNode(Root, 'Начисление зарплаты', TframePayroll, 6); // 6 = Деньги в руке
+  AddMenuNode(Root, 'Расчет отпускных', TframeVacation, 18);   // 7 = Домик
+  AddMenuNode(Root, 'Расчет больничных', TframeSickLeave, 3); // 3 = Чемоданчик с крестом
   Root.Expand(True);
+
   // --- БЛОК 3: Отчеты ---
-  Root := TreeView1.Items.Add(nil, 'Отчеты');
-  Child := TreeView1.Items.AddChild(Root, 'Ведомость');
-  Child.Data := TframeReports;
+  Root := AddMenuNode(nil, 'Отчеты', nil, 5);
+  AddMenuNode(Root, 'Ведомость', TframeReports, 12);
   Root.Expand(True);
 end;
 

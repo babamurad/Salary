@@ -22,6 +22,8 @@ type
     Panel2: TPanel;
     DBNavigator1: TDBNavigator;
     procedure SetupSettingsGrid;
+    procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
 
   private
   procedure SetupHistoryGrid;
@@ -50,6 +52,9 @@ begin
     // --- Настройка вкладки Глобальные настройки (DBGrid1) ---
     DBGrid1.DataSource := dmMain.dsSettings;
 
+    // --- ПРИВЯЗЫВАЕМ НАШУ ПРОЦЕДУРУ РАСКРАСКИ ---
+    DBGrid1.OnDrawColumnCell := DBGrid1DrawColumnCell;
+
     // БЛОКИРУЕМ ДОБАВЛЕНИЕ И УДАЛЕНИЕ В НАВИГАТОРЕ
     DBNavigator1.DataSource := dmMain.dsSettings;
     // Оставляем только: Первую, Предыдущую, Следующую, Последнюю, Редактировать, Сохранить, Отменить, Обновить
@@ -65,7 +70,7 @@ begin
             FieldName := 'display_name';
             Title.Caption := 'Название параметра';
             ReadOnly := True;
-            Width := 200;
+            Width := 215;
         end;
 
         // Колонка 2: Тип операции (Информационная)
@@ -79,8 +84,8 @@ begin
         // Колонка 3: Значение (МОЖНО РЕДАКТИРОВАТЬ)
         with DBGrid1.Columns.Add do begin
             FieldName := 'key_value';
-            Title.Caption := 'Ставка %';
-            Width := 80;
+            Title.Caption := 'Ставка/сумма';
+            Width := 115;
         end;
 
         // Колонка 4: Активность (МОЖНО РЕДАКТИРОВАТЬ: 1 - Вкл, 0 - Выкл)
@@ -114,6 +119,60 @@ begin
     // Настройка истории
     SetupHistoryGrid;
   end;
+end;
+
+procedure TframeSettings.DBGrid1DrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
+var
+  Grid: TDBGrid;
+  IsActive, CalcType: Integer;
+begin
+  Grid := TDBGrid(Sender);
+
+  // Если данных нет, ничего не делаем
+  if Grid.DataSource.DataSet.IsEmpty then Exit;
+
+  // Считываем значения ТЕКУЩЕЙ строки
+  IsActive := Grid.DataSource.DataSet.FieldByName('is_active').AsInteger;
+  CalcType := Grid.DataSource.DataSet.FieldByName('calc_type').AsInteger;
+
+  // --- 1. ПРОВЕРКА АКТИВНОСТИ (Серый фон для отключенных) ---
+  if IsActive = 0 then
+  begin
+    Grid.Canvas.Brush.Color := $00E0E0E0; // Светло-серый фон
+    Grid.Canvas.Font.Color := clGray;     // Серый текст
+  end
+  else
+  begin
+    // Если строка активна, но НЕ выделена курсором - оставляем белый фон
+    if not (gdSelected in State) then
+    begin
+      Grid.Canvas.Brush.Color := clWindow;
+      Grid.Canvas.Font.Color := clWindowText;
+    end;
+  end;
+
+  // --- 2. РАСКРАСКА ТИПА РАСЧЕТА (Только для активных строк) ---
+  if (IsActive = 1) and (Column.FieldName = 'calc_type') then
+  begin
+    if CalcType = 1 then
+      Grid.Canvas.Font.Color := clGreen // Начисление (1) - Зеленый
+    else if CalcType = 2 then
+      Grid.Canvas.Font.Color := clRed;  // Удержание (2) - Красный
+
+    Grid.Canvas.Font.Style := [fsBold]; // Делаем цифру жирной для красоты
+  end;
+
+  // --- 3. СТАНДАРТНОЕ ВЫДЕЛЕНИЕ (Синий фон при клике) ---
+  // Чтобы не сломать стандартное выделение строки курсором
+  if gdSelected in State then
+  begin
+    Grid.Canvas.Brush.Color := clHighlight;
+    Grid.Canvas.Font.Color := clHighlightText;
+  end;
+
+  // Даем команду гриду нарисовать ячейку с нашими новыми цветами!
+  Grid.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
 
 procedure TframeSettings.SetupHistoryGrid;
@@ -174,6 +233,9 @@ begin
     Title.Caption := 'Значение (%)';
     Width := 120;
   end;
+  // Красивое форматирование для колонки со значениями (добавляем %)
+  if dmMain.qrySettings.FindField('key_value') <> nil then
+    TFloatField(dmMain.qrySettings.FieldByName('key_value')).DisplayFormat := '0.00 %';
 end;
 
 end.

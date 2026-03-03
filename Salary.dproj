@@ -134,10 +134,6 @@
             <Form>frmBaseEdit</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="UnitEditEmployee.pas">
-            <Form>frmEditEmployee</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
         <DCCReference Include="UnitframeDepts.pas">
             <Form>frameDepts</Form>
             <FormType>dfm</FormType>
@@ -1030,9 +1026,9 @@
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSX64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="OSXARM64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="OSXARM64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Linux64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>

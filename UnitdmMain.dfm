@@ -18,7 +18,6 @@ object dmMain: TdmMain
         SourceDataType = dtWideMemo
         TargetDataType = dtWideString
       end>
-    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 56
@@ -52,7 +51,6 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
-      ReadOnly = True
     end
     object qryEmployeestabno: TIntegerField
       FieldName = 'tabno'
@@ -93,6 +91,73 @@ object dmMain: TdmMain
       FieldName = 'prior_exp_months'
       Origin = 'prior_exp_months'
     end
+    object qryEmployeesdependents_count: TIntegerField
+      FieldName = 'dependents_count'
+      Origin = 'dependents_count'
+    end
+    object qryEmployeespension_rate: TFloatField
+      DisplayLabel = #1055#1077#1085#1089#1080#1086#1085'.'
+      FieldName = 'pension_rate'
+      Origin = 'pension_rate'
+    end
+    object qryEmployeespay_type: TIntegerField
+      DisplayLabel = #1058#1080#1087' '#1074#1099#1087#1083#1072#1090#1099
+      FieldName = 'pay_type'
+      Origin = 'pay_type'
+    end
+    object qryEmployeesschedule_type: TIntegerField
+      DisplayLabel = #1043#1088#1072#1092#1080#1082' '#1088#1072#1073#1086#1090#1099
+      FieldName = 'schedule_type'
+      Origin = 'schedule_type'
+    end
+    object qryEmployeeshourly_rate: TFloatField
+      DisplayLabel = #1063#1072#1089#1086#1074#1072#1103' '#1089#1090#1072#1074#1082#1072
+      FieldName = 'hourly_rate'
+      Origin = 'hourly_rate'
+    end
+    object qryEmployeeswage_type: TIntegerField
+      DisplayLabel = #1058#1080#1087' '#1086#1087#1083#1072#1090#1099
+      FieldName = 'wage_type'
+      Origin = 'wage_type'
+      Required = True
+    end
+    object qryEmployeesis_rotation: TIntegerField
+      DisplayLabel = #1042#1072#1093#1090#1072
+      FieldName = 'is_rotation'
+      Origin = 'is_rotation'
+      Required = True
+    end
+    object qryEmployeeswork_fraction: TFloatField
+      DisplayLabel = #1057#1090#1072#1074#1082#1072
+      FieldName = 'work_fraction'
+      Origin = 'work_fraction'
+    end
+    object qryEmployeesis_tax_exempt: TIntegerField
+      DisplayLabel = #1051#1100#1075#1086#1090#1072' ('#1053#1072#1083#1086#1075')'
+      FieldName = 'is_tax_exempt'
+      Origin = 'is_tax_exempt'
+    end
+    object qryEmployeesclass_rank: TIntegerField
+      DisplayLabel = #1050#1083#1072#1089#1089#1085#1086#1089#1090#1100
+      FieldName = 'class_rank'
+      Origin = 'class_rank'
+    end
+    object qryEmployeestrade_union: TIntegerField
+      DisplayLabel = #1055#1088#1086#1092#1089#1086#1102#1079
+      FieldName = 'trade_union'
+      Origin = 'trade_union'
+    end
+    object qryEmployeesalimony_percent: TFloatField
+      DisplayLabel = #1040#1083#1080#1084#1077#1085#1090#1099' (%)'
+      FieldName = 'alimony_percent'
+      Origin = 'alimony_percent'
+    end
+    object qryEmployeesbank_account: TWideStringField
+      DisplayLabel = #1041#1072#1085#1082#1086#1074#1089#1082#1080#1081' '#1089#1095#1077#1090
+      FieldName = 'bank_account'
+      Origin = 'bank_account'
+      Size = 32767
+    end
     object qryEmployeesdept_name: TWideStringField
       AutoGenerateValue = arDefault
       FieldName = 'dept_name'
@@ -108,38 +173,6 @@ object dmMain: TdmMain
       ProviderFlags = []
       ReadOnly = True
       Size = 32767
-    end
-    object qryEmployeesdependents_count: TIntegerField
-      FieldName = 'dependents_count'
-      Origin = 'dependents_count'
-    end
-    object qryEmployeespension_rate: TFloatField
-      FieldName = 'pension_rate'
-      Origin = 'pension_rate'
-      DisplayFormat = '0.00'#39' %'#39
-    end
-    object qryEmployeespay_type: TIntegerField
-      FieldName = 'pay_type'
-      Origin = 'pay_type'
-    end
-    object qryEmployeesschedule_type: TIntegerField
-      FieldName = 'schedule_type'
-      Origin = 'schedule_type'
-    end
-    object qryEmployeeshourly_rate: TFloatField
-      FieldName = 'hourly_rate'
-      Origin = 'hourly_rate'
-      DisplayFormat = ',0.00 TMT'
-    end
-    object qryEmployeeswage_type: TIntegerField
-      FieldName = 'wage_type'
-      Origin = 'wage_type'
-      Required = True
-    end
-    object qryEmployeesis_rotation: TIntegerField
-      FieldName = 'is_rotation'
-      Origin = 'is_rotation'
-      Required = True
     end
   end
   object dsEmployees: TDataSource

@@ -29,6 +29,7 @@ object frameSettings: TframeSettings
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        OnDrawColumnCell = DBGrid1DrawColumnCell
       end
       object Panel2: TPanel
         Left = 0

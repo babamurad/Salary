@@ -140,3 +140,5 @@ Project Salary.exe raised exception class EArgumentOutOfRangeException with mess
 на стр начисления з/п нужен фильтр по отделам
 
 password: DownloadDevTools.ir
+
+MainForm.Caption := dmMain.FullPath;

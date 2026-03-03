@@ -116,6 +116,7 @@ type
       var Text: string; DisplayText: Boolean);
     procedure DataModuleDestroy(Sender: TObject);
   private
+    FFullPath: string;
     { Private declarations }
   public
     { Public declarations }
@@ -127,10 +128,13 @@ type
     procedure SaveConfig(const APath: string);
     procedure CloseAllQueries;
     procedure OpenAllQueries;
+    property FullPath: string read FFullPath write FFullPath;
+
   end;
 
 var
   dmMain: TdmMain;
+  FullPath: string;
 
 implementation
 
@@ -180,7 +184,6 @@ begin
         Q.Close;
     end;
   end;
-  //memTimesheet.Close;
 end;
 
 procedure TdmMain.OpenAllQueries;
@@ -197,7 +200,6 @@ begin
         Q.Open;
     end;
   end;
-  //memTimesheet.Open;
 end;
 
 procedure TdmMain.connBeforeConnect(Sender: TObject);
@@ -337,7 +339,7 @@ procedure TdmMain.LoadConfig;
 var
   Ini: TIniFile;
   SavedPath: string;
-  FullPath: string;
+
   ExePath: string;
 begin
   ExePath := ExtractFilePath(ParamStr(0)); // ѕуть к папке с нашим EXE

@@ -31,6 +31,7 @@ type
     N4: TMenuItem;
     N5: TMenuItem;
     ImageList2: TImageList;
+    StatusBar1: TStatusBar;
     procedure FormCreate(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure PageControl1DrawTab(Control: TCustomTabControl;
@@ -122,7 +123,12 @@ end;
 { ================= FORM CREATE ================= }
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+cc:string;
 begin
+  MainForm.Caption := 'Учет зарплаты';
+  StatusBar1.Panels[1].Text := dmMain.FullPath;
+
   BuildTree;
 
   dmMain.LoadConfig;

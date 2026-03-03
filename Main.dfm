@@ -28,13 +28,14 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 992
-    Height = 545
+    Height = 526
     Align = alClient
     TabOrder = 0
+    ExplicitHeight = 545
     object Splitter1: TSplitter
       Left = 289
       Top = 1
-      Height = 543
+      Height = 524
       ExplicitLeft = 200
       ExplicitTop = 0
       ExplicitHeight = 100
@@ -43,32 +44,57 @@ object MainForm: TMainForm
       Left = 1
       Top = 1
       Width = 288
-      Height = 543
+      Height = 524
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 543
       object TreeView1: TTreeView
         Left = 1
         Top = 1
         Width = 286
-        Height = 541
+        Height = 522
         Align = alClient
         Indent = 19
         TabOrder = 0
         OnChange = TreeView1Change
+        ExplicitHeight = 541
       end
     end
     object PageControl1: TPageControl
       Left = 292
       Top = 1
       Width = 699
-      Height = 543
+      Height = 524
       Align = alClient
       TabOrder = 1
       TabWidth = 250
       OnDrawTab = PageControl1DrawTab
       OnMouseDown = PageControl1MouseDown
       OnMouseMove = PageControl1MouseMove
+      ExplicitHeight = 543
     end
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 526
+    Width = 992
+    Height = 19
+    Panels = <
+      item
+        Text = #1056#1072#1073#1086#1090#1072#1077#1090' '#1089' '#1041#1044':'
+        Width = 90
+      end
+      item
+        Width = 700
+      end
+      item
+        Alignment = taRightJustify
+        Text = 'TGA. '#1058#1091#1088#1082#1084#1077#1085#1072#1073#1072#1090
+        Width = 250
+      end>
+    ExplicitLeft = 504
+    ExplicitTop = 296
+    ExplicitWidth = 0
   end
   object ImageList1: TImageList
     Height = 20

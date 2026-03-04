@@ -190,6 +190,10 @@
             <Form>frmPaySlip</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="UnitReportPayroll.pas">
+            <Form>frmReportPayroll</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

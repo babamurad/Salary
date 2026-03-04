@@ -14,12 +14,11 @@ object frameEmployees: TframeEmployees
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitWidth = 858
     object Label1: TLabel
       Left = 375
       Top = 13
-      Width = 105
-      Height = 20
+      Width = 85
+      Height = 15
       Caption = #1055#1086#1080#1089#1082' '#1087#1086' '#1060#1048#1054':'
     end
     object DBNavigator1: TDBNavigator
@@ -34,8 +33,8 @@ object frameEmployees: TframeEmployees
     object edtSearch: TEdit
       Left = 514
       Top = 10
-      Width = 175
-      Height = 28
+      Width = 239
+      Height = 23
       TabOrder = 1
       OnChange = edtSearchChange
     end
@@ -51,7 +50,7 @@ object frameEmployees: TframeEmployees
     TabOrder = 1
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
-    TitleFont.Height = -15
+    TitleFont.Height = -12
     TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
     OnDrawColumnCell = DBGrid1DrawColumnCell

@@ -12,7 +12,6 @@ uses
 type
   TframePayroll = class(TFrame)
     PanelTop: TPanel;
-    DBNavigator1: TDBNavigator;
     DBGrid1: TDBGrid;
     btnCalc: TButton;
     cmbMonth: TComboBox;
@@ -21,12 +20,14 @@ type
     btnExport: TButton;
     cmbDept: TComboBox;
     btnPrintAllSlips: TButton;
+    btnSummaryReport: TButton;
     procedure btnCalcClick(Sender: TObject);
     procedure btnCloseMonthClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
     procedure DBGrid1DblClick(Sender: TObject);
     procedure btnExportClick(Sender: TObject);
     procedure btnPrintAllSlipsClick(Sender: TObject);
+    procedure btnSummaryReportClick(Sender: TObject);
   private
     qryPayroll: TFDQuery;
     dsPayroll: TDataSource;
@@ -44,7 +45,7 @@ implementation
 
 {$R *.dfm}
 
-uses UnitdmMain, UnitPaySlip;
+uses UnitdmMain, UnitPaySlip, UnitReportPayroll;
 
 { TframePayroll }
 
@@ -74,7 +75,6 @@ begin
     dsPayroll.DataSet := qryPayroll;
 
     DBGrid1.DataSource := dsPayroll;
-    DBNavigator1.DataSource := dsPayroll;
 
     LoadDepartments;
     RefreshData;
@@ -490,6 +490,22 @@ begin
     SlipForm.ShowModal;
   finally
     SlipForm.Free;
+  end;
+end;
+
+procedure TframePayroll.btnSummaryReportClick(Sender: TObject);
+var
+  ReportForm: TfrmReportPayroll;
+  Period: string;
+begin
+  if qryPayroll.IsEmpty then Exit;
+  Period := cmbMonth.Text + ' ' + cmbYear.Text;
+  ReportForm := TfrmReportPayroll.Create(Self);
+  try
+    ReportForm.ShowReport(qryPayroll, Period);
+    ReportForm.ShowModal;
+  finally
+    ReportForm.Free;
   end;
 end;
 

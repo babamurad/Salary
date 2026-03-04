@@ -5,6 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls,
+  System.IOUtils,
   Vcl.ExtCtrls, Winapi.WebView2, Winapi.ActiveX, Vcl.Edge;
 
 type
@@ -153,6 +154,7 @@ function TfrmPaySlip.GenerateSlips(Dataset: TDataSet; Period: string;
 var
   Body, Item: string;
   Bookmark: TBookmark;
+  BootstrapPath, BootstrapCSS: string;
 begin
   Body := '';
 
@@ -206,9 +208,16 @@ begin
     end;
   end;
 
+  BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\css\bootstrap.min.css';
+  BootstrapCSS := '';
+  if TFile.Exists(BootstrapPath) then
+    BootstrapCSS := TFile.ReadAllText(BootstrapPath) // Читаем весь файл в память
+  else
+    ShowMessage('Внимание: Файл ' + BootstrapPath + ' не найден! Верстка может поехать.');
+
   Result :=
     '<html><head>' +
-    '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">' +
+    '<style>' + BootstrapCSS + '</style>' +
     '<style>' +
     '  @media print { .no-print { display: none; } }' +
     '  .payslip-card { page-break-inside: avoid; border: 1px solid #dee2e6; }' +

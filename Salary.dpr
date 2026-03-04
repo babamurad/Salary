@@ -20,7 +20,8 @@ uses
   UnitframeCalendar in 'UnitframeCalendar.pas' {frameCalendar: TFrame},
   UnitFormHelp in 'UnitFormHelp.pas' {FormHelp},
   UnitframeTimesheet in 'UnitframeTimesheet.pas' {frameTimesheet: TFrame},
-  UnitPaySlip in 'UnitPaySlip.pas' {frmPaySlip};
+  UnitPaySlip in 'UnitPaySlip.pas' {frmPaySlip},
+  UnitReportPayroll in 'UnitReportPayroll.pas' {frmReportPayroll};
 
 {$R *.res}
 
@@ -29,6 +30,7 @@ begin
   Application.CreateForm(TdmMain, dmMain);
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TfrmPaySlip, frmPaySlip);
+  Application.CreateForm(TfrmReportPayroll, frmReportPayroll);
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TdmMain, dmMain);

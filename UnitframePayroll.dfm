@@ -21,7 +21,7 @@ object framePayroll: TframePayroll
     BevelOuter = bvNone
     TabOrder = 0
     object btnCalc: TButton
-      Left = 429
+      Left = 503
       Top = 16
       Width = 169
       Height = 25
@@ -46,7 +46,7 @@ object framePayroll: TframePayroll
       Text = 'cmbYear'
     end
     object btnCloseMonth: TButton
-      Left = 1016
+      Left = 1090
       Top = 16
       Width = 121
       Height = 25
@@ -55,7 +55,7 @@ object framePayroll: TframePayroll
       OnClick = btnCloseMonthClick
     end
     object btnExport: TButton
-      Left = 604
+      Left = 678
       Top = 16
       Width = 106
       Height = 25
@@ -66,13 +66,13 @@ object framePayroll: TframePayroll
     object cmbDept: TComboBox
       Left = 278
       Top = 14
-      Width = 145
+      Width = 219
       Height = 28
       TabOrder = 5
       Text = 'cmbDept'
     end
     object btnPrintAllSlips: TButton
-      Left = 884
+      Left = 958
       Top = 16
       Width = 126
       Height = 25
@@ -81,7 +81,7 @@ object framePayroll: TframePayroll
       OnClick = btnPrintAllSlipsClick
     end
     object btnSummaryReport: TButton
-      Left = 716
+      Left = 790
       Top = 16
       Width = 162
       Height = 25

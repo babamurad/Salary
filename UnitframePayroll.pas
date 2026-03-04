@@ -108,7 +108,9 @@ begin
   if DeptID > 0 then
     qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' AND e.dept_id = ' + IntToStr(DeptID);
 
-  qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' ORDER BY e.fio';
+  // --- ИЗМЕНИТЬ ВОТ ЭТУ СТРОЧКУ: ---
+  qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' ORDER BY d.dept_name, e.fio';
+
   qryPayroll.ParamByName('period').AsString := SelectedPeriod;
   qryPayroll.Open;
 end;
@@ -388,14 +390,12 @@ procedure TframePayroll.btnExportClick(Sender: TObject);
 var
   ExcelApp, Sheet: Variant;
   Row: Integer;
-  TotalGross, TotalTax, TotalPension, TotalUnion, TotalAlimony, TotalNet: Double;
+  GrandGross, GrandTax, GrandPens, GrandUnion, GrandAlim, GrandNet: Double;
+  DeptGross, DeptTax, DeptPens, DeptUnion, DeptAlim, DeptNet: Double;
   Bookmark: TBookmark;
+  CurrentDept, DeptName: string;
 begin
-  if not Assigned(qryPayroll) or not qryPayroll.Active or qryPayroll.IsEmpty then
-  begin
-    ShowMessage('Нет данных для выгрузки!');
-    Exit;
-  end;
+  if not Assigned(qryPayroll) or not qryPayroll.Active or qryPayroll.IsEmpty then Exit;
 
   try
     ExcelApp := CreateOleObject('Excel.Application');
@@ -411,57 +411,115 @@ begin
     Sheet := ExcelApp.ActiveSheet;
     Sheet.Name := 'Зарплата ' + cmbMonth.Text;
 
-    Sheet.Cells[1, 1].Value := 'Сотрудник';
-    Sheet.Cells[1, 2].Value := 'Отдел';
-    Sheet.Cells[1, 3].Value := 'Оклад/Тариф';
-    Sheet.Cells[1, 4].Value := 'Начислено (Грязными)';
-    Sheet.Cells[1, 5].Value := 'Подоходный';
-    Sheet.Cells[1, 6].Value := 'Пенсионный';
-    Sheet.Cells[1, 7].Value := 'Профсоюз';
-    Sheet.Cells[1, 8].Value := 'Алименты';
-    Sheet.Cells[1, 9].Value := 'На руки (Чистыми)';
+    // Шапка
+    Sheet.Cells[1, 1].Value := 'Сотрудник / Должность';
+    Sheet.Cells[1, 2].Value := 'Оклад/Тариф';
+    Sheet.Cells[1, 3].Value := 'Начислено (Грязными)';
+    Sheet.Cells[1, 4].Value := 'Подоходный';
+    Sheet.Cells[1, 5].Value := 'Пенсионный';
+    Sheet.Cells[1, 6].Value := 'Профсоюз';
+    Sheet.Cells[1, 7].Value := 'Алименты';
+    Sheet.Cells[1, 8].Value := 'На руки (Чистыми)';
 
-    Sheet.Range['A1:I1'].Font.Bold := True;
+    Sheet.Range['A1:H1'].Font.Bold := True;
+    Sheet.Range['A1:H1'].Interior.Color := $D3D3D3; // Серый фон шапки
 
     Row := 2;
-    TotalGross := 0; TotalTax := 0; TotalPension := 0;
-    TotalUnion := 0; TotalAlimony := 0; TotalNet := 0;
+    GrandGross := 0; GrandTax := 0; GrandPens := 0; GrandUnion := 0; GrandAlim := 0; GrandNet := 0;
+    DeptGross := 0; DeptTax := 0; DeptPens := 0; DeptUnion := 0; DeptAlim := 0; DeptNet := 0;
+    CurrentDept := '';
 
     qryPayroll.First;
     while not qryPayroll.Eof do
     begin
-      Sheet.Cells[Row, 1].Value := qryPayroll.FieldByName('fio').AsString;
-      Sheet.Cells[Row, 2].Value := qryPayroll.FieldByName('dept_name').AsString;
-      Sheet.Cells[Row, 3].Value := qryPayroll.FieldByName('base_salary').AsFloat;
+      DeptName := qryPayroll.FieldByName('dept_name').AsString;
+      if DeptName = '' then DeptName := 'Без отдела';
 
-      Sheet.Cells[Row, 4].Value := qryPayroll.FieldByName('gross_amount').AsFloat;
-      Sheet.Cells[Row, 5].Value := qryPayroll.FieldByName('tax_amount').AsFloat;
-      Sheet.Cells[Row, 6].Value := qryPayroll.FieldByName('pension_amount').AsFloat;
-      Sheet.Cells[Row, 7].Value := qryPayroll.FieldByName('union_amount').AsFloat;
-      Sheet.Cells[Row, 8].Value := qryPayroll.FieldByName('alimony_amount').AsFloat;
-      Sheet.Cells[Row, 9].Value := qryPayroll.FieldByName('net_amount').AsFloat;
+      // Группировка
+      if DeptName <> CurrentDept then
+      begin
+        // Итоги прошлого отдела
+        if CurrentDept <> '' then
+        begin
+          Sheet.Cells[Row, 1].Value := 'ИТОГО ПО ОТДЕЛУ:';
+          Sheet.Cells[Row, 3].Value := DeptGross;
+          Sheet.Cells[Row, 4].Value := DeptTax;
+          Sheet.Cells[Row, 5].Value := DeptPens;
+          Sheet.Cells[Row, 6].Value := DeptUnion;
+          Sheet.Cells[Row, 7].Value := DeptAlim;
+          Sheet.Cells[Row, 8].Value := DeptNet;
+          Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Font.Bold := True;
+          Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Interior.Color := $F0F8FF; // AliceBlue
+          Inc(Row);
+        end;
 
-      TotalGross := TotalGross + qryPayroll.FieldByName('gross_amount').AsFloat;
-      TotalTax := TotalTax + qryPayroll.FieldByName('tax_amount').AsFloat;
-      TotalPension := TotalPension + qryPayroll.FieldByName('pension_amount').AsFloat;
-      TotalUnion := TotalUnion + qryPayroll.FieldByName('union_amount').AsFloat;
-      TotalAlimony := TotalAlimony + qryPayroll.FieldByName('alimony_amount').AsFloat;
-      TotalNet := TotalNet + qryPayroll.FieldByName('net_amount').AsFloat;
+        DeptGross := 0; DeptTax := 0; DeptPens := 0; DeptUnion := 0; DeptAlim := 0; DeptNet := 0;
+
+        // Заголовок нового отдела (объединяем ячейки)
+        Sheet.Cells[Row, 1].Value := 'ОТДЕЛ: ' + DeptName;
+        Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Merge;
+        Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Font.Bold := True;
+        Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Interior.Color := $E0FFFF; // LightCyan
+        Inc(Row);
+        CurrentDept := DeptName;
+      end;
+
+      // Данные сотрудника
+      Sheet.Cells[Row, 1].Value := qryPayroll.FieldByName('fio').AsString + ' (' + qryPayroll.FieldByName('pos_name').AsString + ')';
+      Sheet.Cells[Row, 2].Value := qryPayroll.FieldByName('base_salary').AsFloat;
+      Sheet.Cells[Row, 3].Value := qryPayroll.FieldByName('gross_amount').AsFloat;
+      Sheet.Cells[Row, 4].Value := qryPayroll.FieldByName('tax_amount').AsFloat;
+      Sheet.Cells[Row, 5].Value := qryPayroll.FieldByName('pension_amount').AsFloat;
+      Sheet.Cells[Row, 6].Value := qryPayroll.FieldByName('union_amount').AsFloat;
+      Sheet.Cells[Row, 7].Value := qryPayroll.FieldByName('alimony_amount').AsFloat;
+      Sheet.Cells[Row, 8].Value := qryPayroll.FieldByName('net_amount').AsFloat;
+
+      // Накапливаем
+      DeptGross := DeptGross + qryPayroll.FieldByName('gross_amount').AsFloat;
+      DeptTax := DeptTax + qryPayroll.FieldByName('tax_amount').AsFloat;
+      DeptPens := DeptPens + qryPayroll.FieldByName('pension_amount').AsFloat;
+      DeptUnion := DeptUnion + qryPayroll.FieldByName('union_amount').AsFloat;
+      DeptAlim := DeptAlim + qryPayroll.FieldByName('alimony_amount').AsFloat;
+      DeptNet := DeptNet + qryPayroll.FieldByName('net_amount').AsFloat;
+
+      GrandGross := GrandGross + qryPayroll.FieldByName('gross_amount').AsFloat;
+      GrandTax := GrandTax + qryPayroll.FieldByName('tax_amount').AsFloat;
+      GrandPens := GrandPens + qryPayroll.FieldByName('pension_amount').AsFloat;
+      GrandUnion := GrandUnion + qryPayroll.FieldByName('union_amount').AsFloat;
+      GrandAlim := GrandAlim + qryPayroll.FieldByName('alimony_amount').AsFloat;
+      GrandNet := GrandNet + qryPayroll.FieldByName('net_amount').AsFloat;
 
       Inc(Row);
       qryPayroll.Next;
     end;
 
-    Sheet.Cells[Row, 1].Value := 'ИТОГО ПО ВЕДОМОСТИ:';
-    Sheet.Cells[Row, 4].Value := TotalGross;
-    Sheet.Cells[Row, 5].Value := TotalTax;
-    Sheet.Cells[Row, 6].Value := TotalPension;
-    Sheet.Cells[Row, 7].Value := TotalUnion;
-    Sheet.Cells[Row, 8].Value := TotalAlimony;
-    Sheet.Cells[Row, 9].Value := TotalNet;
+    // Итоги самого последнего отдела
+    if CurrentDept <> '' then
+    begin
+      Sheet.Cells[Row, 1].Value := 'ИТОГО ПО ОТДЕЛУ:';
+      Sheet.Cells[Row, 3].Value := DeptGross;
+      Sheet.Cells[Row, 4].Value := DeptTax;
+      Sheet.Cells[Row, 5].Value := DeptPens;
+      Sheet.Cells[Row, 6].Value := DeptUnion;
+      Sheet.Cells[Row, 7].Value := DeptAlim;
+      Sheet.Cells[Row, 8].Value := DeptNet;
+      Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Font.Bold := True;
+      Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Interior.Color := $F0F8FF;
+      Inc(Row);
+    end;
 
-    Sheet.Range['A' + IntToStr(Row) + ':I' + IntToStr(Row)].Font.Bold := True;
-    Sheet.Range['E' + IntToStr(Row) + ':H' + IntToStr(Row)].Font.Color := $0000FF;
+    // Итоги по предприятию
+    Sheet.Cells[Row, 1].Value := 'ИТОГО ПО ПРЕДПРИЯТИЮ:';
+    Sheet.Cells[Row, 3].Value := GrandGross;
+    Sheet.Cells[Row, 4].Value := GrandTax;
+    Sheet.Cells[Row, 5].Value := GrandPens;
+    Sheet.Cells[Row, 6].Value := GrandUnion;
+    Sheet.Cells[Row, 7].Value := GrandAlim;
+    Sheet.Cells[Row, 8].Value := GrandNet;
+
+    Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Font.Bold := True;
+    Sheet.Range['D' + IntToStr(Row) + ':G' + IntToStr(Row)].Font.Color := $0000FF; // Красный для налогов
+    Sheet.Range['A' + IntToStr(Row) + ':H' + IntToStr(Row)].Interior.Color := $C0C0C0; // Серебряный
 
     Sheet.Columns.AutoFit;
 

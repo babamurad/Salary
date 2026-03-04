@@ -31,8 +31,8 @@ object framePayroll: TframePayroll
       TabOrder = 0
     end
     object btnCalc: TButton
-      Left = 856
-      Top = 18
+      Left = 960
+      Top = 16
       Width = 169
       Height = 25
       Caption = #1053#1072#1095#1080#1089#1083#1080#1090#1100' '#1079#1072#1088#1087#1083#1072#1090#1091
@@ -56,8 +56,8 @@ object framePayroll: TframePayroll
       Text = 'cmbYear'
     end
     object btnCloseMonth: TButton
-      Left = 736
-      Top = 18
+      Left = 840
+      Top = 16
       Width = 121
       Height = 25
       Caption = #1047#1072#1082#1088#1099#1090#1100' '#1084#1077#1089#1103#1094
@@ -65,8 +65,8 @@ object framePayroll: TframePayroll
       OnClick = btnCloseMonthClick
     end
     object btnExport: TButton
-      Left = 1023
-      Top = 18
+      Left = 1127
+      Top = 16
       Width = 106
       Height = 25
       Caption = 'Excel'
@@ -82,9 +82,9 @@ object framePayroll: TframePayroll
       Text = 'cmbDept'
     end
     object btnPrintAllSlips: TButton
-      Left = 696
+      Left = 699
       Top = 16
-      Width = 57
+      Width = 126
       Height = 25
       Caption = #1055#1077#1095#1072#1090#1100' '#1082#1074#1080#1090#1082#1086#1074
       TabOrder = 7

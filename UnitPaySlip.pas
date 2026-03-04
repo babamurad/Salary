@@ -221,6 +221,8 @@ end;
 
 procedure TfrmPaySlip.btnPdfClick(Sender: TObject);
 begin
+  // 1. Принудительно отдаем фокус браузеру (очень важно для модальных окон!)
+  Edge.SetFocus;
   // Вызываем диалог печати браузера (там есть кнопка "Сохранить в PDF")
   Edge.ExecuteScript('window.print();');
 end;

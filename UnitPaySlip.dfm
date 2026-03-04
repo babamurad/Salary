@@ -42,8 +42,9 @@ object frmPaySlip: TfrmPaySlip
       Top = 8
       Width = 75
       Height = 25
-      Caption = 'btnPdf'
+      Caption = #1055#1077#1095#1072#1090#1100
       TabOrder = 0
+      OnClick = btnPdfClick
     end
   end
 end

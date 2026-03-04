@@ -12,7 +12,6 @@ object frameVacation: TframeVacation
     Height = 41
     Align = alTop
     TabOrder = 0
-    ExplicitWidth = 640
     object btnNewCalc: TButton
       Left = 24
       Top = 9

@@ -18,3 +18,9 @@ INSERT INTO "settings" ("sys_name", "display_name", "calc_type", "key_value", "i
 ('BONUS_NIGHT', 'Ночные смены', 1, 20.0, 1),
 ('BONUS_HOLIDAY', 'Праздничные дни', 1, 100.0, 1),
 ('BONUS_HAZARD', 'Вредные условия труда', 1, 15.0, 1);
+
+INSERT INTO "settings" ("sys_name", "display_name", "calc_type", "key_value", "is_active") 
+VALUES ('TRADE_UNION', 'Профсоюзный взнос', 2, 1.0, 1);
+INSERT INTO "settings" ("sys_name", "display_name", "calc_type", "key_value", "is_active") VALUES ('BONUS_CLASS_1', 'Надбавка за 1 класс', 1, 25.0, 1);
+INSERT INTO "settings" ("sys_name", "display_name", "calc_type", "key_value", "is_active") VALUES ('BONUS_CLASS_2', 'Надбавка за 2 класс', 1, 10.0, 1);
+INSERT INTO "settings" ("sys_name", "display_name", "calc_type", "key_value", "is_active") VALUES ('BONUS_CLASS_3', 'Надбавка за 3 класс', 1, 5.0, 1);

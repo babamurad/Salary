@@ -316,7 +316,7 @@ object frmBaseEdit: TfrmBaseEdit
       Top = 85
       Width = 218
       Height = 17
-      Caption = #1063#1083#1077#1085' '#1087#1088#1086#1092#1089#1086#1102#1079#1072
+      Caption = #1063#1083#1077#1085' '#1087#1088#1086#1092#1089#1086#1102#1079#1072' 1%'
       TabOrder = 4
     end
     object seAlimony: TSpinEdit

@@ -35,6 +35,7 @@ type
     FCurMonth: Integer;  // Текущий месяц табеля на экране
     procedure ReadPeriodFromUI;
     procedure LoadDepartments;
+    procedure memTimesheetBeforePost(DataSet: TDataSet);
   public
     procedure PrepareMemTable(AYear, AMonth: Integer);
     procedure FillEmployeesList;
@@ -78,6 +79,85 @@ begin
   cmbDept.ItemIndex := 0;
 end;
 
+procedure TframeTimesheet.memTimesheetBeforePost(DataSet: TDataSet);
+var
+  i, DaysCount: Integer;
+  CellVal: string;
+  Hrs: Double;
+  WorkDays, VacDays, SickDays, Weekends: Integer;
+  TotalHrs, NightHrs, HolHrs, PayHrs: Double;
+begin
+  WorkDays := 0; VacDays := 0; SickDays := 0; Weekends := 0;
+  TotalHrs := 0; NightHrs := 0; HolHrs := 0; PayHrs := 0;
+
+  DaysCount := DaysInAMonth(FCurYear, FCurMonth);
+  for i := 1 to DaysCount do
+  begin
+    CellVal := Trim(DataSet.FieldByName('day_' + IntToStr(i)).AsString);
+    if CellVal = '' then Continue;
+    CellVal := UpperCase(CellVal);
+
+    Hrs := StrToFloatDef(StringReplace(CellVal, ',', '.', [rfReplaceAll]), -1);
+
+    if Hrs >= 0 then
+    begin
+      Inc(WorkDays);
+      TotalHrs := TotalHrs + Hrs;
+      PayHrs := PayHrs + Hrs;
+    end
+    else
+    begin
+      if CellVal = 'Б' then Inc(SickDays)
+      else if CellVal = 'О' then Inc(VacDays)
+      else if (CellVal = 'В') or (CellVal = 'П') then Inc(Weekends)
+      else if CellVal = 'Я' then
+      begin
+        Inc(WorkDays);
+        TotalHrs := TotalHrs + 8;
+        PayHrs := PayHrs + 8;
+      end
+      else if Pos('Н', CellVal) = 1 then
+      begin
+        Hrs := StrToFloatDef(StringReplace(Copy(CellVal, 2, Length(CellVal)), ',', '.', [rfReplaceAll]), 0);
+        NightHrs := NightHrs + Hrs;
+        TotalHrs := TotalHrs + Hrs;
+        PayHrs := PayHrs + Hrs;
+        if Hrs > 0 then Inc(WorkDays);
+      end;
+    end;
+  end;
+
+  // --- МАГИЯ: СНИМАЕМ БЛОКИРОВКУ ДЛЯ ПРОГРАММЫ ---
+  DataSet.FieldByName('total_work_days').ReadOnly := False;
+  DataSet.FieldByName('total_hours').ReadOnly := False;
+  DataSet.FieldByName('sick_days').ReadOnly := False;
+  DataSet.FieldByName('vacation_days').ReadOnly := False;
+  DataSet.FieldByName('weekend_days').ReadOnly := False;
+  DataSet.FieldByName('night_hours').ReadOnly := False;
+  DataSet.FieldByName('holiday_hours').ReadOnly := False;
+  DataSet.FieldByName('payable_hours').ReadOnly := False;
+
+  // ЗАПИСЫВАЕМ ИТОГИ
+  DataSet.FieldByName('total_work_days').AsInteger := WorkDays;
+  DataSet.FieldByName('total_hours').AsFloat := TotalHrs;
+  DataSet.FieldByName('sick_days').AsInteger := SickDays;
+  DataSet.FieldByName('vacation_days').AsInteger := VacDays;
+  DataSet.FieldByName('weekend_days').AsInteger := Weekends;
+  DataSet.FieldByName('night_hours').AsFloat := NightHrs;
+  DataSet.FieldByName('holiday_hours').AsFloat := 0; // Или HolHrs, если добавите логику
+  DataSet.FieldByName('payable_hours').AsFloat := PayHrs;
+
+  // --- МАГИЯ: ВЕШАЕМ БЛОКИРОВКУ ОБРАТНО ---
+  DataSet.FieldByName('total_work_days').ReadOnly := True;
+  DataSet.FieldByName('total_hours').ReadOnly := True;
+  DataSet.FieldByName('sick_days').ReadOnly := True;
+  DataSet.FieldByName('vacation_days').ReadOnly := True;
+  DataSet.FieldByName('weekend_days').ReadOnly := True;
+  DataSet.FieldByName('night_hours').ReadOnly := True;
+  DataSet.FieldByName('holiday_hours').ReadOnly := True;
+  DataSet.FieldByName('payable_hours').ReadOnly := True;
+end;
+
 procedure TframeTimesheet.ReadPeriodFromUI;
 begin
   FCurYear := StrToIntDef(cbYear.Text, YearOf(Now));
@@ -107,6 +187,7 @@ begin
   with dmMain.memTimesheet do
   begin
     Active := False;
+    BeforePost := nil;
     Fields.Clear;
     FieldDefs.Clear;
 
@@ -117,12 +198,20 @@ begin
     for i := 1 to DaysCount do
       FieldDefs.Add('day_' + IntToStr(i), ftString, 5);
 
-    CreateDataSet;
+    FieldDefs.Add('total_work_days', ftInteger);
+    FieldDefs.Add('total_hours', ftFloat);
+    FieldDefs.Add('sick_days', ftInteger);
+    FieldDefs.Add('vacation_days', ftInteger);
+    FieldDefs.Add('weekend_days', ftInteger);
+    FieldDefs.Add('night_hours', ftFloat);
+    FieldDefs.Add('holiday_hours', ftFloat);
+    FieldDefs.Add('payable_hours', ftFloat);
 
+    CreateDataSet;
+    BeforePost := memTimesheetBeforePost;
     DBGridTimesheet.DataSource := dmMain.dsTimesheet;
 
     FieldByName('emp_id').Visible := False;
-
     FieldByName('fio').DisplayLabel := 'Сотрудник';
     FieldByName('fio').DisplayWidth := 25;
 
@@ -135,6 +224,30 @@ begin
         Alignment := taCenter;
       end;
     end;
+
+    FieldByName('total_work_days').DisplayLabel := 'Отр. дни';
+    FieldByName('total_hours').DisplayLabel := 'Всего часов';
+    FieldByName('sick_days').DisplayLabel := 'Больн.(Б)';
+    FieldByName('vacation_days').DisplayLabel := 'Отпуск(О)';
+    FieldByName('weekend_days').DisplayLabel := 'Выходн.(В)';
+    FieldByName('night_hours').DisplayLabel := 'Ночные(Н)';
+    FieldByName('holiday_hours').DisplayLabel := 'Праздн.(П)';
+    FieldByName('payable_hours').DisplayLabel := 'К оплате';
+
+    TFloatField(FieldByName('total_hours')).DisplayFormat := '0.##';
+    TFloatField(FieldByName('night_hours')).DisplayFormat := '0.##';
+    TFloatField(FieldByName('holiday_hours')).DisplayFormat := '0.##';
+    TFloatField(FieldByName('payable_hours')).DisplayFormat := '0.##';
+
+    // ВЕШАЕМ НАДЕЖНЫЙ ЗАМОК НА УРОВНЕ ДАННЫХ
+    FieldByName('total_work_days').ReadOnly := True;
+    FieldByName('total_hours').ReadOnly := True;
+    FieldByName('sick_days').ReadOnly := True;
+    FieldByName('vacation_days').ReadOnly := True;
+    FieldByName('weekend_days').ReadOnly := True;
+    FieldByName('night_hours').ReadOnly := True;
+    FieldByName('holiday_hours').ReadOnly := True;
+    FieldByName('payable_hours').ReadOnly := True;
   end;
 end;
 
@@ -346,27 +459,37 @@ var
   DayNum: Integer;
   CurrentDate: TDateTime;
 begin
+  // 1. Раскраска выходных дней (Ваш код)
   if Pos('day_', Column.FieldName) = 1 then
   begin
     DayNum := StrToIntDef(Copy(Column.FieldName, 5, Length(Column.FieldName)), 1);
 
-    // Используем готовые глобальные переменные без лишнего чтения из UI!
     if (FCurYear > 0) and (FCurMonth > 0) then
     begin
       if TryEncodeDate(Word(FCurYear), Word(FCurMonth), Word(DayNum), CurrentDate) then
       begin
         if DayOfTheWeek(CurrentDate) in [6, 7] then
         begin
-          DBGridTimesheet.Canvas.Brush.Color := $00E1E1FF;
-
-          if gdSelected in State then
-            DBGridTimesheet.Canvas.Brush.Color := clHighlight;
+          DBGridTimesheet.Canvas.Brush.Color := $00E1E1FF; // Легкий розово-серый для выходных
+          if gdSelected in State then DBGridTimesheet.Canvas.Brush.Color := clHighlight;
         end;
       end;
     end;
+  end
+  // 2. РАСКРАСКА ИТОГОВЫХ КОЛОНОК (Светло-желтый фон)
+  else if (Column.FieldName = 'total_work_days') or (Column.FieldName = 'total_hours') or
+          (Column.FieldName = 'sick_days') or (Column.FieldName = 'vacation_days') or
+          (Column.FieldName = 'weekend_days') or (Column.FieldName = 'payable_hours') or
+          (Column.FieldName = 'night_hours') or (Column.FieldName = 'holiday_hours') then
+  begin
+    DBGridTimesheet.Canvas.Brush.Color := $00E0FFFF; // Светло-желтый цвет
+    DBGridTimesheet.Canvas.Font.Style := [fsBold];   // Жирный шрифт для итогов
+
+    if gdSelected in State then DBGridTimesheet.Canvas.Brush.Color := clHighlight;
   end;
 
   DBGridTimesheet.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
+
 
 end.

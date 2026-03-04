@@ -20,11 +20,13 @@ type
     btnCloseMonth: TButton;
     btnExport: TButton;
     cmbDept: TComboBox;
+    btnPrintAllSlips: TButton;
     procedure btnCalcClick(Sender: TObject);
     procedure btnCloseMonthClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
     procedure DBGrid1DblClick(Sender: TObject);
     procedure btnExportClick(Sender: TObject);
+    procedure btnPrintAllSlipsClick(Sender: TObject);
   private
     qryPayroll: TFDQuery;
     dsPayroll: TDataSource;
@@ -475,6 +477,22 @@ begin
   ExcelApp.Visible := True;
 end;
 
+procedure TframePayroll.btnPrintAllSlipsClick(Sender: TObject);
+var
+  SlipForm: TfrmPaySlip;
+  Period: string;
+begin
+  if qryPayroll.IsEmpty then Exit;
+  Period := cmbMonth.Text + ' ' + cmbYear.Text;
+  SlipForm := TfrmPaySlip.Create(Self);
+  try
+    SlipForm.ShowAllPayslips(qryPayroll, Period); // ¬€«€¬¿≈Ã ALL
+    SlipForm.ShowModal;
+  finally
+    SlipForm.Free;
+  end;
+end;
+
 procedure TframePayroll.qryPayrollAfterOpen(DataSet: TDataSet);
 var
 i: Integer;
@@ -552,7 +570,7 @@ begin
   Period := cmbMonth.Text + ' ' + cmbYear.Text;
   SlipForm := TfrmPaySlip.Create(Self);
   try
-    SlipForm.LoadFromDataset(qryPayroll, Period);
+    SlipForm.ShowSinglePayslip(qryPayroll, Period); // ¬€«€¬¿≈Ã SINGLE
     SlipForm.ShowModal;
   finally
     SlipForm.Free;

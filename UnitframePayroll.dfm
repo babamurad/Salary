@@ -1,7 +1,7 @@
 object framePayroll: TframePayroll
   Left = 0
   Top = 0
-  Width = 1103
+  Width = 1221
   Height = 500
   Align = alClient
   Font.Charset = DEFAULT_CHARSET
@@ -15,11 +15,12 @@ object framePayroll: TframePayroll
   object PanelTop: TPanel
     Left = 0
     Top = 0
-    Width = 1103
+    Width = 1221
     Height = 49
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitWidth = 1103
     object DBNavigator1: TDBNavigator
       Left = 0
       Top = 0
@@ -80,11 +81,20 @@ object framePayroll: TframePayroll
       TabOrder = 6
       Text = 'cmbDept'
     end
+    object btnPrintAllSlips: TButton
+      Left = 696
+      Top = 16
+      Width = 57
+      Height = 25
+      Caption = #1055#1077#1095#1072#1090#1100' '#1082#1074#1080#1090#1082#1086#1074
+      TabOrder = 7
+      OnClick = btnPrintAllSlipsClick
+    end
   end
   object DBGrid1: TDBGrid
     Left = 0
     Top = 49
-    Width = 1103
+    Width = 1221
     Height = 451
     Align = alClient
     DataSource = dmMain.dsVacation

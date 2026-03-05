@@ -53,11 +53,6 @@ type
     qrySickLeavefio: TWideStringField;
     qryDeptsid: TFDAutoIncField;
     qryDeptsdept_name: TWideStringField;
-    qryHistoryid: TFDAutoIncField;
-    qryHistoryemp_id: TIntegerField;
-    qryHistoryfio: TWideStringField;
-    qryHistoryperiod_date: TDateField;
-    qryHistoryamount: TFMTBCDField;
     qryVacationid: TFDAutoIncField;
     qryVacationemp_id: TIntegerField;
     qryVacationcalc_date: TDateField;
@@ -106,6 +101,17 @@ type
     qryEmployeesbank_account: TWideStringField;
     qryEmployeesdept_name: TWideStringField;
     qryEmployeespos_name: TWideStringField;
+    qryHistoryid: TFDAutoIncField;
+    qryHistoryemp_id: TIntegerField;
+    qryHistoryperiod_date: TDateField;
+    qryHistoryamount: TFMTBCDField;
+    qryHistoryfio: TStringField;
+    qryCompanyInfo: TFDQuery;
+    dsCompanyInfo: TDataSource;
+    qryCompanyInfoid: TFDAutoIncField;
+    qryCompanyInfokey_name: TWideStringField;
+    qryCompanyInfodisplay_name: TWideStringField;
+    qryCompanyInfokey_value: TWideStringField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

@@ -265,30 +265,20 @@ object dmMain: TdmMain
   object qryHistory: TFDQuery
     Connection = conn
     SQL.Strings = (
-      'SELECT h.id, h.emp_id, e.fio, h.period_date, h.amount '
-      'FROM salary_history h'
-      'JOIN employees e ON h.emp_id = e.id'
-      'ORDER BY h.period_date DESC, e.fio')
+      'SELECT * '
+      'FROM salary_history '
+      'ORDER BY period_date DESC')
     Left = 32
     Top = 328
     object qryHistoryid: TFDAutoIncField
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
-      ReadOnly = True
     end
     object qryHistoryemp_id: TIntegerField
       FieldName = 'emp_id'
       Origin = 'emp_id'
       Required = True
-    end
-    object qryHistoryfio: TWideStringField
-      AutoGenerateValue = arDefault
-      FieldName = 'fio'
-      Origin = 'fio'
-      ProviderFlags = []
-      ReadOnly = True
-      Size = 32767
     end
     object qryHistoryperiod_date: TDateField
       FieldName = 'period_date'
@@ -300,6 +290,16 @@ object dmMain: TdmMain
       Origin = 'amount'
       Precision = 18
       Size = 2
+    end
+    object qryHistoryfio: TStringField
+      FieldKind = fkLookup
+      FieldName = 'fio'
+      LookupDataSet = qryEmployees
+      LookupKeyFields = 'id'
+      LookupResultField = 'fio'
+      KeyFields = 'emp_id'
+      Size = 150
+      Lookup = True
     end
   end
   object dsHistory: TDataSource
@@ -668,5 +668,39 @@ object dmMain: TdmMain
       FieldName = 'is_active'
       Origin = 'is_active'
     end
+  end
+  object qryCompanyInfo: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM company_info')
+    Left = 488
+    Top = 328
+    object qryCompanyInfoid: TFDAutoIncField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInWhere, pfInKey]
+    end
+    object qryCompanyInfokey_name: TWideStringField
+      FieldName = 'key_name'
+      Origin = 'key_name'
+      Required = True
+      Size = 32767
+    end
+    object qryCompanyInfodisplay_name: TWideStringField
+      FieldName = 'display_name'
+      Origin = 'display_name'
+      Required = True
+      Size = 32767
+    end
+    object qryCompanyInfokey_value: TWideStringField
+      FieldName = 'key_value'
+      Origin = 'key_value'
+      Size = 32767
+    end
+  end
+  object dsCompanyInfo: TDataSource
+    DataSet = qryCompanyInfo
+    Left = 488
+    Top = 392
   end
 end

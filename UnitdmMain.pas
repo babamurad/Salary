@@ -112,6 +112,8 @@ type
     qryCompanyInfokey_name: TWideStringField;
     qryCompanyInfodisplay_name: TWideStringField;
     qryCompanyInfokey_value: TWideStringField;
+    qryEmpHistory: TFDQuery;
+    dsEmpHistory: TDataSource;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

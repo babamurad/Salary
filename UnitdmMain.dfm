@@ -18,6 +18,7 @@ object dmMain: TdmMain
         SourceDataType = dtWideMemo
         TargetDataType = dtWideString
       end>
+    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 56
@@ -51,6 +52,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryEmployeestabno: TIntegerField
       FieldName = 'tabno'
@@ -274,6 +276,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryHistoryemp_id: TIntegerField
       FieldName = 'emp_id'
@@ -645,6 +648,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qrySettingssys_name: TWideStringField
       FieldName = 'sys_name'
@@ -679,6 +683,7 @@ object dmMain: TdmMain
       FieldName = 'id'
       Origin = 'id'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object qryCompanyInfokey_name: TWideStringField
       FieldName = 'key_name'
@@ -701,6 +706,30 @@ object dmMain: TdmMain
   object dsCompanyInfo: TDataSource
     DataSet = qryCompanyInfo
     Left = 488
+    Top = 392
+  end
+  object qryEmpHistory: TFDQuery
+    MasterSource = dsEmployees
+    MasterFields = 'id'
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * '
+      'FROM salary_history '
+      'WHERE emp_id = :id '
+      'ORDER BY period_date DESC')
+    Left = 600
+    Top = 328
+    ParamData = <
+      item
+        Name = 'ID'
+        DataType = ftAutoInc
+        ParamType = ptInput
+        Value = Null
+      end>
+  end
+  object dsEmpHistory: TDataSource
+    DataSet = qryEmpHistory
+    Left = 600
     Top = 392
   end
 end

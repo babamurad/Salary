@@ -48,26 +48,21 @@ begin
     ShowMessage('Выберите сотрудника!');
     Exit;
   end;
-
   StartDate := dtpStart.Date;
   EndDate := dtpEnd.Date;
-
   if EndDate < StartDate then
   begin
     ShowMessage('Ошибка: Дата окончания не может быть раньше!');
     Exit;
   end;
-
   // 2. Собираем финальные данные для записи
   SelectedEmpID := Integer(ComboBox1.Items.Objects[ComboBox1.ItemIndex]);
   CalcDate := Date; // Дата проведения расчета (сегодня)
   DaysCount := DaysBetween(EndDate, StartDate) + 1;
-
   // Берем стаж и процент прямо из текстовых полей формы,
   // куда они попали после нажатия кнопки "Рассчитать"
   TotalYears := StrToIntDef(edtTotalExp.Text, 0);
   Percent := StrToFloatDef(edtPercent.Text, 60);
-
   // Быстро пересчитываем суммы для надежности
   AvgMonthly := dmMain.GetAverageYearlySalary(SelectedEmpID, StartDate);
   AvgMonthly := SimpleRoundTo(AvgMonthly, -2);
@@ -75,9 +70,7 @@ begin
     AvgDaily := SimpleRoundTo(AvgMonthly / 29.7, -2)
   else
     AvgDaily := 0;
-
   TotalAmount := SimpleRoundTo(AvgDaily * DaysCount * (Percent / 100.0), -2);
-
   // 3. Сохраняем в базу данных (с обязательным форматом дат!)
   try
     dmMain.conn.ExecSQL(
@@ -96,10 +89,8 @@ begin
         TotalAmount
       ]
     );
-
     ShowMessage('Больничный успешно сохранен!');
     ModalResult := mrOk; // Сигнал фрейму обновить таблицу и закрыть форму
-
   except
     on E: Exception do
       ShowMessage('Ошибка при сохранении: ' + E.Message);
@@ -211,11 +202,9 @@ begin
 
   // Защита от ошибок, если модуль данных еще не создан
   if not Assigned(dmMain) then Exit;
-
   // Открываем таблицу сотрудников, если она вдруг закрыта
   if not dmMain.qryEmployees.Active then
     dmMain.qryEmployees.Open;
-
   // Пробегаемся по всем сотрудникам и добавляем в список
   dmMain.qryEmployees.First;
   while not dmMain.qryEmployees.Eof do
@@ -227,7 +216,6 @@ begin
     );
     dmMain.qryEmployees.Next;
   end;
-
   // Автоматически выбираем первого человека в списке, чтобы поле не было пустым
   if ComboBox1.Items.Count > 0 then
     ComboBox1.ItemIndex := 0;

@@ -21,7 +21,8 @@ uses
   UnitFormHelp in 'UnitFormHelp.pas' {FormHelp},
   UnitframeTimesheet in 'UnitframeTimesheet.pas' {frameTimesheet: TFrame},
   UnitPaySlip in 'UnitPaySlip.pas' {frmPaySlip},
-  UnitReportPayroll in 'UnitReportPayroll.pas' {frmReportPayroll};
+  UnitReportPayroll in 'UnitReportPayroll.pas' {frmReportPayroll},
+  UnitFrameReportSummary in 'UnitFrameReportSummary.pas' {FrameReportSummary: TFrame};
 
 {$R *.res}
 

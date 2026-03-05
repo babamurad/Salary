@@ -22,10 +22,6 @@ object frmPaySlip: TfrmPaySlip
     Align = alClient
     TabOrder = 0
     OnCreateWebViewCompleted = EdgeCreateWebViewCompleted
-    ExplicitLeft = 8
-    ExplicitTop = 8
-    ExplicitWidth = 669
-    ExplicitHeight = 121
   end
   object PanelBottom: TPanel
     Left = 0
@@ -34,9 +30,6 @@ object frmPaySlip: TfrmPaySlip
     Height = 41
     Align = alBottom
     TabOrder = 1
-    ExplicitLeft = 256
-    ExplicitTop = 192
-    ExplicitWidth = 185
     object btnPdf: TButton
       Left = 304
       Top = 8

@@ -128,14 +128,11 @@ var
   IsActive, CalcType: Integer;
 begin
   Grid := TDBGrid(Sender);
-
   // Если данных нет, ничего не делаем
   if Grid.DataSource.DataSet.IsEmpty then Exit;
-
   // Считываем значения ТЕКУЩЕЙ строки
   IsActive := Grid.DataSource.DataSet.FieldByName('is_active').AsInteger;
   CalcType := Grid.DataSource.DataSet.FieldByName('calc_type').AsInteger;
-
   // --- 1. ПРОВЕРКА АКТИВНОСТИ (Серый фон для отключенных) ---
   if IsActive = 0 then
   begin
@@ -151,7 +148,6 @@ begin
       Grid.Canvas.Font.Color := clWindowText;
     end;
   end;
-
   // --- 2. РАСКРАСКА ТИПА РАСЧЕТА (Только для активных строк) ---
   if (IsActive = 1) and (Column.FieldName = 'calc_type') then
   begin
@@ -159,10 +155,8 @@ begin
       Grid.Canvas.Font.Color := clGreen // Начисление (1) - Зеленый
     else if CalcType = 2 then
       Grid.Canvas.Font.Color := clRed;  // Удержание (2) - Красный
-
     Grid.Canvas.Font.Style := [fsBold]; // Делаем цифру жирной для красоты
   end;
-
   // --- 3. СТАНДАРТНОЕ ВЫДЕЛЕНИЕ (Синий фон при клике) ---
   // Чтобы не сломать стандартное выделение строки курсором
   if gdSelected in State then
@@ -170,47 +164,37 @@ begin
     Grid.Canvas.Brush.Color := clHighlight;
     Grid.Canvas.Font.Color := clHighlightText;
   end;
-
   // Даем команду гриду нарисовать ячейку с нашими новыми цветами!
   Grid.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
 
 procedure TframeSettings.SetupHistoryGrid;
 begin
-  // Подключаем сетку к источнику данных
   DBGridHistory.DataSource := dmMain.dsHistory;
 
-  // Ensure the dataset has fields before trying to configure columns
   if dmMain.qryHistory.FieldCount > 0 then
   begin
     DBGridHistory.Columns.Clear;
 
-    // 0: Technical ID (Hidden) - We don't even need to add it if we want it hidden
-    // but if you must add it to hide it later:
+    // Колонка ФИО (это будет наш выпадающий список)
     with DBGridHistory.Columns.Add do begin
-        FieldName := 'id'; // Or whatever your technical ID field is
-        Visible := False;
+      FieldName := 'fio';
+      Title.Caption := 'Ф.И.О. сотрудника';
+      Width := 250;
     end;
 
-    // 1: Employee
+    // Колонка Дата
     with DBGridHistory.Columns.Add do begin
-        FieldName := 'employee_name_lookup'; // Use your actual field name
-        Title.Caption := 'Сотрудник';
-        Width := 200;
+      FieldName := 'period_date';
+      Title.Caption := 'Период (01.ММ.ГГГГ)';
+      Width := 130;
     end;
 
-    // 2: Date
+    // Колонка Сумма
     with DBGridHistory.Columns.Add do begin
-        FieldName := 'record_date'; // Use your actual field name
-        Title.Caption := 'Дата (01.ММ.ГГГГ)';
-        Width := 100;
-    end;
-
-    // 3: Income Amount
-    with DBGridHistory.Columns.Add do begin
-        FieldName := 'income_amount'; // Use your actual field name
-        Title.Caption := 'Сумма дохода';
-        Width := 120;
+      FieldName := 'amount';
+      Title.Caption := 'Сумма дохода';
+      Width := 150;
     end;
   end;
 end;

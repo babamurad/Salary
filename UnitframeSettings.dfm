@@ -11,7 +11,7 @@ object frameSettings: TframeSettings
     Top = 0
     Width = 979
     Height = 500
-    ActivePage = tsGeneral
+    ActivePage = TabSheet1
     Align = alClient
     TabOrder = 0
     object tsGeneral: TTabSheet

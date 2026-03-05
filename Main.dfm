@@ -31,7 +31,6 @@ object MainForm: TMainForm
     Height = 526
     Align = alClient
     TabOrder = 0
-    ExplicitHeight = 545
     object Splitter1: TSplitter
       Left = 289
       Top = 1
@@ -47,7 +46,6 @@ object MainForm: TMainForm
       Height = 524
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 543
       object TreeView1: TTreeView
         Left = 1
         Top = 1
@@ -57,7 +55,6 @@ object MainForm: TMainForm
         Indent = 19
         TabOrder = 0
         OnChange = TreeView1Change
-        ExplicitHeight = 541
       end
     end
     object PageControl1: TPageControl
@@ -71,7 +68,6 @@ object MainForm: TMainForm
       OnDrawTab = PageControl1DrawTab
       OnMouseDown = PageControl1MouseDown
       OnMouseMove = PageControl1MouseMove
-      ExplicitHeight = 543
     end
   end
   object StatusBar1: TStatusBar
@@ -92,9 +88,6 @@ object MainForm: TMainForm
         Text = 'TGA. '#1058#1091#1088#1082#1084#1077#1085#1072#1073#1072#1090
         Width = 250
       end>
-    ExplicitLeft = 504
-    ExplicitTop = 296
-    ExplicitWidth = 0
   end
   object ImageList1: TImageList
     Height = 20

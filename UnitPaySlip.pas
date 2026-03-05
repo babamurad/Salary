@@ -48,7 +48,6 @@ procedure TfrmPaySlip.ShowPayroll(Dataset: TDataSet; Period: string);
 begin
   // 1. Генерируем HTML и прячем его в нашу переменную
   FHtmlContent := GenerateAllSlips(Dataset, Period);
-
   // 2. Даем браузеру команду "Просыпайся и создавай движок!"
   Edge.CreateWebView;
 end;
@@ -114,14 +113,12 @@ begin
       Item := StringReplace(Item, '{{FIO}}', Dataset.FieldByName('fio').AsString, [rfReplaceAll]);
       Item := StringReplace(Item, '{{DEPT}}', Dataset.FieldByName('dept_name').AsString, [rfReplaceAll]);
       Item := StringReplace(Item, '{{POS}}', Dataset.FieldByName('pos_name').AsString, [rfReplaceAll]);
-
       Item := StringReplace(Item, '{{GROSS}}', FormatFloat('#,##0.00', Dataset.FieldByName('gross_amount').AsFloat), [rfReplaceAll]);
       Item := StringReplace(Item, '{{TAX}}', FormatFloat('#,##0.00', Dataset.FieldByName('tax_amount').AsFloat), [rfReplaceAll]);
       Item := StringReplace(Item, '{{PENS}}', FormatFloat('#,##0.00', Dataset.FieldByName('pension_amount').AsFloat), [rfReplaceAll]);
       Item := StringReplace(Item, '{{UNION}}', FormatFloat('#,##0.00', Dataset.FieldByName('union_amount').AsFloat), [rfReplaceAll]);
       Item := StringReplace(Item, '{{ALIM}}', FormatFloat('#,##0.00', Dataset.FieldByName('alimony_amount').AsFloat), [rfReplaceAll]);
       Item := StringReplace(Item, '{{NET}}', FormatFloat('#,##0.00', Dataset.FieldByName('net_amount').AsFloat), [rfReplaceAll]);
-
       Body := Body + Item;
       Dataset.Next;
     end;
@@ -157,7 +154,6 @@ var
   BootstrapPath, BootstrapCSS: string;
 begin
   Body := '';
-
   if IsSingle then
   begin
     // ЕСЛИ ОДИН: Просто берем текущую запись (где стоит курсор в DBGrid)
@@ -194,7 +190,6 @@ begin
         Item := StringReplace(Item, '{{UNION}}', FormatFloat('#,##0.00', Dataset.FieldByName('union_amount').AsFloat), [rfReplaceAll]);
         Item := StringReplace(Item, '{{ALIM}}', FormatFloat('#,##0.00', Dataset.FieldByName('alimony_amount').AsFloat), [rfReplaceAll]);
         Item := StringReplace(Item, '{{NET}}', FormatFloat('#,##0.00', Dataset.FieldByName('net_amount').AsFloat), [rfReplaceAll]);
-
         Body := Body + Item;
         Dataset.Next;
       end;
@@ -207,14 +202,12 @@ begin
       Dataset.EnableControls;
     end;
   end;
-
   BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\css\bootstrap.min.css';
   BootstrapCSS := '';
   if TFile.Exists(BootstrapPath) then
     BootstrapCSS := TFile.ReadAllText(BootstrapPath) // Читаем весь файл в память
   else
     ShowMessage('Внимание: Файл ' + BootstrapPath + ' не найден! Верстка может поехать.');
-
   Result :=
     '<html><head>' +
     '<style>' + BootstrapCSS + '</style>' +

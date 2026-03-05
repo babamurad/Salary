@@ -72,7 +72,7 @@ uses
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
   UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp,
-  UnitframeTimesheet;
+  UnitframeTimesheet, UnitFrameReportSummary;
 
 { ================= TREE ================= }
 
@@ -117,16 +117,15 @@ begin
 
   Root := AddMenuNode(nil, 'Отчеты', nil, 5);
   AddMenuNode(Root, 'Ведомость', TframeReports, 12);
+  AddMenuNode(Root, 'Ведомость Св.', TframeReportSummary, 20);
   Root.Expand(True);
 end;
 
 { ================= FORM CREATE ================= }
 
 procedure TMainForm.FormCreate(Sender: TObject);
-var
-cc:string;
 begin
-  MainForm.Caption := 'Учет зарплаты';
+  Caption := 'Учет зарплаты';
   StatusBar1.Panels[1].Text := dmMain.FullPath;
 
   BuildTree;

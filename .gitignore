@@ -20,3 +20,5 @@ Win64/
 *.db
 *.sqlite
 *.ini
+Win32/Debug/*.dcu
+Win32/Debug/*.exe

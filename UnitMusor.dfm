@@ -29,4 +29,57 @@ object Form2: TForm2
     OnMouseLeave = ListBoxNavMouseLeave
     OnMouseMove = ListBoxNavMouseMove
   end
+  object DBGrid1: TDBGrid
+    Left = 272
+    Top = 16
+    Width = 497
+    Height = 177
+    DataSource = dmMain.dsEmployees
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+  object DBGrid2: TDBGrid
+    Left = 272
+    Top = 280
+    Width = 497
+    Height = 201
+    DataSource = DataSource1
+    TabOrder = 2
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+  object DataSource1: TDataSource
+    DataSet = FDQuery1
+    Left = 128
+    Top = 224
+  end
+  object FDQuery1: TFDQuery
+    Filtered = True
+    MasterSource = dmMain.dsEmployees
+    MasterFields = 'id'
+    DetailFields = 'id'
+    Connection = dmMain.conn
+    FetchOptions.AssignedValues = [evCache]
+    FetchOptions.Cache = [fiBlobs, fiMeta]
+    SQL.Strings = (
+      'SELECT * '
+      'FROM salary_history '
+      'WHERE emp_id = :id')
+    Left = 128
+    Top = 160
+    ParamData = <
+      item
+        Name = 'ID'
+        DataType = ftAutoInc
+        ParamType = ptInput
+        Value = 3
+      end>
+  end
 end

@@ -2,8 +2,8 @@ object frmBaseEdit: TfrmBaseEdit
   Left = 0
   Top = 0
   Caption = #1050#1072#1088#1090#1086#1095#1082#1072' '#1089#1086#1090#1088#1091#1076#1085#1080#1082#1072
-  ClientHeight = 552
-  ClientWidth = 880
+  ClientHeight = 576
+  ClientWidth = 899
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,11 +17,14 @@ object frmBaseEdit: TfrmBaseEdit
   object PageControl1: TPageControl
     Left = 0
     Top = 0
-    Width = 880
-    Height = 503
+    Width = 899
+    Height = 527
     ActivePage = tsMain
     Align = alClient
     TabOrder = 0
+    OnChange = PageControl1Change
+    ExplicitWidth = 1017
+    ExplicitHeight = 726
     object tsMain: TTabSheet
       Caption = #1054#1089#1085#1086#1074#1085#1099#1077' '#1076#1072#1085#1085#1099#1077
       object GroupBox1: TGroupBox
@@ -347,10 +350,11 @@ object frmBaseEdit: TfrmBaseEdit
       object PanelHistory: TPanel
         Left = 0
         Top = 0
-        Width = 872
+        Width = 891
         Height = 45
         Align = alTop
         TabOrder = 0
+        ExplicitWidth = 1009
         object btnAutoGenerate: TButton
           Left = 8
           Top = 8
@@ -361,20 +365,19 @@ object frmBaseEdit: TfrmBaseEdit
           OnClick = btnAutoGenerateClick
         end
         object DBNavHistory: TDBNavigator
-          Left = 250
-          Top = 8
-          Width = 240
+          Left = 244
+          Top = 11
+          Width = 230
           Height = 28
           DataSource = dmMain.dsEmpHistory
-          VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbEdit, nbPost, nbCancel, nbRefresh]
           TabOrder = 1
         end
       end
       object DBGridHistory: TDBGrid
         Left = 0
         Top = 45
-        Width = 872
-        Height = 423
+        Width = 891
+        Height = 447
         Align = alClient
         DataSource = dmMain.dsEmpHistory
         TabOrder = 1
@@ -403,28 +406,39 @@ object frmBaseEdit: TfrmBaseEdit
   end
   object Panel1: TPanel
     Left = 0
-    Top = 503
-    Width = 880
+    Top = 527
+    Width = 899
     Height = 49
     Align = alBottom
     TabOrder = 1
+    ExplicitTop = 726
+    ExplicitWidth = 1017
     object Button1: TButton
       Left = 120
-      Top = 10
-      Width = 99
+      Top = 9
+      Width = 188
       Height = 30
-      Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
+      Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '#1080' '#1079#1072#1082#1088#1099#1090#1100
       ModalResult = 1
       TabOrder = 0
     end
     object Button2: TButton
-      Left = 376
-      Top = 10
+      Left = 556
+      Top = 9
       Width = 99
       Height = 30
       Caption = #1054#1090#1084#1077#1085#1072
       ModalResult = 2
       TabOrder = 1
+    end
+    object btnSaveOnly: TButton
+      Left = 330
+      Top = 9
+      Width = 175
+      Height = 30
+      Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
+      TabOrder = 2
+      OnClick = btnSaveOnlyClick
     end
   end
 end

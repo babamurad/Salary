@@ -4,11 +4,18 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Data.DB, Vcl.Grids,
+  Vcl.DBGrids, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Comp.Client;
 
 type
   TForm2 = class(TForm)
     ListBoxNav: TListBox;
+    DBGrid1: TDBGrid;
+    DBGrid2: TDBGrid;
+    DataSource1: TDataSource;
+    FDQuery1: TFDQuery;
     procedure FormCreate(Sender: TObject);
     procedure ListBoxNavDrawItem(Control: TWinControl; Index: Integer;
       Rect: TRect; State: TOwnerDrawState);
@@ -31,6 +38,8 @@ var
 implementation
 
 {$R *.dfm}
+
+uses UnitdmMain;
 
 procedure TForm2.FormCreate(Sender: TObject);
 begin
@@ -149,20 +158,15 @@ end;
 Давайте реализуем ту самую вкладку «Исторические данные» (Входящие сальдо).
 
 Как это будет работать:
-
 Мы создадим таблицу, где будет: Сотрудник | Месяц | Год | Сумма.
-
 Бухгалтер один раз впишет туда данные за прошлый год (до того, как начали пользоваться программой).
-
 Наш будущий скрипт расчета отпускных будет суммировать: (Данные из программы) + (Данные из этой таблицы).
 
 
 Про расчет отпускных (Средний заработок)
 Раз мы наладили ввод истории, теперь мы можем написать тот самый «умный» SQL-запрос.
 Он будет складывать данные из двух разных корзин за последние 12 месяцев.
-
 Логика запроса:
-
 Что это дает бухгалтеру:
 Даже если вы пользуетесь программой всего 2 месяца, она увидит эти 2 месяца в журнале,
 а остальные 10 месяцев подтянет из вкладки «История», которую вы сейчас заполнили.
@@ -173,15 +177,10 @@ end;
 
 Логика кнопки «Рассчитать»
 В обработчике кнопки напишите код, который:
-
 Вычисляет количество дней: Days := DaysBetween(dtpEnd.Date, dtpStart.Date) + 1;
-
 Вызывает функцию GetAverageYearlySalary из вашего DataModule.
-
 Делит полученную сумму на коэффициент (например, 29.7 — среднее количество дней в месяце).
-
 Умножает результат на количество дней отпуска.
-
 Шаг В: Сохранение данных
 Кнопка «Сохранить» должна выполнить INSERT запрос в таблицу vacation_journal, используя значения из компонентов формы и результаты расчетов.
 

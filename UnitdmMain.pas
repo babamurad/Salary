@@ -130,6 +130,7 @@ type
     procedure qrySickLeaveRatesmin_yearsGetText(Sender: TField;
       var Text: string; DisplayText: Boolean);
     procedure DataModuleDestroy(Sender: TObject);
+    procedure dsEmployeesDataChange(Sender: TObject; Field: TField);
   private
     FFullPath: string;
     { Private declarations }
@@ -300,38 +301,64 @@ begin
   end;
 end;
 
+procedure TdmMain.dsEmployeesDataChange(Sender: TObject; Field: TField);
+begin
+//  if qryEmployees.Active then
+//  begin
+//    qryEmpHistory.Close;
+//    qryEmpHistory.ParamByName('emp_id').AsInteger := qryEmployees.FieldByName('id').AsInteger;
+//    qryEmpHistory.Open;
+//  end;
+end;
+
+
 function TdmMain.GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
 var
   Qry: TFDQuery;
-  StartDate: string;
+  StartDate, EndDate: string;
   SumTotal: Double;
   MonthsCount: Integer;
 begin
   Result := 0;
-  // ќпредел€ем дату "12 мес€цев назад" от даты расчета
-  StartDate := FormatDateTime('yyyy-mm-dd', IncMonth(ACalcDate, -12));
+  // Ѕерем ровно 12 мес€цев назад от 1-го числа мес€ца расчета
+  StartDate := FormatDateTime('yyyy-mm-dd', IncMonth(StartOfTheMonth(ACalcDate), -12));
+  // ¬ерхн€€ граница - 1-е число мес€ца ухода в отпуск (чтобы не брать текущий мес€ц)
+  EndDate := FormatDateTime('yyyy-mm-dd', StartOfTheMonth(ACalcDate));
 
   Qry := TFDQuery.Create(nil);
   try
     Qry.Connection := conn;
 
-    // ќбновленный SQL-запрос: теперь он считает и сумму, и количество отработанных мес€цев
     Qry.SQL.Text :=
       'SELECT ' +
       '  SUM(TotalAmount) as SumTotal, ' +
       '  COUNT(DISTINCT strftime(''%Y-%m'', period_date)) as MonthsCount ' +
       'FROM ( ' +
+      '  -- 1. Ѕерем реальные начислени€ ' +
       '  SELECT gross_amount AS TotalAmount, period_date FROM payroll_journal ' +
-      '  WHERE emp_id = :id1 AND period_date >= :dt1 ' +
+      '  WHERE emp_id = :id1 AND period_date >= :dt1 AND period_date < :dtEnd1 ' +
       '  UNION ALL ' +
+      '  -- 2. Ѕерем историю “ќЋ№ ќ если за этот мес€ц нет реального начислени€ ' +
       '  SELECT amount AS TotalAmount, period_date FROM salary_history ' +
-      '  WHERE emp_id = :id2 AND period_date >= :dt2 ' +
+      '  WHERE emp_id = :id2 AND period_date >= :dt2 AND period_date < :dtEnd2 ' +
+      '  AND strftime(''%Y-%m'', period_date) NOT IN ( ' +
+      '      SELECT strftime(''%Y-%m'', period_date) FROM payroll_journal ' +
+      '      WHERE emp_id = :id3 AND period_date >= :dt3 ' +
+      '  ) ' +
       ')';
 
+    // «аполн€ем параметры
     Qry.ParamByName('id1').AsInteger := AEmpID;
     Qry.ParamByName('id2').AsInteger := AEmpID;
+    Qry.ParamByName('id3').AsInteger := AEmpID;
+
     Qry.ParamByName('dt1').AsString := StartDate;
     Qry.ParamByName('dt2').AsString := StartDate;
+    Qry.ParamByName('dt3').AsString := StartDate;
+
+    Qry.ParamByName('dtEnd1').AsString := EndDate;
+    Qry.ParamByName('dtEnd2').AsString := EndDate;
+
     Qry.Open;
 
     if not Qry.FieldByName('SumTotal').IsNull then
@@ -339,9 +366,8 @@ begin
       SumTotal := Qry.FieldByName('SumTotal').AsFloat;
       MonthsCount := Qry.FieldByName('MonthsCount').AsInteger;
 
-      // «ащита: делим только если есть хот€ бы 1 отработанный мес€ц
       if MonthsCount > 0 then
-        Result := SumTotal / MonthsCount // ƒелим на фактическое количество мес€цев!
+        Result := SumTotal / MonthsCount
       else
         Result := 0;
     end;

@@ -179,6 +179,7 @@ object dmMain: TdmMain
   end
   object dsEmployees: TDataSource
     DataSet = qryEmployees
+    OnDataChange = dsEmployeesDataChange
     Left = 40
     Top = 248
   end
@@ -709,20 +710,17 @@ object dmMain: TdmMain
     Top = 392
   end
   object qryEmpHistory: TFDQuery
-    MasterSource = dsEmployees
-    MasterFields = 'id'
     Connection = conn
     SQL.Strings = (
       'SELECT * '
       'FROM salary_history '
-      'WHERE emp_id = :id '
+      'WHERE emp_id = :emp_id '
       'ORDER BY period_date DESC')
     Left = 600
     Top = 328
     ParamData = <
       item
-        Name = 'ID'
-        DataType = ftAutoInc
+        Name = 'EMP_ID'
         ParamType = ptInput
         Value = Null
       end>

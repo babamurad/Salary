@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.DBCtrls,
-  Vcl.ComCtrls, Vcl.Mask;
+  Vcl.ComCtrls, Vcl.Mask, System.UITypes; // Добавлен UITypes для MessageDlg
 
 type
   TFormVacationCalc = class(TForm)
@@ -20,9 +20,15 @@ type
     procedure Button1Click(Sender: TObject);
     procedure ButtonSaveClick(Sender: TObject);
   private
-    { Private declarations }
+    // Переменные для хранения рассчитанных данных, чтобы не считать дважды
+    FSelectedEmpID: Integer;
+    FDaysCount: Integer;
+    FAvgMonthly: Double;
+    FAvgDaily: Double;
+    FTotalAmount: Double;
+    FIsCalculated: Boolean; // Флаг: был ли произведен расчет
 
-
+    procedure DoCalculate; // Вынесли логику расчета в отдельную процедуру
   public
     { Public declarations }
   end;
@@ -34,140 +40,15 @@ implementation
 
 {$R *.dfm}
 
-uses UnitdmMain, System.DateUtils;
+uses UnitdmMain, System.DateUtils, Data.DB;
 
 { TFormVacationCalc }
-
-
-
-procedure TFormVacationCalc.Button1Click(Sender: TObject);
-var
-  SelectedEmpID: Integer;
-  StartDate, EndDate: TDate;
-  DaysCount: Integer;
-  AvgMonthly, AvgDaily, TotalAmount: Double;
-begin
-  // 1. Проверяем, что сотрудник выбран
-  if cmbEmployee.ItemIndex = -1 then
-  begin
-    ShowMessage('Выберите сотрудника!');
-    Exit;
-  end;
-
-  SelectedEmpID := Integer(cmbEmployee.Items.Objects[cmbEmployee.ItemIndex]);
-
-  // 2. Получаем даты из календариков (замените названия, если у вас другие)
-  StartDate := dtpStart.Date;
-  EndDate := dtpEnd.Date;
-
-  // Защита от ошибок ввода
-  if EndDate < StartDate then
-  begin
-    ShowMessage('Ошибка: Дата окончания не может быть раньше даты начала!');
-    Exit;
-  end;
-
-  // 3. Считаем дни (разница в днях + 1, чтобы включить последний день)
-  DaysCount := DaysBetween(EndDate, StartDate) + 1;
-
-  // 4. Получаем средний доход за 12 месяцев
-  // (Передаем StartDate, чтобы отсчет 12 месяцев шел именно от начала отпуска)
-  AvgMonthly := dmMain.GetAverageYearlySalary(SelectedEmpID, StartDate);
-
-  // 5. Вычисляем суммы
-  if AvgMonthly > 0 then
-    AvgDaily := AvgMonthly / 29.7 // Используем стандартный средний коэффициент дней
-  else
-    AvgDaily := 0;
-
-  TotalAmount := AvgDaily * DaysCount;
-
-  // 6. Выводим результат
-  // Если у вас на форме есть компоненты TEdit (например, Edit1, Edit2, Edit3),
-  // раскомментируйте эти строки и впишите их правильные имена:
-
-  // edtDays.Text := IntToStr(DaysCount);
-  // edtAvgDaily.Text := FormatFloat('0.00', AvgDaily);
-  // edtTotal.Text := FormatFloat('0.00', TotalAmount);
-
-  // А пока для проверки выведем всё в красивом всплывающем окне:
-  lbResult.Caption :=     'Дней отпуска: ' + IntToStr(DaysCount) + sLineBreak +
-    'Среднемесячный: ' + FormatFloat('0.00', AvgMonthly) + ' TMT' + sLineBreak +
-    'Среднедневной: ' + FormatFloat('0.00', AvgDaily) + ' TMT' + sLineBreak +
-    'ИТОГО К ВЫПЛАТЕ: ' + FormatFloat('0.00', TotalAmount) + ' TMT'
-  ;
-
-end;
-
-procedure TFormVacationCalc.ButtonSaveClick(Sender: TObject);
-var
-  SelectedEmpID: Integer;
-  StartDate, EndDate, CalcDate: TDate;
-  DaysCount: Integer;
-  AvgMonthly, AvgDaily, TotalAmount: Double;
-begin
-  // 1. Базовые проверки
-  if cmbEmployee.ItemIndex = -1 then
-  begin
-    ShowMessage('Выберите сотрудника!');
-    Exit;
-  end;
-
-  StartDate := dtpStart.Date;
-  EndDate := dtpEnd.Date;
-
-  if EndDate < StartDate then
-  begin
-    ShowMessage('Ошибка: Дата окончания не может быть раньше даты начала!');
-    Exit;
-  end;
-
-  // 2. Быстрый пересчет (чтобы данные были 100% актуальными)
-  SelectedEmpID := Integer(cmbEmployee.Items.Objects[cmbEmployee.ItemIndex]);
-  CalcDate := Date; // Сегодняшняя дата (день, когда бухгалтер делает расчет)
-  DaysCount := DaysBetween(EndDate, StartDate) + 1;
-  AvgMonthly := dmMain.GetAverageYearlySalary(SelectedEmpID, StartDate);
-
-  if AvgMonthly > 0 then
-    AvgDaily := AvgMonthly / 29.7
-  else
-    AvgDaily := 0;
-
-  TotalAmount := AvgDaily * DaysCount;
-
-  // 3. Сохранение в базу данных (используем безопасную передачу параметров)
-  try
-    dmMain.conn.ExecSQL(
-      'INSERT INTO vacation_journal (emp_id, calc_date, start_date, end_date, ' +
-      'days_count, avg_monthly_salary, avg_daily_salary, total_amount) ' +
-      'VALUES (:emp_id, :calc_date, :start_date, :end_date, :days, :avg_m, :avg_d, :total)',
-      [
-        SelectedEmpID,
-        FormatDateTime('yyyy-mm-dd', CalcDate),   // <-- ПРЕВРАЩАЕМ В ТЕКСТ
-        FormatDateTime('yyyy-mm-dd', StartDate),  // <-- ПРЕВРАЩАЕМ В ТЕКСТ
-        FormatDateTime('yyyy-mm-dd', EndDate),    // <-- ПРЕВРАЩАЕМ В ТЕКСТ
-        DaysCount,
-        AvgMonthly,
-        AvgDaily,
-        TotalAmount
-      ]
-    );
-
-    //ShowMessage('Расчет отпускных успешно сохранен!');
-
-    // Закрываем модальное окно с сигналом "Успешно"
-    ModalResult := mrOk;
-
-  except
-    on E: Exception do
-      ShowMessage('Ошибка при сохранении в базу: ' + E.Message);
-  end;
-
-end;
 
 procedure TFormVacationCalc.FormShow(Sender: TObject);
 begin
   cmbEmployee.Items.Clear;
+  lbResult.Caption := '';
+  FIsCalculated := False;
 
   if not Assigned(dmMain) then Exit;
 
@@ -177,7 +58,6 @@ begin
   dmMain.qryEmployees.First;
   while not dmMain.qryEmployees.Eof do
   begin
-    // Добавляем текст (ФИО) и скрыто привязываем к нему ID сотрудника
     cmbEmployee.Items.AddObject(
       dmMain.qryEmployees.FieldByName('fio').AsString,
       TObject(dmMain.qryEmployees.FieldByName('id').AsInteger)
@@ -185,9 +65,123 @@ begin
     dmMain.qryEmployees.Next;
   end;
 
-  // Если список не пуст, автоматически выбираем первого человека
   if cmbEmployee.Items.Count > 0 then
     cmbEmployee.ItemIndex := 0;
+end;
+
+procedure TFormVacationCalc.DoCalculate;
+var
+  StartDate, EndDate: TDate;
+  CurrentBaseSalary: Double;
+begin
+  if cmbEmployee.ItemIndex = -1 then
+  begin
+    ShowMessage('Выберите сотрудника!');
+    Exit;
+  end;
+
+  FSelectedEmpID := Integer(cmbEmployee.Items.Objects[cmbEmployee.ItemIndex]);
+  StartDate := dtpStart.Date;
+  EndDate := dtpEnd.Date;
+
+  if EndDate < StartDate then
+  begin
+    ShowMessage('Ошибка: Дата окончания не может быть раньше даты начала!');
+    Exit;
+  end;
+
+  FDaysCount := DaysBetween(EndDate, StartDate) + 1;
+
+  // Получаем средний доход за 12 месяцев из базы
+  FAvgMonthly := dmMain.GetAverageYearlySalary(FSelectedEmpID, StartDate);
+
+  // --- ЗАЩИТА ОТ ПУСТОЙ ИСТОРИИ ---
+  if FAvgMonthly <= 0 then
+  begin
+    if MessageDlg('У сотрудника пустая история начислений за последние 12 месяцев!' + sLineBreak +
+                  'Рассчитать отпускные исходя из текущего оклада?',
+                  mtWarning, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // Ищем оклад прямо в наборе данных сотрудников
+      if dmMain.qryEmployees.Locate('id', FSelectedEmpID, []) then
+        FAvgMonthly := dmMain.qryEmployees.FieldByName('base_salary').AsFloat
+      else
+        FAvgMonthly := 0;
+    end
+    else
+    begin
+      FIsCalculated := False;
+      Exit; // Пользователь отказался, прерываем расчет
+    end;
+  end;
+
+  // Считаем суммы
+  if FAvgMonthly > 0 then
+    FAvgDaily := FAvgMonthly / 29.7
+  else
+    FAvgDaily := 0;
+
+  FTotalAmount := FAvgDaily * FDaysCount;
+  FIsCalculated := True; // Успешно рассчитано
+
+  // Выводим результат
+  lbResult.Caption :=
+    'Дней отпуска: ' + IntToStr(FDaysCount) + sLineBreak +
+    'Среднемесячный: ' + FormatFloat('#,##0.00', FAvgMonthly) + ' TMT' + sLineBreak +
+    'Среднедневной: ' + FormatFloat('#,##0.00', FAvgDaily) + ' TMT' + sLineBreak +
+    sLineBreak +
+    'ИТОГО К ВЫПЛАТЕ: ' + FormatFloat('#,##0.00', FTotalAmount) + ' TMT';
+end;
+
+procedure TFormVacationCalc.Button1Click(Sender: TObject);
+begin
+  DoCalculate;
+end;
+
+procedure TFormVacationCalc.ButtonSaveClick(Sender: TObject);
+var
+  CalcDate: TDate;
+begin
+  // Если кадровик сразу нажал "Сохранить", не нажав "Рассчитать", считаем за него
+  if not FIsCalculated then
+    DoCalculate;
+
+  // Если после расчета всё равно ошибка (например, отказался считать из оклада)
+  if not FIsCalculated then Exit;
+
+  CalcDate := Date;
+
+  try
+    dmMain.conn.ExecSQL(
+      'INSERT INTO vacation_journal (emp_id, calc_date, start_date, end_date, ' +
+      'days_count, avg_monthly_salary, avg_daily_salary, total_amount) ' +
+      'VALUES (:emp_id, :calc_date, :start_date, :end_date, :days, :avg_m, :avg_d, :total)',
+      [
+        FSelectedEmpID,
+        FormatDateTime('yyyy-mm-dd', CalcDate),
+        FormatDateTime('yyyy-mm-dd', dtpStart.Date),
+        FormatDateTime('yyyy-mm-dd', dtpEnd.Date),
+        FDaysCount,
+        FAvgMonthly,
+        FAvgDaily,
+        FTotalAmount
+      ]
+    );
+
+    // --- ОБНОВЛЯЕМ ГЛАВНУЮ ТАБЛИЦУ ОТПУСКОВ ---
+    if dmMain.qryVacation.Active then
+    begin
+      dmMain.qryVacation.Close;
+      dmMain.qryVacation.Open;
+    end;
+
+    ShowMessage('Расчет отпускных успешно сохранен!');
+    ModalResult := mrOk;
+
+  except
+    on E: Exception do
+      ShowMessage('Ошибка при сохранении в базу: ' + E.Message);
+  end;
 end;
 
 end.

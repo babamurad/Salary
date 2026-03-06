@@ -72,7 +72,7 @@ uses
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
   UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp,
-  UnitframeTimesheet, UnitFrameReportSummary;
+  UnitframeTimesheet, UnitFrameReportSummary, UnitFrameVacations;
 
 { ================= TREE ================= }
 
@@ -111,7 +111,7 @@ begin
   Root := AddMenuNode(nil, 'Документы', nil, 5);
   AddMenuNode(Root, 'Табель', TframeTimesheet, 17);
   AddMenuNode(Root, 'Начисление зарплаты', TframePayroll, 6);
-  AddMenuNode(Root, 'Расчет отпускных', TframeVacation, 18);
+  AddMenuNode(Root, 'Расчет отпускных', TframeVacations, 18);
   AddMenuNode(Root, 'Расчет больничных', TframeSickLeave, 3);
   Root.Expand(True);
 

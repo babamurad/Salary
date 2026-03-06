@@ -401,7 +401,7 @@ end;
 // --- КОД ДЛЯ НОВОЙ КНОПКИ "ПРОСТО СОХРАНИТЬ" ---
 procedure TfrmBaseEdit.btnSaveOnlyClick(Sender: TObject);
 begin
-  if Assigned(FTargetDataSet) then
+  if Assigned(FTargetDataSet)  then
   begin
     // Переводим датасет в режим редактирования (если он еще не там)
     if not (FTargetDataSet.State in [dsEdit, dsInsert]) then

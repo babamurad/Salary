@@ -9,7 +9,7 @@ uses
   FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
   FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.VCLUI.Wait, FireDAC.Comp.UI, Data.DB,
   FireDAC.Comp.Client, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
-  Vcl.Controls, System.IniFiles,
+  Vcl.Controls, System.IniFiles, System.DateUtils,
   FireDAC.DApt, FireDAC.Comp.DataSet, Vcl.Dialogs, FireDAC.Comp.ScriptCommands,
   FireDAC.Stan.Util, FireDAC.Comp.Script, Vcl.Menus;
 
@@ -320,44 +320,46 @@ var
   MonthsCount: Integer;
 begin
   Result := 0;
-  // Ѕерем ровно 12 мес€цев назад от 1-го числа мес€ца расчета
+  // ќтступаем ровно на 12 мес€цев назад от 1-го числа мес€ца расчета
   StartDate := FormatDateTime('yyyy-mm-dd', IncMonth(StartOfTheMonth(ACalcDate), -12));
-  // ¬ерхн€€ граница - 1-е число мес€ца ухода в отпуск (чтобы не брать текущий мес€ц)
+  // ¬ерхн€€ граница - 1-е число мес€ца ухода в отпуск (текущий мес€ц не берем)
   EndDate := FormatDateTime('yyyy-mm-dd', StartOfTheMonth(ACalcDate));
 
   Qry := TFDQuery.Create(nil);
   try
     Qry.Connection := conn;
 
-    Qry.SQL.Text :=
-      'SELECT ' +
-      '  SUM(TotalAmount) as SumTotal, ' +
-      '  COUNT(DISTINCT strftime(''%Y-%m'', period_date)) as MonthsCount ' +
-      'FROM ( ' +
-      '  -- 1. Ѕерем реальные начислени€ ' +
-      '  SELECT gross_amount AS TotalAmount, period_date FROM payroll_journal ' +
-      '  WHERE emp_id = :id1 AND period_date >= :dt1 AND period_date < :dtEnd1 ' +
-      '  UNION ALL ' +
-      '  -- 2. Ѕерем историю “ќЋ№ ќ если за этот мес€ц нет реального начислени€ ' +
-      '  SELECT amount AS TotalAmount, period_date FROM salary_history ' +
-      '  WHERE emp_id = :id2 AND period_date >= :dt2 AND period_date < :dtEnd2 ' +
-      '  AND strftime(''%Y-%m'', period_date) NOT IN ( ' +
-      '      SELECT strftime(''%Y-%m'', period_date) FROM payroll_journal ' +
-      '      WHERE emp_id = :id3 AND period_date >= :dt3 ' +
-      '  ) ' +
-      ')';
+    // ќтключаем макросы FireDAC, чтобы символ % из strftime не ломал парсер
+    Qry.ResourceOptions.MacroCreate := False;
+    Qry.ResourceOptions.MacroExpand := False;
 
-    // «аполн€ем параметры
-    Qry.ParamByName('id1').AsInteger := AEmpID;
-    Qry.ParamByName('id2').AsInteger := AEmpID;
-    Qry.ParamByName('id3').AsInteger := AEmpID;
+    // ‘ормируем запрос (используем единые имена параметров везде)
+    Qry.SQL.Clear;
+    Qry.SQL.Add('SELECT SUM(TotalAmount) as SumTotal, COUNT(DISTINCT strftime(''%Y-%m'', period_date)) as MonthsCount');
+    Qry.SQL.Add('FROM (');
+    Qry.SQL.Add('  SELECT gross_amount AS TotalAmount, period_date FROM payroll_journal');
+    Qry.SQL.Add('  WHERE emp_id = :emp_id AND period_date >= :start_dt AND period_date < :end_dt');
+    Qry.SQL.Add('  UNION ALL');
+    Qry.SQL.Add('  SELECT amount AS TotalAmount, period_date FROM salary_history');
+    Qry.SQL.Add('  WHERE emp_id = :emp_id AND period_date >= :start_dt AND period_date < :end_dt');
+    Qry.SQL.Add('  AND strftime(''%Y-%m'', period_date) NOT IN (');
+    Qry.SQL.Add('      SELECT strftime(''%Y-%m'', period_date) FROM payroll_journal');
+    Qry.SQL.Add('      WHERE emp_id = :emp_id AND period_date >= :start_dt');
+    Qry.SQL.Add('  )');
+    Qry.SQL.Add(')');
 
-    Qry.ParamByName('dt1').AsString := StartDate;
-    Qry.ParamByName('dt2').AsString := StartDate;
-    Qry.ParamByName('dt3').AsString := StartDate;
+    // ≈сли парсер FireDAC всЄ еще слепой, создаем параметры ѕ–»Ќ”ƒ»“≈Ћ№Ќќ
+    if Qry.Params.FindParam('emp_id') = nil then
+    begin
+      Qry.Params.CreateParam(ftInteger, 'emp_id', ptInput);
+      Qry.Params.CreateParam(ftString, 'start_dt', ptInput);
+      Qry.Params.CreateParam(ftString, 'end_dt', ptInput);
+    end;
 
-    Qry.ParamByName('dtEnd1').AsString := EndDate;
-    Qry.ParamByName('dtEnd2').AsString := EndDate;
+    // ѕередаем значени€ (они автоматически разлет€тс€ по всем местам в SQL-запросе)
+    Qry.ParamByName('emp_id').AsInteger := AEmpID;
+    Qry.ParamByName('start_dt').AsString := StartDate;
+    Qry.ParamByName('end_dt').AsString := EndDate;
 
     Qry.Open;
 

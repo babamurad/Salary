@@ -22,7 +22,8 @@ uses
   UnitframeTimesheet in 'UnitframeTimesheet.pas' {frameTimesheet: TFrame},
   UnitPaySlip in 'UnitPaySlip.pas' {frmPaySlip},
   UnitReportPayroll in 'UnitReportPayroll.pas' {frmReportPayroll},
-  UnitFrameReportSummary in 'UnitFrameReportSummary.pas' {FrameReportSummary: TFrame};
+  UnitFrameReportSummary in 'UnitFrameReportSummary.pas' {FrameReportSummary: TFrame},
+  UnitFrameVacations in 'UnitFrameVacations.pas' {frameVacations: TFrame};
 
 {$R *.res}
 

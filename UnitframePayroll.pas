@@ -107,10 +107,8 @@ begin
 
   if DeptID > 0 then
     qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' AND e.dept_id = ' + IntToStr(DeptID);
-
   // --- ИЗМЕНИТЬ ВОТ ЭТУ СТРОЧКУ: ---
   qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' ORDER BY d.dept_name, e.fio';
-
   qryPayroll.ParamByName('period').AsString := SelectedPeriod;
   qryPayroll.Open;
 end;
@@ -609,11 +607,9 @@ begin
     // Настраиваем ширину Отдела
     if DBGrid1.Columns[i].FieldName = 'dept_name' then
       DBGrid1.Columns[i].Width := 170
-
     // Настраиваем ширину Должности
     else if DBGrid1.Columns[i].FieldName = 'pos_name' then
       DBGrid1.Columns[i].Width := 170
-
     // Заодно аккуратно сожмем Оклад, если он слишком широкий
     else if DBGrid1.Columns[i].FieldName = 'base_salary' then
       DBGrid1.Columns[i].Width := 110;
@@ -628,7 +624,6 @@ begin
 
   if DataSet.FindField('base_salary') <> nil then
     TFloatField(DataSet.FieldByName('base_salary')).DisplayFormat := '#,##0.00 TMT';
-
   // --- ДОБАВЛЯЕМ ЭТОТ БЛОК ДЛЯ ПЕРЕВОДА "ХВОСТОВ" ---
   if DataSet.FindField('base_salary') <> nil then DataSet.FieldByName('base_salary').DisplayLabel := 'Базовый оклад';
   if DataSet.FindField('dept_name') <> nil then DataSet.FieldByName('dept_name').DisplayLabel := 'Отдел';

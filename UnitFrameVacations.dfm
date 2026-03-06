@@ -16,11 +16,11 @@ object frameVacations: TframeVacations
     ExplicitTop = 256
     ExplicitWidth = 185
     object btnAdd: TButton
-      Left = 264
+      Left = 232
       Top = 8
-      Width = 89
+      Width = 121
       Height = 25
-      Caption = #1056#1072#1089#1089#1095#1080#1090#1072#1090#1100
+      Caption = #1053#1086#1074#1099#1081' '#1088#1072#1089#1095#1077#1090
       TabOrder = 0
       OnClick = btnAddClick
     end
@@ -40,6 +40,15 @@ object frameVacations: TframeVacations
       Height = 25
       Caption = #1054#1073#1085#1086#1074#1080#1090#1100
       TabOrder = 2
+    end
+    object btnPrint: TButton
+      Left = 664
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = #1055#1077#1095#1072#1090#1100
+      TabOrder = 3
+      OnClick = btnPrintClick
     end
   end
   object DBGridVacations: TDBGrid

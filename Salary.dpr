@@ -23,7 +23,8 @@ uses
   UnitPaySlip in 'UnitPaySlip.pas' {frmPaySlip},
   UnitReportPayroll in 'UnitReportPayroll.pas' {frmReportPayroll},
   UnitFrameReportSummary in 'UnitFrameReportSummary.pas' {FrameReportSummary: TFrame},
-  UnitFrameVacations in 'UnitFrameVacations.pas' {frameVacations: TFrame};
+  UnitFrameVacations in 'UnitFrameVacations.pas' {frameVacations: TFrame},
+  UnitHtmlPreview in 'UnitHtmlPreview.pas' {frmHtmlPreview};
 
 {$R *.res}
 
@@ -33,6 +34,7 @@ begin
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TfrmPaySlip, frmPaySlip);
   Application.CreateForm(TfrmReportPayroll, frmReportPayroll);
+  Application.CreateForm(TfrmHtmlPreview, frmHtmlPreview);
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TdmMain, dmMain);

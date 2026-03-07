@@ -56,7 +56,6 @@ object frameSettings: TframeSettings
         Width = 971
         Height = 470
         Align = alClient
-        DataSource = dmMain.dsSickLeaveRates
         TabOrder = 0
         TitleFont.Charset = DEFAULT_CHARSET
         TitleFont.Color = clWindowText

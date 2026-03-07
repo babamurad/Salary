@@ -2,8 +2,8 @@ object frmBaseEdit: TfrmBaseEdit
   Left = 0
   Top = 0
   Caption = #1050#1072#1088#1090#1086#1095#1082#1072' '#1089#1086#1090#1088#1091#1076#1085#1080#1082#1072
-  ClientHeight = 576
-  ClientWidth = 899
+  ClientHeight = 657
+  ClientWidth = 909
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,14 +17,14 @@ object frmBaseEdit: TfrmBaseEdit
   object PageControl1: TPageControl
     Left = 0
     Top = 0
-    Width = 899
-    Height = 527
+    Width = 909
+    Height = 608
     ActivePage = tsMain
     Align = alClient
     TabOrder = 0
     OnChange = PageControl1Change
-    ExplicitWidth = 1017
-    ExplicitHeight = 726
+    ExplicitWidth = 899
+    ExplicitHeight = 527
     object tsMain: TTabSheet
       Caption = #1054#1089#1085#1086#1074#1085#1099#1077' '#1076#1072#1085#1085#1099#1077
       object GroupBox1: TGroupBox
@@ -264,7 +264,7 @@ object frmBaseEdit: TfrmBaseEdit
         Left = 8
         Top = 322
         Width = 855
-        Height = 145
+        Height = 177
         Caption = #1053#1072#1083#1086#1075#1080' '#1080' '#1083#1100#1075#1086#1090#1099
         TabOrder = 2
         object Label10: TLabel
@@ -283,10 +283,17 @@ object frmBaseEdit: TfrmBaseEdit
         end
         object Label16: TLabel
           Left = 16
-          Top = 104
+          Top = 97
           Width = 98
           Height = 20
           Caption = #1040#1083#1080#1084#1077#1085#1090#1099' (%)'
+        end
+        object Label17: TLabel
+          Left = 175
+          Top = 97
+          Width = 164
+          Height = 20
+          Caption = '% '#1086#1087#1083#1072#1090#1099' '#1073#1086#1083#1100#1085#1080#1095#1085#1086#1075#1086
         end
         object seDependents: TSpinEdit
           Left = 16
@@ -333,13 +340,23 @@ object frmBaseEdit: TfrmBaseEdit
           TabOrder = 4
         end
         object seAlimony: TSpinEdit
-          Left = 175
-          Top = 101
+          Left = 16
+          Top = 123
           Width = 121
           Height = 30
           MaxValue = 0
           MinValue = 100
           TabOrder = 5
+          Value = 100
+        end
+        object seSickLeavePercent: TSpinEdit
+          Left = 175
+          Top = 123
+          Width = 121
+          Height = 30
+          MaxValue = 100
+          MinValue = 0
+          TabOrder = 6
           Value = 0
         end
       end
@@ -350,11 +367,11 @@ object frmBaseEdit: TfrmBaseEdit
       object PanelHistory: TPanel
         Left = 0
         Top = 0
-        Width = 891
+        Width = 901
         Height = 45
         Align = alTop
         TabOrder = 0
-        ExplicitWidth = 1009
+        ExplicitWidth = 891
         object btnAutoGenerate: TButton
           Left = 8
           Top = 8
@@ -376,8 +393,8 @@ object frmBaseEdit: TfrmBaseEdit
       object DBGridHistory: TDBGrid
         Left = 0
         Top = 45
-        Width = 891
-        Height = 447
+        Width = 901
+        Height = 528
         Align = alClient
         DataSource = dmMain.dsEmpHistory
         TabOrder = 1
@@ -406,13 +423,13 @@ object frmBaseEdit: TfrmBaseEdit
   end
   object Panel1: TPanel
     Left = 0
-    Top = 527
-    Width = 899
+    Top = 608
+    Width = 909
     Height = 49
     Align = alBottom
     TabOrder = 1
-    ExplicitTop = 726
-    ExplicitWidth = 1017
+    ExplicitTop = 527
+    ExplicitWidth = 899
     object Button1: TButton
       Left = 120
       Top = 9

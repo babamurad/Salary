@@ -32,8 +32,6 @@ type
     dsConstSettings: TDataSource;
     qryProdCalendar: TFDQuery;
     dsProdCalendar: TDataSource;
-    qrySickLeaveRates: TFDQuery;
-    dsSickLeaveRates: TDataSource;
     qryHistory: TFDQuery;
     dsHistory: TDataSource;
     qryVacation: TFDQuery;
@@ -63,8 +61,6 @@ type
     qryVacationavg_daily_salary: TFMTBCDField;
     qryVacationtotal_amount: TFMTBCDField;
     qryVacationfio: TWideStringField;
-    qrySickLeaveRatesmin_years: TIntegerField;
-    qrySickLeaveRatespercent: TFloatField;
     scrCreateDb: TFDScript;
     memTimesheet: TFDMemTable;
     dsTimesheet: TDataSource;
@@ -114,6 +110,7 @@ type
     qryCompanyInfokey_value: TWideStringField;
     qryEmpHistory: TFDQuery;
     dsEmpHistory: TDataSource;
+    qryEmployeessick_leave_percent: TIntegerField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

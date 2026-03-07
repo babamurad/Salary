@@ -18,7 +18,6 @@ object dmMain: TdmMain
         SourceDataType = dtWideMemo
         TargetDataType = dtWideString
       end>
-    Connected = True
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
     Left = 56
@@ -176,6 +175,10 @@ object dmMain: TdmMain
       ReadOnly = True
       Size = 32767
     end
+    object qryEmployeessick_leave_percent: TIntegerField
+      FieldName = 'sick_leave_percent'
+      Origin = 'sick_leave_percent'
+    end
   end
   object dsEmployees: TDataSource
     DataSet = qryEmployees
@@ -241,28 +244,6 @@ object dmMain: TdmMain
   object dsProdCalendar: TDataSource
     DataSet = qryProdCalendar
     Left = 608
-    Top = 248
-  end
-  object qrySickLeaveRates: TFDQuery
-    Connection = conn
-    SQL.Strings = (
-      'SELECT * FROM sick_leave_rates ORDER BY min_years')
-    Left = 720
-    Top = 168
-    object qrySickLeaveRatesmin_years: TIntegerField
-      FieldName = 'min_years'
-      Origin = 'min_years'
-      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
-      OnGetText = qrySickLeaveRatesmin_yearsGetText
-    end
-    object qrySickLeaveRatespercent: TFloatField
-      FieldName = 'percent'
-      Origin = 'percent'
-    end
-  end
-  object dsSickLeaveRates: TDataSource
-    DataSet = qrySickLeaveRates
-    Left = 720
     Top = 248
   end
   object qryHistory: TFDQuery
@@ -392,7 +373,7 @@ object dmMain: TdmMain
       'JOIN employees e ON s.emp_id = e.id '
       'ORDER BY s.calc_date DESC')
     Left = 240
-    Top = 320
+    Top = 328
     object qrySickLeaveid: TFDAutoIncField
       FieldName = 'id'
       Origin = 'id'
@@ -459,7 +440,7 @@ object dmMain: TdmMain
   object dsSickLeave: TDataSource
     DataSet = qrySickLeave
     Left = 240
-    Top = 384
+    Top = 392
   end
   object scrCreateDb: TFDScript
     SQLScripts = <

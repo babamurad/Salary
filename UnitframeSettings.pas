@@ -120,7 +120,6 @@ begin
     // 1. Открываем DataSets
     if not dmMain.qrySettings.Active then dmMain.qrySettings.Open;
     if not dmMain.qryHistory.Active then dmMain.qryHistory.Open;
-    if not dmMain.qrySickLeaveRates.Active then dmMain.qrySickLeaveRates.Open;
 
     // --- Настройка вкладки Глобальные настройки (DBGrid1) ---
     DBGrid1.DataSource := dmMain.dsSettings;
@@ -174,29 +173,8 @@ begin
         DBGrid1.OnDrawColumnCell := DBGrid1DrawColumnCell;
         DBGrid1.OnCellClick := DBGrid1CellClick;
 
-    // --- Настройка вкладки Больничные (DBGrid2) ---
-    DBGrid2.DataSource := dmMain.dsSickLeaveRates;
 
-    if dmMain.qrySickLeaveRates.FieldCount > 0 then
-    begin
-        DBGrid2.Columns.Clear;
-
-        with DBGrid2.Columns.Add do begin
-            FieldName := 'min_years'; // Правильное имя из БД
-            Title.Caption := 'Минимальный стаж (лет)';
-            Width := 180;
-        end;
-
-        with DBGrid2.Columns.Add do begin
-            FieldName := 'percent'; // Правильное имя из БД
-            Title.Caption := '% Выплаты';
-            Width := 120;
-        end;
-
-        // Сразу добавим красивое форматирование для процентов
-        if dmMain.qrySickLeaveRates.FindField('percent') <> nil then
-          TFloatField(dmMain.qrySickLeaveRates.FieldByName('percent')).DisplayFormat := '0 %';
-    end;
+    
 
     // Настройка истории
     SetupCompanyInfoGrid;

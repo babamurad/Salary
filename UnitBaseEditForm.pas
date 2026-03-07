@@ -63,6 +63,8 @@ type
     chkTaxExempt: TCheckBox;
     chkTradeUnion: TCheckBox;
     seAlimony: TSpinEdit;
+    seSickLeavePercent: TSpinEdit;
+    Label17: TLabel;
 
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -282,6 +284,7 @@ begin
   chkTaxExempt.Checked := DataSet.FieldByName('is_tax_exempt').AsInteger = 1;
   chkTradeUnion.Checked := DataSet.FieldByName('trade_union').AsInteger = 1;
   seAlimony.Value := DataSet.FieldByName('alimony_percent').AsInteger;
+  seSickLeavePercent.Value := DataSet.FieldByName('sick_leave_percent').AsInteger;
 
   TargetID := DataSet.FieldByName('dept_id').AsInteger;
   cmbDept.ItemIndex := -1;
@@ -386,6 +389,7 @@ begin
   DataSet.FieldByName('dependents_count').AsInteger := seDependents.Value;
   DataSet.FieldByName('pension_rate').AsFloat := sePension.Value;
   DataSet.FieldByName('alimony_percent').AsFloat := seAlimony.Value;
+  DataSet.FieldByName('sick_leave_percent').AsInteger := seSickLeavePercent.Value;
 
   if chkRotation.Checked then DataSet.FieldByName('is_rotation').AsInteger := 1 else DataSet.FieldByName('is_rotation').AsInteger := 0;
   if chkTaxExempt.Checked then DataSet.FieldByName('is_tax_exempt').AsInteger := 1 else DataSet.FieldByName('is_tax_exempt').AsInteger := 0;

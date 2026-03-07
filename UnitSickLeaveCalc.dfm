@@ -2,8 +2,8 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
   Left = 0
   Top = 0
   Caption = 'FormSickLeaveCalc'
-  ClientHeight = 385
-  ClientWidth = 753
+  ClientHeight = 422
+  ClientWidth = 952
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,6 +13,13 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 20
+  object lbResult: TLabel
+    Left = 664
+    Top = 88
+    Width = 53
+    Height = 20
+    Caption = 'lbResult'
+  end
   object ComboBox1: TComboBox
     Left = 32
     Top = 56
@@ -39,29 +46,13 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
     Time = 0.439358958334196400
     TabOrder = 2
   end
-  object edtTotalExp: TEdit
-    Left = 360
-    Top = 136
-    Width = 121
-    Height = 28
-    TabOrder = 3
-    Text = 'edtTotalExp'
-  end
-  object edtPercent: TEdit
-    Left = 208
-    Top = 136
-    Width = 121
-    Height = 28
-    TabOrder = 4
-    Text = 'edtPercent'
-  end
   object Button1: TButton
     Left = 96
     Top = 224
     Width = 113
     Height = 25
     Caption = #1056#1072#1089#1089#1095#1080#1090#1072#1090#1100
-    TabOrder = 5
+    TabOrder = 3
     OnClick = Button1Click
   end
   object btnSave: TButton
@@ -70,7 +61,15 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
     Width = 115
     Height = 25
     Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
-    TabOrder = 6
+    TabOrder = 4
     OnClick = btnSaveClick
+  end
+  object edtPercent: TEdit
+    Left = 208
+    Top = 136
+    Width = 121
+    Height = 28
+    ReadOnly = True
+    TabOrder = 5
   end
 end

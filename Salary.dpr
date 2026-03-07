@@ -2,6 +2,7 @@ program Salary;
 
 uses
   Vcl.Forms,
+  Vcl.Controls,
   Main in 'Main.pas' {MainForm},
   UnitdmMain in 'UnitdmMain.pas' {dmMain: TDataModule},
   UnitframeEmployees in 'UnitframeEmployees.pas' {frameEmployees: TFrame},
@@ -24,13 +25,35 @@ uses
   UnitReportPayroll in 'UnitReportPayroll.pas' {frmReportPayroll},
   UnitFrameReportSummary in 'UnitFrameReportSummary.pas' {FrameReportSummary: TFrame},
   UnitFrameVacations in 'UnitFrameVacations.pas' {frameVacations: TFrame},
-  UnitHtmlPreview in 'UnitHtmlPreview.pas' {frmHtmlPreview};
+  UnitHtmlPreview in 'UnitHtmlPreview.pas' {frmHtmlPreview},
+  UnitLogin in 'UnitLogin.pas' {frmLogin};
 
 {$R *.res}
 
+var
+  LoginForm: TfrmLogin; // Создаем переменную для окна логина
+
 begin
   Application.Initialize;
+  // 1. Первым делом поднимаем базу данных (чтобы логин мог проверить пароль)
   Application.CreateForm(TdmMain, dmMain);
+
+  // --- 2. ЖЕЛЕЗОБЕТОННЫЙ ВЫЗОВ ЛОГИНА ---
+  LoginForm := TfrmLogin.Create(nil);
+  try
+    if LoginForm.ShowModal <> mrOk then
+    begin
+      Application.Terminate;
+      Exit; // Пароль неверный - жестко прерываем запуск программы!
+    end;
+  finally
+    LoginForm.Free;
+  end;
+  // --------------------------------------
+
+  // 3. Если код дошел сюда (пароль верный) - строим интерфейс!
+  Application.CreateForm(TMainForm, MainForm);
+
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TfrmPaySlip, frmPaySlip);
   Application.CreateForm(TfrmReportPayroll, frmReportPayroll);

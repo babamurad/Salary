@@ -162,3 +162,7 @@ Project Salary.exe raised exception class EArgumentOutOfRangeException with mess
 FROM employees WHERE strftime('%m', birth_date) = strftime('%m', 'now') AND status = 1)
 
 Кто сейчас отсутствует: Список тех, кто прямо сегодня находится в отпуске или на больничном.
+
+procedure MenuBackupClick(Sender: TObject);
+
+

@@ -72,10 +72,6 @@ object FrameReportSummary: TFrameReportSummary
     Align = alClient
     TabOrder = 1
     OnCreateWebViewCompleted = EdgeCreateWebViewCompleted
-    ExplicitLeft = 256
-    ExplicitTop = 104
-    ExplicitWidth = 265
-    ExplicitHeight = 177
   end
   object qryReport: TFDQuery
     Connection = dmMain.conn

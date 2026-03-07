@@ -1,5 +1,5 @@
-2026/03/05-12:11:30.146 2c38 Log #3: 1 ops saved to Table #4 OK
-2026/03/05-12:11:30.155 2c38 Archiving C:\OSPanel\domains\Salary\Win32\Debug\EdgeCacheReports\EBWebView\Default\Site Characteristics Database/000003.log: OK
-2026/03/05-12:11:30.156 2c38 Table #4: 1 entries OK
-2026/03/05-12:11:30.159 2c38 Archiving C:\OSPanel\domains\Salary\Win32\Debug\EdgeCacheReports\EBWebView\Default\Site Characteristics Database/MANIFEST-000001: OK
-2026/03/05-12:11:30.170 2c38 **** Repaired leveldb C:\OSPanel\domains\Salary\Win32\Debug\EdgeCacheReports\EBWebView\Default\Site Characteristics Database; recovered 1 files; 130 bytes. Some data may have been lost. ****
+2026/03/07-16:27:14.311 408c Log #6: 0 ops saved to Table #7 OK
+2026/03/07-16:27:14.317 408c Archiving C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Win32\Debug\EdgeCacheReports\EBWebView\Default\Site Characteristics Database/000006.log: OK
+2026/03/07-16:27:14.318 408c Table #4: 1 entries OK
+2026/03/07-16:27:14.329 408c Archiving C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Win32\Debug\EdgeCacheReports\EBWebView\Default\Site Characteristics Database/MANIFEST-000001: OK
+2026/03/07-16:27:14.389 408c **** Repaired leveldb C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Win32\Debug\EdgeCacheReports\EBWebView\Default\Site Characteristics Database; recovered 1 files; 130 bytes. Some data may have been lost. ****

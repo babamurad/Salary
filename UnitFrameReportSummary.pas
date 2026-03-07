@@ -112,7 +112,6 @@ end;
 procedure TframeReportSummary.SetParent(AParent: TWinControl);
 begin
   inherited;
-
   // Как только у фрейма появился родитель (вкладка) — безопасно запускаем браузер!
   if (AParent <> nil) and not Assigned(Edge.DefaultInterface) then
   begin

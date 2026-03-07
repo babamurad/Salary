@@ -13,10 +13,6 @@ type
     Panel1: TPanel;
     lblWelcome: TLabel;
     Image1: TImage;
-    lblEmpCount: TLabel;
-    lblFund: TLabel;
-    Label1: TLabel;
-    Label2: TLabel;
     Panel2: TPanel;
     Panel3: TPanel;
     Label3: TLabel;
@@ -29,6 +25,13 @@ type
     Panel7: TPanel;
     Shape2: TShape;
     Shape1: TShape;
+    StackPanel1: TStackPanel;
+    RelativePanel2: TRelativePanel;
+    lblFund: TLabel;
+    RelativePanel1: TRelativePanel;
+    lblEmpCount: TLabel;
+    lblTitle1: TLabel;
+    Label1: TLabel;
   private
     { Private declarations }
   public
@@ -62,9 +65,7 @@ begin
     // 1. Считаем активных сотрудников
     Q.SQL.Text := 'SELECT COUNT(id) FROM employees WHERE status = 1';
     Q.Open;
-    Label1.Caption :=  'Сотрудников в штате: ';
-    Label1.Color := clHotLight;
-    lblEmpCount.Caption := Q.Fields[0].AsString;
+    lblEmpCount.Caption := Q.Fields[0].AsString + '  ';
     Q.Close;
 
     // 2. Считаем фонд окладов
@@ -73,15 +74,12 @@ begin
     // Проверка на NULL (если база вдруг пустая)
     if Q.Fields[0].IsNull then
     begin
-      Label2.Caption := 'Месячный фонд окладов: ';
       lblFund.Caption := ' 0.00 TMT'
     end
     else
     begin
-      Label2.Caption := 'Месячный фонд окладов: ';
       lblFund.Caption := FormatFloat('#,##0.00 TMT', Q.Fields[0].AsFloat);
     end;
-    Label2.Color := clHotLight;
   finally
     Q.Free;
   end;
@@ -184,8 +182,6 @@ begin
       lblFund.Caption := FormatFloat('#,##0.00 TMT', Q.Fields[0].AsFloat);
     // Наводим красоту
     lblWelcome.Font.Color := clNavy;
-    Label1.Font.Color := clHotLight;
-    Label2.Font.Color := clHotLight;
   finally
     Q.Free;
   end;

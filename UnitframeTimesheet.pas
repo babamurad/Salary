@@ -9,7 +9,7 @@ uses
   Vcl.DBGrids, Vcl.StdCtrls, Vcl.ExtCtrls, FireDAC.Stan.Intf,
   FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
-  FireDAC.Comp.DataSet, FireDAC.Comp.Client;
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.DBCtrls;
 
 type
   TframeTimesheet = class(TFrame)
@@ -25,6 +25,10 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
+    Label4: TLabel;
+    lblCurrentEmp: TLabel;
+    DBGridNames: TDBGrid;
+    Splitter1: TSplitter;
     procedure DBGridTimesheetDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure btnLoadClick(Sender: TObject);
@@ -33,9 +37,11 @@ type
   private
     FCurYear: Integer;   // Текущий год табеля на экране
     FCurMonth: Integer;  // Текущий месяц табеля на экране
+    FCurrentEmpID: Integer;
     procedure ReadPeriodFromUI;
     procedure LoadDepartments;
     procedure memTimesheetBeforePost(DataSet: TDataSet);
+    procedure memTimesheetAfterScroll(DataSet: TDataSet);
   public
     procedure PrepareMemTable(AYear, AMonth: Integer);
     procedure FillEmployeesList;
@@ -51,11 +57,32 @@ uses UnitdmMain;
 { TframeTimesheet }
 
 constructor TframeTimesheet.Create(AOwner: TComponent);
+var
+  i, CurrentYear: Integer;
 begin
   inherited;
-  // Инициализируем стартовые значения, чтобы отрисовка сетки не ругалась на нули
+
+  // 1. Инициализируем стартовые значения для переменных
   FCurYear := YearOf(Now);
-  FCurMonth := MonthOfTheYear(Now);
+  FCurMonth := MonthOf(Now); // Требует System.DateUtils в uses (он у вас уже есть)
+
+  // --- МАГИЯ АВТОВЫБОРА В ИНТЕРФЕЙСЕ ---
+
+  // 2. Устанавливаем текущий месяц в ComboBox (индекс начинается с 0, поэтому отнимаем 1)
+  cbMonth.ItemIndex := FCurMonth - 1;
+
+  // 3. Динамически заполняем года (от прошлого до +2 лет вперед) и выбираем текущий
+  cbYear.Items.Clear;
+  CurrentYear := FCurYear;
+  for i := CurrentYear - 1 to CurrentYear + 2 do
+    cbYear.Items.Add(IntToStr(i));
+
+  // Так как мы начали цикл с прошлого года (CurrentYear - 1),
+  // текущий год всегда будет под индексом 1
+  cbYear.ItemIndex := 1;
+
+  // ------------------------------------
+
   LoadDepartments;
 end;
 
@@ -77,6 +104,28 @@ begin
   end;
 
   cmbDept.ItemIndex := 0;
+end;
+
+procedure TframeTimesheet.memTimesheetAfterScroll(DataSet: TDataSet);
+begin
+  if DataSet.Active and not DataSet.IsEmpty then
+  begin
+    // Запоминаем текущего сотрудника
+    lblCurrentEmp.Caption := DataSet.FieldByName('fio').AsString;
+    FCurrentEmpID := DataSet.FieldByName('emp_id').AsInteger;
+  end
+  else
+  begin
+    lblCurrentEmp.Caption := '---';
+    FCurrentEmpID := -1;
+  end;
+
+  // --- ЗАСТАВЛЯЕМ ПЕРЕРИСОВАТЬСЯ ОБА ГРИДА! ---
+  if Assigned(DBGridTimesheet) then
+    DBGridTimesheet.Invalidate; // Обновляем правый
+
+  if Assigned(DBGridNames) then
+    DBGridNames.Invalidate;     // Обновляем левый (ВОТ ЭТУ СТРОЧКУ МЫ ЗАБЫЛИ!)
 end;
 
 procedure TframeTimesheet.memTimesheetBeforePost(DataSet: TDataSet);
@@ -182,6 +231,8 @@ var
 begin
   if not Assigned(dmMain) then Exit;
 
+  // Отключаем оба грида на время перестройки
+  DBGridNames.DataSource := nil;
   DBGridTimesheet.DataSource := nil;
 
   with dmMain.memTimesheet do
@@ -209,31 +260,45 @@ begin
 
     CreateDataSet;
     BeforePost := memTimesheetBeforePost;
+    AfterScroll := memTimesheetAfterScroll;
+
+    // Подключаем базу обратно к ОБОИМ гридам
+    DBGridNames.DataSource := dmMain.dsTimesheet;
     DBGridTimesheet.DataSource := dmMain.dsTimesheet;
 
-    FieldByName('emp_id').Visible := False;
-    FieldByName('fio').DisplayLabel := 'Сотрудник';
-    FieldByName('fio').DisplayWidth := 25;
+    // --- 1. НАСТРАИВАЕМ ЛЕВЫЙ ГРИД (ТОЛЬКО ФИО) ---
+    DBGridNames.Columns.Clear;
+    with DBGridNames.Columns.Add do
+    begin
+      FieldName := 'fio';
+      Title.Caption := 'Сотрудник';
+      Width := 220;
+    end;
 
+    // --- 2. НАСТРАИВАЕМ ПРАВЫЙ ГРИД (ДНИ И ИТОГИ) ---
+    DBGridTimesheet.Columns.Clear;
     for i := 1 to DaysCount do
     begin
-      with FieldByName('day_' + IntToStr(i)) do
+      with DBGridTimesheet.Columns.Add do
       begin
-        DisplayLabel := IntToStr(i);
-        DisplayWidth := 4;
+        FieldName := 'day_' + IntToStr(i);
+        Title.Caption := IntToStr(i);
+        Title.Alignment := taCenter;
         Alignment := taCenter;
+        Width := 25; // Делаем дни компактными
       end;
     end;
 
-    FieldByName('total_work_days').DisplayLabel := 'Отр. дни';
-    FieldByName('total_hours').DisplayLabel := 'Всего часов';
-    FieldByName('sick_days').DisplayLabel := 'Больн.(Б)';
-    FieldByName('vacation_days').DisplayLabel := 'Отпуск(О)';
-    FieldByName('weekend_days').DisplayLabel := 'Выходн.(В)';
-    FieldByName('night_hours').DisplayLabel := 'Ночные(Н)';
-    FieldByName('holiday_hours').DisplayLabel := 'Праздн.(П)';
-    FieldByName('payable_hours').DisplayLabel := 'К оплате';
+    // Итоги в правом гриде
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'total_work_days'; Title.Caption := 'Отр. дни'; Width := 65; end;
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'total_hours'; Title.Caption := 'Часы'; Width := 50; end;
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'sick_days'; Title.Caption := 'Больн.(Б)'; Width := 65; end;
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'vacation_days'; Title.Caption := 'Отпуск(О)'; Width := 65; end;
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'weekend_days'; Title.Caption := 'Вых.(В)'; Width := 50; end;
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'night_hours'; Title.Caption := 'Ночн.(Н)'; Width := 60; end;
+    with DBGridTimesheet.Columns.Add do begin FieldName := 'payable_hours'; Title.Caption := 'К оплате'; Width := 65; end;
 
+    // Форматы цифр
     TFloatField(FieldByName('total_hours')).DisplayFormat := '0.##';
     TFloatField(FieldByName('night_hours')).DisplayFormat := '0.##';
     TFloatField(FieldByName('holiday_hours')).DisplayFormat := '0.##';
@@ -328,6 +393,8 @@ begin
 
     dmMain.memTimesheet.First;
 
+    memTimesheetAfterScroll(dmMain.memTimesheet);
+
   finally
     LoadQuery.Free;
     dmMain.memTimesheet.FieldByName('fio').ReadOnly := True;
@@ -338,42 +405,117 @@ end;
 
 procedure TframeTimesheet.btnAutoFillClick(Sender: TObject);
 var
-  i, DaysCount: Integer;
-  CurrentDate: TDateTime;
+  i, DaysCount, EmpID: Integer;
+  CurrentDate, FirstDay, LastDay: TDateTime;
+  QryVac, QrySick: TFDQuery;
+  IsVacation, IsSick: Boolean;
 begin
   if not Assigned(dmMain) or not dmMain.memTimesheet.Active then Exit;
   if dmMain.memTimesheet.IsEmpty then Exit;
 
-  // Просто берем сохраненные значения
   DaysCount := DaysInAMonth(FCurYear, FCurMonth);
+  // Определяем первый и последний день выбранного месяца
+  FirstDay := EncodeDate(FCurYear, FCurMonth, 1);
+  LastDay := EncodeDate(FCurYear, FCurMonth, DaysCount);
 
-  dmMain.memTimesheet.DisableControls;
+  QryVac := TFDQuery.Create(nil);
+  QrySick := TFDQuery.Create(nil);
   try
-    dmMain.memTimesheet.First;
+    QryVac.Connection := dmMain.conn;
+    // Запрос: ищем любые отпуска, которые пересекаются с текущим месяцем
+    QryVac.SQL.Text := 'SELECT start_date, end_date FROM vacation_journal ' +
+                       'WHERE emp_id = :emp AND start_date <= :end_dt AND end_date >= :start_dt';
 
-    while not dmMain.memTimesheet.Eof do
-    begin
-      dmMain.memTimesheet.Edit;
+    QrySick.Connection := dmMain.conn;
+    // Запрос: ищем любые больничные, которые пересекаются с текущим месяцем
+    QrySick.SQL.Text := 'SELECT start_date, end_date FROM sick_leave_journal ' +
+                        'WHERE emp_id = :emp AND start_date <= :end_dt AND end_date >= :start_dt';
 
-      for i := 1 to DaysCount do
+    dmMain.memTimesheet.DisableControls;
+    try
+      dmMain.memTimesheet.First;
+
+      while not dmMain.memTimesheet.Eof do
       begin
-        if TryEncodeDate(Word(FCurYear), Word(FCurMonth), Word(i), CurrentDate) then
+        EmpID := dmMain.memTimesheet.FieldByName('emp_id').AsInteger;
+
+        // 1. Загружаем отпуска сотрудника
+        QryVac.Close;
+        QryVac.ParamByName('emp').AsInteger := EmpID;
+        QryVac.ParamByName('start_dt').AsDate := FirstDay;
+        QryVac.ParamByName('end_dt').AsDate := LastDay;
+        QryVac.Open;
+
+        // 2. Загружаем больничные сотрудника
+        QrySick.Close;
+        QrySick.ParamByName('emp').AsInteger := EmpID;
+        QrySick.ParamByName('start_dt').AsDate := FirstDay;
+        QrySick.ParamByName('end_dt').AsDate := LastDay;
+        QrySick.Open;
+
+        dmMain.memTimesheet.Edit;
+
+        // 3. Пробегаемся по каждому дню месяца
+        for i := 1 to DaysCount do
         begin
-          if DayOfTheWeek(CurrentDate) in [6, 7] then
+          CurrentDate := EncodeDate(FCurYear, FCurMonth, i);
+          IsVacation := False;
+          IsSick := False;
+
+          // Проверяем, попадает ли день на больничный
+          QrySick.First;
+          while not QrySick.Eof do
+          begin
+            if (CurrentDate >= QrySick.FieldByName('start_date').AsDateTime) and
+               (CurrentDate <= QrySick.FieldByName('end_date').AsDateTime) then
+            begin
+              IsSick := True;
+              Break;
+            end;
+            QrySick.Next;
+          end;
+
+          // Проверяем, попадает ли день на отпуск (если он не болел)
+          if not IsSick then
+          begin
+            QryVac.First;
+            while not QryVac.Eof do
+            begin
+              if (CurrentDate >= QryVac.FieldByName('start_date').AsDateTime) and
+                 (CurrentDate <= QryVac.FieldByName('end_date').AsDateTime) then
+              begin
+                IsVacation := True;
+                Break;
+              end;
+              QryVac.Next;
+            end;
+          end;
+
+          // --- ПРОСТАВЛЯЕМ ЗНАЧЕНИЯ ---
+          if IsSick then
+            dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := 'Б'
+          else if IsVacation then
+            dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := 'О'
+          else if DayOfTheWeek(CurrentDate) in [6, 7] then
             dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := 'В'
           else
             dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := '8';
         end;
+
+        dmMain.memTimesheet.Post;
+        dmMain.memTimesheet.Next;
       end;
 
-      dmMain.memTimesheet.Post;
-      dmMain.memTimesheet.Next;
+      dmMain.memTimesheet.First;
+    finally
+      dmMain.memTimesheet.EnableControls;
     end;
-
-    dmMain.memTimesheet.First;
   finally
-    dmMain.memTimesheet.EnableControls;
+    QryVac.Free;
+    QrySick.Free;
   end;
+
+  ShowMessage('Табель успешно заполнен! Отпуска и больничные учтены автоматически.');
 end;
 
 procedure TframeTimesheet.btnSaveClick(Sender: TObject);
@@ -458,37 +600,57 @@ procedure TframeTimesheet.DBGridTimesheetDrawColumnCell(Sender: TObject;
 var
   DayNum: Integer;
   CurrentDate: TDateTime;
+  IsActiveRow: Boolean;
+  Grid: TDBGrid;
 begin
-  // 1. Раскраска выходных дней (Ваш код)
+  Grid := Sender as TDBGrid; // Магия: понимаем, какой грид себя сейчас рисует (левый или правый)
+  IsActiveRow := False;
+
+  if (dmMain.memTimesheet.Active) and (dmMain.memTimesheet.FindField('emp_id') <> nil) then
+    IsActiveRow := (dmMain.memTimesheet.FieldByName('emp_id').AsInteger = FCurrentEmpID);
+
+  // Базовый цвет активной строки
+  if IsActiveRow then
+  begin
+    Grid.Canvas.Brush.Color := $00FFF0E0;
+    Grid.Canvas.Font.Style := [fsBold];
+  end;
+
+  // Раскраска выходных дней
   if Pos('day_', Column.FieldName) = 1 then
   begin
     DayNum := StrToIntDef(Copy(Column.FieldName, 5, Length(Column.FieldName)), 1);
-
     if (FCurYear > 0) and (FCurMonth > 0) then
     begin
       if TryEncodeDate(Word(FCurYear), Word(FCurMonth), Word(DayNum), CurrentDate) then
       begin
         if DayOfTheWeek(CurrentDate) in [6, 7] then
         begin
-          DBGridTimesheet.Canvas.Brush.Color := $00E1E1FF; // Легкий розово-серый для выходных
-          if gdSelected in State then DBGridTimesheet.Canvas.Brush.Color := clHighlight;
+          if IsActiveRow then Grid.Canvas.Brush.Color := $00FFD2D2
+          else Grid.Canvas.Brush.Color := $00E1E1FF;
         end;
       end;
     end;
   end
-  // 2. РАСКРАСКА ИТОГОВЫХ КОЛОНОК (Светло-желтый фон)
+  // Раскраска итоговых колонок
   else if (Column.FieldName = 'total_work_days') or (Column.FieldName = 'total_hours') or
           (Column.FieldName = 'sick_days') or (Column.FieldName = 'vacation_days') or
           (Column.FieldName = 'weekend_days') or (Column.FieldName = 'payable_hours') or
           (Column.FieldName = 'night_hours') or (Column.FieldName = 'holiday_hours') then
   begin
-    DBGridTimesheet.Canvas.Brush.Color := $00E0FFFF; // Светло-желтый цвет
-    DBGridTimesheet.Canvas.Font.Style := [fsBold];   // Жирный шрифт для итогов
-
-    if gdSelected in State then DBGridTimesheet.Canvas.Brush.Color := clHighlight;
+    if IsActiveRow then Grid.Canvas.Brush.Color := $00C0FFFF
+    else Grid.Canvas.Brush.Color := $00E0FFFF;
+    Grid.Canvas.Font.Style := [fsBold];
   end;
 
-  DBGridTimesheet.DefaultDrawColumnCell(Rect, DataCol, Column, State);
+  // Оставляем стандартное синее выделение
+  if gdSelected in State then
+  begin
+    Grid.Canvas.Brush.Color := clHighlight;
+    Grid.Canvas.Font.Color := clHighlightText;
+  end;
+
+  Grid.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
 
 

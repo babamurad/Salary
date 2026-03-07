@@ -33,6 +33,8 @@ type
     FIsCalculated: Boolean; // Тот самый флаг!
   public
     { Public declarations }
+    FEditMode: Boolean; // Флаг режима редактирования
+    FDocID: Integer;    // ID документа, который редактируем
     procedure DoCalculate;
   end;
 
@@ -54,27 +56,35 @@ begin
   // Если после расчета всё равно ошибка (например, отказался считать из оклада)
   if not FIsCalculated then Exit;
 
-  try
-    dmMain.conn.ExecSQL(
-      'INSERT INTO sick_leave_journal (emp_id, calc_date, start_date, end_date, ' +
-      'days_count, avg_daily_salary, experience_years, payment_percent, total_amount) ' +
-      'VALUES (:emp_id, :calc_date, :start_date, :end_date, :days, :avg_d, :exp_y, :percent, :total)',
-      [
-        FSelectedEmpID,                              // Наша новая переменная с ID
-        FormatDateTime('yyyy-mm-dd', Date),          // Сегодняшняя дата расчета
-        FormatDateTime('yyyy-mm-dd', dtpStart.Date), // Дата начала из календаря
-        FormatDateTime('yyyy-mm-dd', dtpEnd.Date),   // Дата конца из календаря
-        FDaysCount,                                  // Наша новая переменная дней
-        FAvgDaily,                                   // Наша новая переменная среднедневного
-        0,                                           // Жестко 0 для стажа, т.к. мы его больше не считаем
-        FPercent,                                    // Наша новая переменная процента
-        FTotalAmount                                 // Наша новая переменная итога
-      ]
-    );
+try
+    if FEditMode then
+    begin
+      // РЕЖИМ ОБНОВЛЕНИЯ
+      dmMain.conn.ExecSQL(
+        'UPDATE sick_leave_journal SET calc_date = :calc, start_date = :st, end_date = :en, ' +
+        'days_count = :d, avg_daily_salary = :avg_d, payment_percent = :perc, total_amount = :tot ' +
+        'WHERE id = :id',
+        [
+          FormatDateTime('yyyy-mm-dd', Date),
+          FormatDateTime('yyyy-mm-dd', dtpStart.Date),
+          FormatDateTime('yyyy-mm-dd', dtpEnd.Date),
+          FDaysCount, FAvgDaily, FPercent, FTotalAmount,
+          FDocID // Передаем ID редактируемого документа
+        ]
+      );
+    end
+    else
+    begin
+      // РЕЖИМ СОЗДАНИЯ (Ваш старый код INSERT INTO...)
+      dmMain.conn.ExecSQL(
+        'INSERT INTO sick_leave_journal (emp_id, calc_date, start_date, end_date, ' +
+        'days_count, avg_daily_salary, experience_years, payment_percent, total_amount) ' +
+        'VALUES (:emp_id, :calc_date, :start_date, :end_date, :days, :avg_d, :exp_y, :percent, :total)',
+        [ FSelectedEmpID, FormatDateTime('yyyy-mm-dd', Date), FormatDateTime('yyyy-mm-dd', dtpStart.Date), FormatDateTime('yyyy-mm-dd', dtpEnd.Date), FDaysCount, FAvgDaily, 0, FPercent, FTotalAmount ]
+      );
+    end;
 
-    // Форма сама закроется и скажет фрейму обновить таблицу
     ModalResult := mrOk;
-
   except
     on E: Exception do
       ShowMessage('Ошибка при сохранении: ' + E.Message);
@@ -182,6 +192,37 @@ begin
   // Автоматически выбираем первого человека в списке, чтобы поле не было пустым
   if ComboBox1.Items.Count > 0 then
     ComboBox1.ItemIndex := 0;
+
+  // --- МАГИЯ РЕДАКТИРОВАНИЯ ---
+  if FEditMode then
+  begin
+    Self.Caption := 'Редактирование больничного';
+    btnSave.Caption := 'Обновить';
+
+    // Загружаем даты из базы
+    dtpStart.Date := dmMain.qrySickLeave.FieldByName('start_date').AsDateTime;
+    dtpEnd.Date := dmMain.qrySickLeave.FieldByName('end_date').AsDateTime;
+
+    // Выбираем нужного сотрудника в комбобоксе
+    for var i := 0 to ComboBox1.Items.Count - 1 do
+      if Integer(ComboBox1.Items.Objects[i]) = dmMain.qrySickLeave.FieldByName('emp_id').AsInteger then
+      begin
+        ComboBox1.ItemIndex := i;
+        Break;
+      end;
+
+    // Блокируем смену сотрудника (обычно при ошибке меняют только даты)
+    ComboBox1.Enabled := False;
+
+    // Автоматически нажимаем кнопку "Рассчитать", чтобы подтянуть суммы
+    DoCalculate;
+  end
+  else
+  begin
+    Self.Caption := 'Новый расчет больничного';
+    btnSave.Caption := 'Сохранить';
+    ComboBox1.Enabled := True;
+  end;
 end;
 
 end.

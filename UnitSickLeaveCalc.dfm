@@ -23,14 +23,14 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
   object ComboBox1: TComboBox
     Left = 32
     Top = 56
-    Width = 145
+    Width = 426
     Height = 28
     TabOrder = 0
     Text = 'ComboBox1'
   end
   object dtpStart: TDateTimePicker
-    Left = 208
-    Top = 56
+    Left = 32
+    Top = 112
     Width = 186
     Height = 28
     Date = 46082.000000000000000000
@@ -38,8 +38,8 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
     TabOrder = 1
   end
   object dtpEnd: TDateTimePicker
-    Left = 424
-    Top = 56
+    Left = 272
+    Top = 112
     Width = 186
     Height = 28
     Date = 46082.000000000000000000
@@ -47,8 +47,8 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
     TabOrder = 2
   end
   object Button1: TButton
-    Left = 96
-    Top = 224
+    Left = 32
+    Top = 192
     Width = 113
     Height = 25
     Caption = #1056#1072#1089#1089#1095#1080#1090#1072#1090#1100
@@ -56,8 +56,8 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
     OnClick = Button1Click
   end
   object btnSave: TButton
-    Left = 310
-    Top = 224
+    Left = 272
+    Top = 192
     Width = 115
     Height = 25
     Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
@@ -65,8 +65,8 @@ object FormSickLeaveCalc: TFormSickLeaveCalc
     OnClick = btnSaveClick
   end
   object edtPercent: TEdit
-    Left = 208
-    Top = 136
+    Left = 496
+    Top = 56
     Width = 121
     Height = 28
     ReadOnly = True

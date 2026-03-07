@@ -16,10 +16,12 @@ type
     btnPrint: TButton;
     cmbMonthFilter: TComboBox;
     Label1: TLabel;
+    btnEdit: TButton;
     procedure btnNewCalcClick(Sender: TObject);
     procedure btnDeleteClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
     procedure cmbMonthFilterChange(Sender: TObject);
+    procedure btnEditClick(Sender: TObject);
   private
     procedure SetupGrid;
     procedure LoadMonths; // Загрузка месяцев для фильтра
@@ -144,6 +146,25 @@ begin
 end;
 
 // --- 4. ДОБАВЛЕНИЕ НОВОГО РАСЧЕТА ---
+procedure TframeSickLeave.btnEditClick(Sender: TObject);
+var
+  Frm: TFormSickLeaveCalc;
+begin
+  if dmMain.qrySickLeave.IsEmpty then Exit;
+
+  Frm := TFormSickLeaveCalc.Create(Self);
+  try
+    // Говорим форме, что мы хотим редактировать!
+    Frm.FEditMode := True;
+    Frm.FDocID := dmMain.qrySickLeave.FieldByName('id').AsInteger;
+
+    if Frm.ShowModal = mrOk then
+      RefreshData; // Обновляем таблицу
+  finally
+    Frm.Free;
+  end;
+end;
+
 procedure TframeSickLeave.btnNewCalcClick(Sender: TObject);
 var
   Frm: TFormSickLeaveCalc;

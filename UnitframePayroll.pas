@@ -120,9 +120,29 @@ end;
 
 function TframePayroll.GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
 var
+  Q: TFDQuery;
   i, DaysCount: Integer;
   D: TDateTime;
 begin
+  // 1. Пытаемся взять норму дней из нашего Производственного календаря
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := dmMain.conn;
+    Q.SQL.Text := 'SELECT working_days FROM production_calendar WHERE year = :y AND month = :m';
+    Q.ParamByName('y').AsInteger := AYear;
+    Q.ParamByName('m').AsInteger := AMonth;
+    Q.Open;
+
+    if not Q.IsEmpty and (Q.FieldByName('working_days').AsInteger > 0) then
+    begin
+      Result := Q.FieldByName('working_days').AsInteger;
+      Exit; // Нашли! Выходим из функции
+    end;
+  finally
+    Q.Free;
+  end;
+
+  // 2. ЗАПАСНОЙ ВАРИАНТ: Если календарь пуст, считаем по старинке (без учета праздников)
   Result := 0;
   DaysCount := DaysInAMonth(AYear, AMonth);
   for i := 1 to DaysCount do
@@ -372,14 +392,41 @@ var
   Period: string;
 begin
   Period := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
-  if MessageDlg('Вы уверены, что хотите ЗАКРЫТЬ ' + cmbMonth.Text + ' для редактирования?',
+
+  if IsPeriodClosed(Period) then
+  begin
+    ShowMessage('Этот месяц уже закрыт для редактирования!');
+    Exit;
+  end;
+
+  if MessageDlg('Вы уверены, что хотите ЗАКРЫТЬ ' + cmbMonth.Text + ' ' + cmbYear.Text + '?' + sLineBreak +
+                'Это действие заблокирует месяц от изменений и перенесет суммы начислений в Историю для расчета будущих отпусков.',
      mtWarning, [mbYes, mbNo], 0) = mrYes then
   begin
+    dmMain.conn.StartTransaction;
     try
+      // 1. Блокируем период
       dmMain.conn.ExecSQL('INSERT INTO closed_periods (period_str) VALUES (:p)', [Period]);
-      ShowMessage('Период заблокирован!');
+
+      // 2. Очищаем историю за этот месяц (на случай, если месяц перепроводили)
+      dmMain.conn.ExecSQL('DELETE FROM salary_history WHERE strftime(''%Y-%m'', period_date) = :p', [Period]);
+
+      // 3. Копируем начисления (ГРЯЗНЫМИ) в историю!
+      dmMain.conn.ExecSQL(
+        'INSERT INTO salary_history (emp_id, period_date, amount) ' +
+        'SELECT emp_id, period_date, gross_amount FROM payroll_journal ' +
+        'WHERE strftime(''%Y-%m'', period_date) = :p',
+        [Period]
+      );
+
+      dmMain.conn.Commit;
+      ShowMessage('Месяц успешно закрыт! Данные перенесены в Историю начислений.');
     except
-      ShowMessage('Этот период уже был закрыт ранее.');
+      on E: Exception do
+      begin
+        dmMain.conn.Rollback;
+        ShowMessage('Ошибка при закрытии месяца: ' + E.Message);
+      end;
     end;
   end;
 end;

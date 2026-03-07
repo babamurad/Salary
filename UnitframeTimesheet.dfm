@@ -5,6 +5,14 @@ object frameTimesheet: TframeTimesheet
   Height = 520
   TabOrder = 0
   PixelsPerInch = 96
+  object Splitter1: TSplitter
+    Left = 250
+    Top = 81
+    Height = 398
+    ExplicitLeft = 520
+    ExplicitTop = 208
+    ExplicitHeight = 100
+  end
   object Panel1: TPanel
     Left = 0
     Top = 0
@@ -92,9 +100,9 @@ object frameTimesheet: TframeTimesheet
     end
   end
   object DBGridTimesheet: TDBGrid
-    Left = 0
+    Left = 253
     Top = 81
-    Width = 1040
+    Width = 787
     Height = 398
     Align = alClient
     DataSource = dmMain.dsTimesheet
@@ -114,14 +122,51 @@ object frameTimesheet: TframeTimesheet
     Height = 41
     Align = alBottom
     TabOrder = 2
-    object btnSave: TButton
-      Left = 480
+    object Label4: TLabel
+      Left = 288
+      Top = 13
+      Width = 145
+      Height = 15
+      Caption = #1058#1077#1082#1091#1097#1080#1081' '#1089#1086#1090#1088#1091#1076#1085#1080#1082
+    end
+    object lblCurrentEmp: TLabel
+      Left = 496
       Top = 8
+      Width = 105
+      Height = 21
+      Caption = 'lblCurrentEmp'
+      Font.Charset = RUSSIAN_CHARSET
+      Font.Color = clBlue
+      Font.Height = -16
+      Font.Name = 'Segoe UI Semibold'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object btnSave: TButton
+      Left = 40
+      Top = 6
       Width = 169
       Height = 25
       Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '#1090#1072#1073#1077#1083#1100
       TabOrder = 0
       OnClick = btnSaveClick
     end
+  end
+  object DBGridNames: TDBGrid
+    Left = 0
+    Top = 81
+    Width = 250
+    Height = 398
+    Align = alLeft
+    DataSource = dmMain.dsTimesheet
+    Options = [dgEditing, dgTitles, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+    ReadOnly = True
+    TabOrder = 3
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+    OnDrawColumnCell = DBGridTimesheetDrawColumnCell
   end
 end

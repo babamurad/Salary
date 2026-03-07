@@ -1,8 +1,8 @@
 object frameDashboard: TframeDashboard
   Left = 0
   Top = 0
-  Width = 1007
-  Height = 480
+  Width = 1096
+  Height = 808
   TabOrder = 0
   PixelsPerInch = 96
   object Image1: TImage
@@ -1023,11 +1023,13 @@ object frameDashboard: TframeDashboard
     Width = 105
     Height = 23
     Caption = #1047#1072#1075#1088#1091#1079#1082#1072'...'
+    Color = 6538752
     Font.Charset = RUSSIAN_CHARSET
-    Font.Color = clGrayText
+    Font.Color = 6538752
     Font.Height = -19
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
+    ParentColor = False
     ParentFont = False
   end
   object lblFund: TLabel
@@ -1036,11 +1038,13 @@ object frameDashboard: TframeDashboard
     Width = 105
     Height = 23
     Caption = #1047#1072#1075#1088#1091#1079#1082#1072'...'
+    Color = 6538752
     Font.Charset = RUSSIAN_CHARSET
-    Font.Color = clGrayText
+    Font.Color = 6538752
     Font.Height = -19
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
+    ParentColor = False
     ParentFont = False
   end
   object Label1: TLabel
@@ -1049,9 +1053,9 @@ object frameDashboard: TframeDashboard
     Width = 60
     Height = 30
     Caption = 'Label1'
-    Color = clMenuHighlight
+    Color = 6538752
     Font.Charset = DEFAULT_CHARSET
-    Font.Color = clMenuHighlight
+    Font.Color = 5415936
     Font.Height = -21
     Font.Name = 'Segoe UI'
     Font.Style = []
@@ -1066,12 +1070,30 @@ object frameDashboard: TframeDashboard
     Caption = 'Label2'
     Color = clMenuHighlight
     Font.Charset = DEFAULT_CHARSET
-    Font.Color = clMenuHighlight
+    Font.Color = 5415936
     Font.Height = -21
     Font.Name = 'Segoe UI'
     Font.Style = []
     ParentColor = False
     ParentFont = False
+  end
+  object Shape2: TShape
+    Left = 555
+    Top = 311
+    Width = 483
+    Height = 258
+    Brush.Color = 15263976
+    Pen.Color = 11447982
+    Pen.Style = psClear
+  end
+  object Shape1: TShape
+    Left = 34
+    Top = 310
+    Width = 483
+    Height = 258
+    Brush.Color = 15263976
+    Pen.Color = 11447982
+    Pen.Style = psClear
   end
   object Panel1: TPanel
     Left = 13
@@ -1085,12 +1107,166 @@ object frameDashboard: TframeDashboard
       Width = 758
       Height = 33
       Caption = #1044#1086#1073#1088#1086' '#1087#1086#1078#1072#1083#1086#1074#1072#1090#1100' '#1074' '#1089#1080#1089#1090#1077#1084#1091' '#1091#1087#1088#1072#1074#1083#1077#1085#1080#1103' '#1087#1077#1088#1089#1086#1085#1072#1083#1086#1084
+      Color = 6538752
       Font.Charset = ANSI_CHARSET
-      Font.Color = clTeal
+      Font.Color = 5415936
       Font.Height = -27
       Font.Name = 'Showcard Gothic'
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
+    end
+  end
+  object Panel2: TPanel
+    Left = 30
+    Top = 310
+    Width = 480
+    Height = 250
+    BevelOuter = bvNone
+    Caption = 'Panel2'
+    Color = clWindow
+    ParentBackground = False
+    ShowCaption = False
+    TabOrder = 1
+    object Panel4: TPanel
+      Left = 0
+      Top = 0
+      Width = 5
+      Height = 250
+      Align = alLeft
+      BevelOuter = bvNone
+      Caption = 'Panel4'
+      Color = 6538752
+      ParentBackground = False
+      ShowCaption = False
+      TabOrder = 0
+    end
+    object Panel7: TPanel
+      Left = 5
+      Top = 0
+      Width = 475
+      Height = 250
+      Align = alClient
+      BevelOuter = bvNone
+      Caption = 'Panel7'
+      ShowCaption = False
+      TabOrder = 1
+      object Label4: TLabel
+        AlignWithMargins = True
+        Left = 10
+        Top = 10
+        Width = 462
+        Height = 22
+        Margins.Left = 10
+        Margins.Top = 10
+        Margins.Bottom = 5
+        Align = alTop
+        Caption = #1048#1084#1077#1085#1080#1085#1085#1080#1082#1080' '#1074' '#1101#1090#1086#1084' '#1084#1077#1089#1103#1094#1077
+        Font.Charset = RUSSIAN_CHARSET
+        Font.Color = clGray
+        Font.Height = -19
+        Font.Name = 'Times New Roman'
+        Font.Style = [fsBold, fsItalic]
+        ParentFont = False
+        ExplicitWidth = 238
+      end
+      object lblBirthdaysList: TLabel
+        AlignWithMargins = True
+        Left = 10
+        Top = 47
+        Width = 455
+        Height = 21
+        Margins.Left = 10
+        Margins.Top = 10
+        Margins.Right = 10
+        Margins.Bottom = 10
+        Align = alTop
+        Caption = 'lblBirthdaysList'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clGray
+        Font.Height = -16
+        Font.Name = 'Segoe UI'
+        Font.Style = [fsItalic]
+        ParentFont = False
+        WordWrap = True
+        ExplicitWidth = 104
+      end
+    end
+  end
+  object Panel3: TPanel
+    Left = 550
+    Top = 310
+    Width = 480
+    Height = 250
+    BevelOuter = bvNone
+    Caption = 'Panel3'
+    Color = clWindow
+    ParentBackground = False
+    ShowCaption = False
+    TabOrder = 2
+    object Panel5: TPanel
+      Left = 0
+      Top = 0
+      Width = 5
+      Height = 250
+      Align = alLeft
+      BevelOuter = bvNone
+      Caption = 'Panel4'
+      Color = 6538752
+      ParentBackground = False
+      ShowCaption = False
+      TabOrder = 0
+    end
+    object Panel6: TPanel
+      Left = 5
+      Top = 0
+      Width = 475
+      Height = 250
+      Align = alClient
+      BevelOuter = bvNone
+      Caption = 'Panel6'
+      ShowCaption = False
+      TabOrder = 1
+      object Label3: TLabel
+        AlignWithMargins = True
+        Left = 10
+        Top = 10
+        Width = 462
+        Height = 22
+        Margins.Left = 10
+        Margins.Top = 10
+        Margins.Bottom = 5
+        Align = alTop
+        Caption = #1054#1090#1089#1091#1090#1089#1090#1074#1091#1102#1090' '#1089#1077#1075#1086#1076#1085#1103
+        Font.Charset = RUSSIAN_CHARSET
+        Font.Color = clGray
+        Font.Height = -19
+        Font.Name = 'Times New Roman'
+        Font.Style = [fsBold, fsItalic]
+        ParentFont = False
+        ExplicitWidth = 199
+      end
+      object lblAbsentList: TLabel
+        AlignWithMargins = True
+        Left = 10
+        Top = 47
+        Width = 455
+        Height = 21
+        Margins.Left = 10
+        Margins.Top = 10
+        Margins.Right = 10
+        Margins.Bottom = 10
+        Align = alTop
+        Caption = 'lblAbsentList'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clGray
+        Font.Height = -16
+        Font.Name = 'Segoe UI'
+        Font.Style = [fsItalic]
+        ParentFont = False
+        WordWrap = True
+        ExplicitWidth = 86
+      end
     end
   end
 end

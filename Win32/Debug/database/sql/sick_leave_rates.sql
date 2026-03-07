@@ -1,4 +1,6 @@
 CREATE TABLE IF NOT EXISTS "sick_leave_rates" (
-    "min_years" INTEGER PRIMARY KEY,
+    "id" INTEGER PRIMARY KEY,
+	"min_years" INTEGER,
+	"max_years" INTEGER,
     "percent" REAL
 );

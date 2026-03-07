@@ -53,7 +53,6 @@ begin
 
   // 3. Если код дошел сюда (пароль верный) - строим интерфейс!
   Application.CreateForm(TMainForm, MainForm);
-
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TfrmPaySlip, frmPaySlip);
   Application.CreateForm(TfrmReportPayroll, frmReportPayroll);

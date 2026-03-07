@@ -9,7 +9,8 @@ uses
   Vcl.StdCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
   System.DateUtils, System.UITypes,
-  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.Client;
+  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.Client, Vcl.WinXPanels,
+  Vcl.Buttons, System.ImageList, Vcl.ImgList;
 
 type
   TframeSettings = class(TFrame)
@@ -22,14 +23,30 @@ type
     DBGridCompany: TDBGrid;
     Panel2: TPanel;
     DBNavigator1: TDBNavigator;
+    TabSheet2: TTabSheet;
+    Panel3: TPanel;
+    Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Panel1: TPanel;
+    btnChangePass: TButton;
+    edtConfirmPass: TEdit;
+    edtNewPass: TEdit;
+    edtOldPass: TEdit;
+    Label4: TLabel;
+    SpeedButton1: TSpeedButton;
+    ImageList1: TImageList;
     procedure SetupSettingsGrid;
     procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure btnAutoGenerateClick(Sender: TObject);
+    procedure btnChangePassClick(Sender: TObject);
+    procedure SpeedButton1Click(Sender: TObject);
 
   private
   procedure SetupCompanyInfoGrid;
   procedure DBGrid1CellClick(Column: TColumn);
+  procedure MaxYearsGetText(Sender: TField; var Text: string; DisplayText: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -112,6 +129,72 @@ begin
   end;
 end;
 
+procedure TframeSettings.btnChangePassClick(Sender: TObject);
+var
+  CurrentPass: string;
+  Q: TFDQuery;
+begin
+  // 1. Проверки
+  if edtNewPass.Text <> edtConfirmPass.Text then
+  begin
+    ShowMessage('Новый пароль и подтверждение не совпадают!');
+    edtConfirmPass.SetFocus;
+    Exit;
+  end;
+
+  if Trim(edtNewPass.Text) = '' then
+  begin
+    ShowMessage('Пароль не может быть пустым!');
+    edtNewPass.SetFocus;
+    Exit;
+  end;
+
+  // 2. Узнаем текущий пароль из базы
+  CurrentPass := 'admin';
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := dmMain.conn;
+    Q.SQL.Text := 'SELECT key_value FROM company_info WHERE key_name = ''app_password''';
+    Q.Open;
+
+    if not Q.IsEmpty then
+      CurrentPass := Q.FieldByName('key_value').AsString;
+
+    if edtOldPass.Text <> CurrentPass then
+    begin
+      ShowMessage('Текущий пароль введен неверно!');
+      edtOldPass.SetFocus;
+      Exit;
+    end;
+
+    // 3. Сохраняем в базу
+    if not Q.IsEmpty then
+    begin
+      Q.Close;
+      Q.SQL.Text := 'UPDATE company_info SET key_value = :p WHERE key_name = ''app_password''';
+      Q.ParamByName('p').AsString := edtNewPass.Text;
+      Q.ExecSQL;
+    end
+    else
+    begin
+      Q.Close;
+      Q.SQL.Text := 'INSERT INTO company_info (key_name, display_name, key_value) VALUES (''app_password'', ''Пароль для входа'', :p)';
+      Q.ParamByName('p').AsString := edtNewPass.Text;
+      Q.ExecSQL;
+    end;
+
+  finally
+    Q.Free;
+  end;
+
+  ShowMessage('Пароль успешно изменен!');
+
+  // Очищаем поля после успешной смены
+  edtOldPass.Clear;
+  edtNewPass.Clear;
+  edtConfirmPass.Clear;
+end;
+
 constructor TframeSettings.Create(AOwner: TComponent);
 begin
   inherited;
@@ -173,8 +256,46 @@ begin
         DBGrid1.OnDrawColumnCell := DBGrid1DrawColumnCell;
         DBGrid1.OnCellClick := DBGrid1CellClick;
 
+        if not dmMain.qrySickLeaveRates.Active then dmMain.qrySickLeaveRates.Open;
 
-    
+         DBGrid2.DataSource := dmMain.dsSickLeaveRates;
+
+          if Assigned(DBGrid2.DataSource) and Assigned(DBGrid2.DataSource.DataSet) then
+          begin
+            if DBGrid2.DataSource.DataSet.FieldCount > 0 then
+            begin
+              DBGrid2.Columns.Clear;
+
+              // 1. Стаж ОТ (В базе: min_years)
+              with DBGrid2.Columns.Add do begin
+                FieldName := 'min_years';
+                Title.Caption := 'Стаж от (лет)';
+                Width := 110;
+              end;
+
+              // 2. Стаж ДО (В базе ЭТОГО ПОЛЯ НЕТ!)
+              // Пока закомментируем, чтобы не смущать пустой колонкой
+
+              with DBGrid2.Columns.Add do begin
+                FieldName := 'max_years';
+                Title.Caption := 'Стаж до (лет)';
+                Width := 110;
+              end;
+
+
+              // 3. Процент (В базе: percent, а не rate_percent!)
+              with DBGrid2.Columns.Add do begin
+                FieldName := 'percent';
+                Title.Caption := 'Процент оплаты (%)';
+                Width := 150;
+              end;
+            end;
+          end;
+
+          if dmMain.qrySickLeaveRates.FindField('max_years') <> nil then
+          begin
+            dmMain.qrySickLeaveRates.FieldByName('max_years').OnGetText := MaxYearsGetText;
+          end;
 
     // Настройка истории
     SetupCompanyInfoGrid;
@@ -282,6 +403,16 @@ begin
   end;
 end;
 
+procedure TframeSettings.MaxYearsGetText(Sender: TField; var Text: string;
+  DisplayText: Boolean);
+begin
+  // Если в базе пусто (Null) или стоит цифра 0 — показываем пустоту
+  if Sender.IsNull or (Sender.AsInteger = 0) then
+    Text := ''
+  else
+    Text := Sender.AsString; // В остальных случаях выводим саму цифру
+end;
+
 procedure TframeSettings.SetupCompanyInfoGrid;
 begin
   // Привязываем DataSource (на всякий случай, если не сделали в инспекторе)
@@ -337,6 +468,43 @@ begin
   // Красивое форматирование для колонки со значениями (добавляем %)
   if dmMain.qrySettings.FindField('key_value') <> nil then
     TFloatField(dmMain.qrySettings.FieldByName('key_value')).DisplayFormat := '0.00 %';
+end;
+
+procedure TframeSettings.SpeedButton1Click(Sender: TObject);
+begin
+  if edtOldPass.PasswordChar = '*' then
+  begin
+    edtOldPass.PasswordChar := #0;
+    SpeedButton1.ImageIndex := 1;
+  end
+  else
+  begin
+    edtOldPass.PasswordChar := '*';
+    SpeedButton1.ImageIndex := 0;
+  end;
+
+  if edtNewPass.PasswordChar = '*' then
+  begin
+    edtNewPass.PasswordChar := #0;
+    SpeedButton1.ImageIndex := 1;
+  end
+  else
+  begin
+    edtNewPass.PasswordChar := '*';
+    SpeedButton1.ImageIndex := 0;
+  end;
+
+  if edtConfirmPass.PasswordChar = '*' then
+  begin
+    edtConfirmPass.PasswordChar := #0;
+    SpeedButton1.ImageIndex := 1;
+  end
+  else
+  begin
+    edtConfirmPass.PasswordChar := '*';
+    SpeedButton1.ImageIndex := 0;
+  end;
+  //edtNewPass edtConfirmPass
 end;
 
 end.

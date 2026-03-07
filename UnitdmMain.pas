@@ -111,6 +111,12 @@ type
     qryEmpHistory: TFDQuery;
     dsEmpHistory: TDataSource;
     qryEmployeessick_leave_percent: TIntegerField;
+    qrySickLeaveRates: TFDQuery;
+    dsSickLeaveRates: TDataSource;
+    qrySickLeaveRatesid: TIntegerField;
+    qrySickLeaveRatesmin_years: TIntegerField;
+    qrySickLeaveRatesmax_years: TLargeintField;
+    qrySickLeaveRatespercent: TFloatField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);

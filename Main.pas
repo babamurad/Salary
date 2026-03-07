@@ -174,25 +174,20 @@ var
 begin
   // Берем путь к текущей базе из настроек подключения FireDAC
   SourceDB := dmMain.conn.Params.Values['Database'];
-
   SaveDialogBackup.FileName := 'Backup_Salary_' + FormatDateTime('yyyy_mm_dd', Now) + '.db';
-
   if SaveDialogBackup.Execute then
   begin
     DestDB := SaveDialogBackup.FileName;
     try
       // Закрываем соединение, чтобы файл точно не был заблокирован
       dmMain.conn.Connected := False;
-
       // Копируем файл (True означает перезапись, если такой файл уже есть)
       TFile.Copy(SourceDB, DestDB, True);
-
       ShowMessage('Резервная копия успешно создана!' + sLineBreak + DestDB);
     except
       on E: Exception do
         ShowMessage('Ошибка при копировании: ' + E.Message);
     end;
-
     // Обязательно открываем соединение обратно!
     dmMain.conn.Connected := True;
   end;

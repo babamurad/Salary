@@ -711,4 +711,41 @@ object dmMain: TdmMain
     Left = 600
     Top = 392
   end
+  object qrySickLeaveRates: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT '
+      '  id, '
+      '  min_years, '
+      '  NULLIF(max_years, 0) AS max_years, '
+      '  percent '
+      'FROM sick_leave_rates')
+    Left = 728
+    Top = 176
+    object qrySickLeaveRatesid: TIntegerField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object qrySickLeaveRatesmin_years: TIntegerField
+      FieldName = 'min_years'
+      Origin = 'min_years'
+    end
+    object qrySickLeaveRatesmax_years: TLargeintField
+      AutoGenerateValue = arDefault
+      FieldName = 'max_years'
+      Origin = 'max_years'
+      ProviderFlags = []
+      ReadOnly = True
+    end
+    object qrySickLeaveRatespercent: TFloatField
+      FieldName = 'percent'
+      Origin = 'percent'
+    end
+  end
+  object dsSickLeaveRates: TDataSource
+    DataSet = qrySickLeaveRates
+    Left = 728
+    Top = 256
+  end
 end

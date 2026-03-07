@@ -12,7 +12,6 @@ type
   TframeDashboard = class(TFrame)
     Panel1: TPanel;
     lblWelcome: TLabel;
-    Image1: TImage;
     Panel2: TPanel;
     Panel3: TPanel;
     Label3: TLabel;
@@ -25,13 +24,18 @@ type
     Panel7: TPanel;
     Shape2: TShape;
     Shape1: TShape;
-    StackPanel1: TStackPanel;
-    RelativePanel2: TRelativePanel;
-    lblFund: TLabel;
     RelativePanel1: TRelativePanel;
     lblEmpCount: TLabel;
     lblTitle1: TLabel;
+    Panel8: TPanel;
+    RelativePanel2: TRelativePanel;
+    Panel9: TPanel;
     Label1: TLabel;
+    lblFund: TLabel;
+    Shape3: TShape;
+    Shape4: TShape;
+    Shape5: TShape;
+    Panel10: TPanel;
   private
     { Private declarations }
   public

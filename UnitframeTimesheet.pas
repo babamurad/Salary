@@ -62,28 +62,28 @@ var
 begin
   inherited;
 
-  // 1. Инициализируем стартовые значения для переменных
   FCurYear := YearOf(Now);
-  FCurMonth := MonthOf(Now); // Требует System.DateUtils в uses (он у вас уже есть)
+  FCurMonth := MonthOf(Now);
 
-  // --- МАГИЯ АВТОВЫБОРА В ИНТЕРФЕЙСЕ ---
-
-  // 2. Устанавливаем текущий месяц в ComboBox (индекс начинается с 0, поэтому отнимаем 1)
   cbMonth.ItemIndex := FCurMonth - 1;
 
-  // 3. Динамически заполняем года (от прошлого до +2 лет вперед) и выбираем текущий
   cbYear.Items.Clear;
   CurrentYear := FCurYear;
   for i := CurrentYear - 1 to CurrentYear + 2 do
     cbYear.Items.Add(IntToStr(i));
-
-  // Так как мы начали цикл с прошлого года (CurrentYear - 1),
-  // текущий год всегда будет под индексом 1
   cbYear.ItemIndex := 1;
 
-  // ------------------------------------
-
   LoadDepartments;
+
+  // --- МАГИЯ АВТОЗАГРУЗКИ ---
+  // Привязываем пересчет ко всем выпадающим спискам.
+  // Теперь, как только вы поменяете месяц, год или отдел — табель сам мгновенно перерисуется!
+  cbMonth.OnChange := btnLoadClick;
+  cbYear.OnChange := btnLoadClick;
+  cmbDept.OnChange := btnLoadClick;
+
+  // Имитируем нажатие кнопки "Сформировать табель" сразу при открытии вкладки
+  btnLoadClick(nil);
 end;
 
 procedure TframeTimesheet.LoadDepartments;
@@ -525,13 +525,17 @@ var
   CellText: string;
   Hours: Double;
   SaveQuery: TFDQuery;
+  Bookmark: TBookmark; // Для запоминания строки
 begin
   if not Assigned(dmMain) or not dmMain.memTimesheet.Active then Exit;
   if dmMain.memTimesheet.IsEmpty then Exit;
 
   DaysCount := DaysInAMonth(FCurYear, FCurMonth);
-
   SaveQuery := TFDQuery.Create(nil);
+
+  // --- ОТКЛЮЧАЕМ ПРОРИСОВКУ ГРИДА (Ускоряет в 10 раз и убирает мигание) ---
+  dmMain.memTimesheet.DisableControls;
+  Bookmark := dmMain.memTimesheet.GetBookmark; // Запоминаем, где стоял курсор
   try
     SaveQuery.Connection := dmMain.conn;
     dmMain.conn.StartTransaction;
@@ -553,7 +557,6 @@ begin
         for i := 1 to DaysCount do
         begin
           CellText := Trim(dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString);
-
           if CellText = '' then Continue;
 
           CurrentDate := EncodeDate(FCurYear, FCurMonth, i);
@@ -592,6 +595,14 @@ begin
     end;
   finally
     SaveQuery.Free;
+
+    // --- ВОЗВРАЩАЕМ КУРСОР НА МЕСТО И ВКЛЮЧАЕМ ГРИД ---
+    if dmMain.memTimesheet.BookmarkValid(Bookmark) then
+    begin
+      dmMain.memTimesheet.GotoBookmark(Bookmark);
+      dmMain.memTimesheet.FreeBookmark(Bookmark);
+    end;
+    dmMain.memTimesheet.EnableControls;
   end;
 end;
 

@@ -109,6 +109,13 @@ object MainForm: TMainForm
         OnClick = N3Click
       end
     end
+    object N6: TMenuItem
+      Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
+      object MenuBackup: TMenuItem
+        Caption = #1057#1076#1077#1083#1072#1090#1100' '#1088#1077#1079#1077#1088#1074#1085#1091#1102' '#1082#1086#1087#1080#1102
+        OnClick = MenuBackupClick
+      end
+    end
     object N4: TMenuItem
       Caption = #1057#1087#1088#1072#1074#1082#1072
       object N5: TMenuItem
@@ -928,5 +935,9 @@ object MainForm: TMainForm
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
+  end
+  object SaveDialogBackup: TSaveDialog
+    Left = 648
+    Top = 416
   end
 end

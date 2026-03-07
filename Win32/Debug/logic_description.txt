@@ -155,3 +155,10 @@ Project Salary.exe raised exception class EArgumentOutOfRangeException with mess
 
 редактировать больничный
 в табеле трудно отслеживать строку. Закрепить область как в excel
+
+Идеи для дашборда:
+Дни рождения в этом месяце: Кадровику всегда полезно знать, кого нужно поздравить.
+(SQL: SELECT fio, strftime('%d.%m', birth_date) as bdate
+FROM employees WHERE strftime('%m', birth_date) = strftime('%m', 'now') AND status = 1)
+
+Кто сейчас отсутствует: Список тех, кто прямо сегодня находится в отпуске или на больничном.

@@ -10,7 +10,7 @@ uses
   System.Types, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
   FireDAC.Stan.Async, FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet,
-  Vcl.Graphics,
+  Vcl.Graphics, System.IOUtils,
   FireDAC.Comp.Client, System.ImageList, Vcl.Menus;
 
 type
@@ -32,6 +32,9 @@ type
     N5: TMenuItem;
     ImageList2: TImageList;
     StatusBar1: TStatusBar;
+    N6: TMenuItem;
+    MenuBackup: TMenuItem;
+    SaveDialogBackup: TSaveDialog;
     procedure FormCreate(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure PageControl1DrawTab(Control: TCustomTabControl;
@@ -44,6 +47,7 @@ type
     procedure N2Click(Sender: TObject);
     procedure N3Click(Sender: TObject);
     procedure N5Click(Sender: TObject);
+    procedure MenuBackupClick(Sender: TObject);
   private
     FHoverCloseTab: Integer;  // для hover-эффекта крестика
     procedure BuildTree;
@@ -197,6 +201,36 @@ begin
     FormHelp.ShowModal;
   finally
     FormHelp.Free;
+  end;
+end;
+
+procedure TfrmMain.MenuBackupClick(Sender: TObject);
+var
+  SourceDB, DestDB: string;
+begin
+  // Берем путь к текущей базе из настроек подключения FireDAC
+  SourceDB := dmMain.conn.Params.Values['Database'];
+
+  SaveDialogBackup.FileName := 'Backup_Salary_' + FormatDateTime('yyyy_mm_dd', Now) + '.db';
+
+  if SaveDialogBackup.Execute then
+  begin
+    DestDB := SaveDialogBackup.FileName;
+    try
+      // Закрываем соединение, чтобы файл точно не был заблокирован
+      dmMain.conn.Connected := False;
+
+      // Копируем файл (True означает перезапись, если такой файл уже есть)
+      TFile.Copy(SourceDB, DestDB, True);
+
+      ShowMessage('Резервная копия успешно создана!' + sLineBreak + DestDB);
+    except
+      on E: Exception do
+        ShowMessage('Ошибка при копировании: ' + E.Message);
+    end;
+
+    // Обязательно открываем соединение обратно!
+    dmMain.conn.Connected := True;
   end;
 end;
 

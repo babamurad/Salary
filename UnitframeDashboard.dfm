@@ -6,37 +6,37 @@ object frameDashboard: TframeDashboard
   TabOrder = 0
   PixelsPerInch = 96
   object Shape2: TShape
-    Left = 555
-    Top = 406
-    Width = 483
-    Height = 253
+    Left = 556
+    Top = 345
+    Width = 480
+    Height = 250
     Brush.Color = 15263976
     Pen.Color = 11447982
     Pen.Style = psClear
   end
   object Shape1: TShape
-    Left = 41
-    Top = 406
-    Width = 478
-    Height = 253
+    Left = 36
+    Top = 345
+    Width = 480
+    Height = 250
     Brush.Color = 15263976
     Pen.Color = 11447982
     Pen.Style = psClear
   end
   object Shape3: TShape
-    Left = 555
-    Top = 160
-    Width = 483
-    Height = 208
+    Left = 556
+    Top = 156
+    Width = 480
+    Height = 132
     Brush.Color = 15263976
     Pen.Color = 11447982
     Pen.Style = psClear
   end
   object Shape4: TShape
-    Left = 41
+    Left = 36
     Top = 156
-    Width = 478
-    Height = 212
+    Width = 480
+    Height = 132
     Brush.Color = 15263976
     Pen.Color = 11447982
     Pen.Style = psClear
@@ -93,14 +93,11 @@ object frameDashboard: TframeDashboard
       ParentBackground = False
       ShowCaption = False
       TabOrder = 0
-      ExplicitLeft = 0
-      ExplicitTop = -35
-      ExplicitHeight = 250
     end
   end
   object Panel2: TPanel
     Left = 30
-    Top = 400
+    Top = 340
     Width = 480
     Height = 250
     BevelOuter = bvNone
@@ -176,7 +173,7 @@ object frameDashboard: TframeDashboard
   end
   object Panel3: TPanel
     Left = 550
-    Top = 400
+    Top = 340
     Width = 480
     Height = 250
     BevelOuter = bvNone
@@ -253,9 +250,9 @@ object frameDashboard: TframeDashboard
   object RelativePanel1: TRelativePanel
     AlignWithMargins = True
     Left = 30
-    Top = 149
+    Top = 150
     Width = 480
-    Height = 209
+    Height = 132
     Margins.Right = 20
     ControlCollection = <
       item
@@ -291,11 +288,11 @@ object frameDashboard: TframeDashboard
     TabOrder = 3
     DesignSize = (
       480
-      209)
+      132)
     object lblEmpCount: TLabel
-      Left = 169
-      Top = 142
-      Width = 142
+      Left = 183
+      Top = 65
+      Width = 114
       Height = 67
       Align = alBottom
       Alignment = taCenter
@@ -344,10 +341,10 @@ object frameDashboard: TframeDashboard
   end
   object RelativePanel2: TRelativePanel
     AlignWithMargins = True
-    Left = 547
-    Top = 149
+    Left = 550
+    Top = 150
     Width = 480
-    Height = 209
+    Height = 132
     Margins.Right = 20
     ControlCollection = <
       item
@@ -383,7 +380,7 @@ object frameDashboard: TframeDashboard
     TabOrder = 4
     DesignSize = (
       480
-      209)
+      132)
     object Panel9: TPanel
       Left = 0
       Top = -35
@@ -416,11 +413,12 @@ object frameDashboard: TframeDashboard
       ParentFont = False
     end
     object lblFund: TLabel
-      Left = 119
-      Top = 154
+      Left = 125
+      Top = 74
       Width = 195
-      Height = 42
-      Anchors = []
+      Height = 50
+      Align = alBottom
+      Alignment = taCenter
       Caption = #1047#1072#1075#1088#1091#1079#1082#1072'...'
       Color = 6538752
       Font.Charset = ANSI_CHARSET

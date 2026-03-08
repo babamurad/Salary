@@ -17,7 +17,7 @@ object frmLogin: TfrmLogin
   object Label1: TLabel
     Left = 48
     Top = 81
-    Width = 271
+    Width = 263
     Height = 25
     Caption = #55357#56420#1042#1074#1077#1076#1080#1090#1077' '#1087#1072#1088#1086#1083#1100' '#1076#1083#1103' '#1074#1093#1086#1076#1072':'
     Font.Charset = RUSSIAN_CHARSET
@@ -39,7 +39,6 @@ object frmLogin: TfrmLogin
     Top = 112
     Width = 241
     Height = 33
-    Alignment = taCenter
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -19
@@ -89,8 +88,5 @@ object frmLogin: TfrmLogin
     ParentBackground = False
     ParentFont = False
     TabOrder = 3
-    ExplicitLeft = 0
-    ExplicitTop = 0
-    ExplicitWidth = 350
   end
 end

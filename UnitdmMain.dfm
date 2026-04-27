@@ -1,9 +1,9 @@
 object dmMain: TdmMain
   OnCreate = DataModuleCreate
   OnDestroy = DataModuleDestroy
-  Height = 651
-  Width = 960
-  PixelsPerInch = 96
+  Height = 251
+  Width = 486
+  PixelsPerInch = 120
   object conn: TFDConnection
     Params.Strings = (
       

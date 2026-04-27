@@ -11,7 +11,7 @@ uses
   FireDAC.Comp.Client, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
   Vcl.Controls, System.IniFiles, System.DateUtils,
   FireDAC.DApt, FireDAC.Comp.DataSet, Vcl.Dialogs, FireDAC.Comp.ScriptCommands,
-  FireDAC.Stan.Util, FireDAC.Comp.Script, Vcl.Menus;
+  FireDAC.Stan.Util, FireDAC.Comp.Script, Vcl.Menus, Data.Bind.Components;
 
 type
   TdmMain = class(TDataModule)
@@ -32,6 +32,8 @@ type
     dsConstSettings: TDataSource;
     qryProdCalendar: TFDQuery;
     dsProdCalendar: TDataSource;
+    qrySickLeaveRates: TFDQuery;
+    dsSickLeaveRates: TDataSource;
     qryHistory: TFDQuery;
     dsHistory: TDataSource;
     qryVacation: TFDQuery;
@@ -61,6 +63,8 @@ type
     qryVacationavg_daily_salary: TFMTBCDField;
     qryVacationtotal_amount: TFMTBCDField;
     qryVacationfio: TWideStringField;
+    qrySickLeaveRatesmin_years: TIntegerField;
+    qrySickLeaveRatespercent: TFloatField;
     scrCreateDb: TFDScript;
     memTimesheet: TFDMemTable;
     dsTimesheet: TDataSource;
@@ -110,13 +114,6 @@ type
     qryCompanyInfokey_value: TWideStringField;
     qryEmpHistory: TFDQuery;
     dsEmpHistory: TDataSource;
-    qryEmployeessick_leave_percent: TIntegerField;
-    qrySickLeaveRates: TFDQuery;
-    dsSickLeaveRates: TDataSource;
-    qrySickLeaveRatesid: TIntegerField;
-    qrySickLeaveRatesmin_years: TIntegerField;
-    qrySickLeaveRatesmax_years: TLargeintField;
-    qrySickLeaveRatespercent: TFloatField;
 
     procedure connBeforeConnect(Sender: TObject);
     procedure DataModuleCreate(Sender: TObject);
@@ -147,6 +144,7 @@ type
     procedure SaveConfig(const APath: string);
     procedure CloseAllQueries;
     procedure OpenAllQueries;
+
     property FullPath: string read FFullPath write FFullPath;
 
   end;
@@ -166,26 +164,29 @@ uses Main;
 procedure TdmMain.ApplyDatabase(const APath: string);
 begin
   try
+    // === ОТЛАДКА ===
+//    ShowMessage('Попытка открыть: ' + APath + #13#10 +
+//                'Файл существует: ' + BoolToStr(FileExists(APath), True));
+    // ================
     CloseAllQueries;
     conn.Close;
-
-    conn.Params.Values['Database'] := APath;
-    // Для существующих баз возвращаем обычный режим
-    conn.Params.Values['OpenMode'] := 'ReadWrite';
-
+    conn.Params.Clear;
+    conn.Params.DriverID := 'SQLite';
+    conn.Params.Database := APath;
+    conn.Params.Add('OpenMode=ReadWrite');
+    // === ОТЛАДКА: покажем все параметры ===
+//    ShowMessage('Параметры подключения:'#13#10 + conn.Params.Text);
+    // ======================================
     conn.Connected := True;
-
     OpenAllQueries;
     SaveConfig(APath);
-
-    // Обновляем дашборд на MainForm
     if Assigned(MainForm) then
       MainForm.RefreshDashboard;
-
   except
     on E: Exception do
-      ShowMessage('Ошибка подключения к базе данных:' + sLineBreak + APath +
-                  sLineBreak + 'Детали: ' + E.Message);
+      ShowMessage('Ошибка подключения к базе данных:' + sLineBreak +
+                  'Путь: ' + APath + sLineBreak +
+                  'Детали: ' + E.Message);
   end;
 end;
 
@@ -385,24 +386,29 @@ procedure TdmMain.LoadConfig;
 var
   Ini: TIniFile;
   SavedPath: string;
-
   ExePath: string;
+  DBDir: string;
 begin
-  ExePath := ExtractFilePath(ParamStr(0)); // Путь к папке с нашим EXE
-
+  ExePath := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
   Ini := TIniFile.Create(ExePath + 'config.ini');
   try
-    // Читаем путь из INI. По умолчанию ищем просто 'salarydb.db'
-    SavedPath := Ini.ReadString('Database', 'Path', 'salarydb.db');
-
-    // ПРОВЕРКА: Это относительный путь или абсолютный?
-    // Функция ExtractFileDrive вернет пустоту, если это просто имя файла (без C:\ или D:\)
+    // Читаем путь из INI. По умолчанию: папка\файл
+    SavedPath := Ini.ReadString('Database', 'Path', 'database\salarydb.db');
+    // === ЗАЩИТА 1: Если указана только папка (без .db) ===
+    if ExtractFileExt(SavedPath) = '' then
+      SavedPath := IncludeTrailingPathDelimiter(SavedPath) + 'salarydb.db';
+    // ====================================================
+    // === ЗАЩИТА 2: Относительный или абсолютный путь ===
     if ExtractFileDrive(SavedPath) = '' then
-      FullPath := ExePath + SavedPath // Приклеиваем путь к EXE
+      FullPath := ExePath + SavedPath  // Приклеиваем к EXE: D:\Salary\...\database\salarydb.db
     else
-      FullPath := SavedPath;          // Если путь абсолютный (например, сетевой диск), оставляем как есть
-
-    // Пытаемся применить этот собранный путь
+      FullPath := SavedPath;           // Абсолютный путь — оставляем как есть
+    // ===================================================
+    // === ЗАЩИТА 3: Создаём папку если не существует ===
+    DBDir := ExtractFilePath(FullPath);
+    if not DirectoryExists(DBDir) then
+      ForceDirectories(DBDir);
+    // ==================================================
     ApplyDatabase(FullPath);
   finally
     Ini.Free;

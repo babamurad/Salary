@@ -1,8 +1,8 @@
 object dmMain: TdmMain
   OnCreate = DataModuleCreate
   OnDestroy = DataModuleDestroy
-  Height = 251
-  Width = 486
+  Height = 590
+  Width = 873
   PixelsPerInch = 120
   object conn: TFDConnection
     Params.Strings = (
@@ -660,7 +660,7 @@ object dmMain: TdmMain
     SQL.Strings = (
       'SELECT * FROM company_info')
     Left = 488
-    Top = 328
+    Top = 336
     object qryCompanyInfoid: TFDAutoIncField
       FieldName = 'id'
       Origin = 'id'
@@ -688,7 +688,7 @@ object dmMain: TdmMain
   object dsCompanyInfo: TDataSource
     DataSet = qryCompanyInfo
     Left = 488
-    Top = 392
+    Top = 400
   end
   object qryEmpHistory: TFDQuery
     Connection = conn
@@ -697,8 +697,8 @@ object dmMain: TdmMain
       'FROM salary_history '
       'WHERE emp_id = :emp_id '
       'ORDER BY period_date DESC')
-    Left = 600
-    Top = 328
+    Left = 608
+    Top = 336
     ParamData = <
       item
         Name = 'EMP_ID'
@@ -708,8 +708,8 @@ object dmMain: TdmMain
   end
   object dsEmpHistory: TDataSource
     DataSet = qryEmpHistory
-    Left = 600
-    Top = 392
+    Left = 608
+    Top = 400
   end
   object qrySickLeaveRates: TFDQuery
     Connection = conn

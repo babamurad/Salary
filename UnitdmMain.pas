@@ -546,4 +546,6 @@ begin
   end;
 end;
 
+initialization
+  RegisterClass(TLargeintField);
 end.

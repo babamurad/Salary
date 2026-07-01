@@ -1,3 +1,2 @@
-2026/03/07-11:19:37.691 176c Reusing MANIFEST C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
-2026/03/07-11:19:37.715 176c Recovering log #3
-2026/03/07-11:19:37.724 176c Reusing old log C:\Users\user\Documents\Embarcadero\Studio\Projects\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Local Storage\leveldb/000003.log 
+2026/07/01-12:08:39.935 23ec Creating DB C:\OSPanel\domains\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Local Storage\leveldb since it was missing.
+2026/07/01-12:08:39.976 23ec Reusing MANIFEST C:\OSPanel\domains\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001

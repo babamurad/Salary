@@ -7,8 +7,8 @@ object dmMain: TdmMain
   object conn: TFDConnection
     Params.Strings = (
       
-        'Database=C:\Users\user\Documents\Embarcadero\Studio\Projects\Sal' +
-        'ary\Win32\Debug\database\salarydb.db'
+        'Database=C:\OSPanel\domains\Salary\Win32\Debug\database\salarydb' +
+        '.db'
       'OpenMode=ReadWrite'
       'DriverID=SQLite')
     FormatOptions.AssignedValues = [fvMapRules]
@@ -20,7 +20,7 @@ object dmMain: TdmMain
       end>
     LoginPrompt = False
     BeforeConnect = connBeforeConnect
-    Left = 56
+    Left = 40
     Top = 16
   end
   object FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink

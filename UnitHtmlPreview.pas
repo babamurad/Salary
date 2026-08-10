@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge;
+  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, UnitWebView2Utils;
 
 type
   TfrmHtmlPreview = class(TForm)
@@ -47,7 +47,7 @@ begin
   if Succeeded(AResult) then
     Edge.NavigateToString(FHtmlContent)
   else
-    ShowMessage('Ошибка запуска WebView2.');
+    ShowWebView2Error(AResult);
 end;
 
 procedure TfrmHtmlPreview.btnPrintClick(Sender: TObject);

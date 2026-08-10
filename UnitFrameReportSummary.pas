@@ -6,6 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, System.IOUtils, Data.DB, ComObj,
+  UnitWebView2Utils,
   FireDAC.Comp.Client, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
   System.DateUtils,
@@ -154,7 +155,7 @@ end;
 procedure TframeReportSummary.EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 begin
   if not Succeeded(AResult) then
-    ShowMessage('Ошибка инициализации браузера для отчетов.');
+    ShowWebView2Error(AResult);
 end;
 
 procedure TframeReportSummary.btnPrintClick(Sender: TObject);

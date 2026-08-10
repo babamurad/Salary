@@ -26,7 +26,8 @@ uses
   UnitFrameReportSummary in 'UnitFrameReportSummary.pas' {FrameReportSummary: TFrame},
   UnitFrameVacations in 'UnitFrameVacations.pas' {frameVacations: TFrame},
   UnitHtmlPreview in 'UnitHtmlPreview.pas' {frmHtmlPreview},
-  UnitLogin in 'UnitLogin.pas' {frmLogin};
+  UnitLogin in 'UnitLogin.pas' {frmLogin},
+  UnitWebView2Utils in 'UnitWebView2Utils.pas';
 
 {$R *.res}
 

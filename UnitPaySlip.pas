@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls,
   System.IOUtils,
-  Vcl.ExtCtrls, Winapi.WebView2, Winapi.ActiveX, Vcl.Edge;
+  Vcl.ExtCtrls, Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, UnitWebView2Utils;
 
 type
   TfrmPaySlip = class(TForm)
@@ -49,6 +49,7 @@ begin
   // 1. Генерируем HTML и прячем его в нашу переменную
   FHtmlContent := GenerateAllSlips(Dataset, Period);
   // 2. Даем браузеру команду "Просыпайся и создавай движок!"
+  Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
   Edge.CreateWebView;
 end;
 
@@ -90,7 +91,7 @@ begin
   if Succeeded(AResult) then
     Edge.NavigateToString(FHtmlContent)
   else
-    ShowMessage('Ошибка запуска WebView2.');
+    ShowWebView2Error(AResult);
 end;
 
 function TfrmPaySlip.GenerateAllSlips(Dataset: TDataSet; Period: string): string;

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, System.IOUtils, Data.DB;
+  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, System.IOUtils, Data.DB, UnitWebView2Utils;
 
 type
   TfrmReportPayroll = class(TForm)
@@ -45,7 +45,7 @@ begin
   if Succeeded(AResult) then
     Edge.NavigateToString(FHtmlContent)
   else
-    ShowMessage('Ошибка запуска WebView2 для отчета.');
+    ShowWebView2Error(AResult);
 end;
 
 function TfrmReportPayroll.GenerateReportHtml(Dataset: TDataSet; Period: string): string;

@@ -115,10 +115,7 @@ begin
   inherited;
   // Как только у фрейма появился родитель (вкладка) — безопасно запускаем браузер!
   if (AParent <> nil) and not Assigned(Edge.DefaultInterface) then
-  begin
-    Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCacheReports';
-    Edge.CreateWebView;
-  end;
+    SafeCreateWebView(Edge, 'EdgeCacheReports');
 end;
 
 procedure TframeReportSummary.btnGenerateClick(Sender: TObject);

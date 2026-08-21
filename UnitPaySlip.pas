@@ -40,8 +40,7 @@ implementation
 procedure TfrmPaySlip.ShowAllPayslips(Dataset: TDataSet; Period: string);
 begin
   FHtmlContent := GenerateSlips(Dataset, Period, False); // False = цикл по всем
-  Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
-  Edge.CreateWebView;
+  SafeCreateWebView(Edge, 'EdgeCache');
 end;
 
 procedure TfrmPaySlip.ShowPayroll(Dataset: TDataSet; Period: string);
@@ -49,15 +48,13 @@ begin
   // 1. Генерируем HTML и прячем его в нашу переменную
   FHtmlContent := GenerateAllSlips(Dataset, Period);
   // 2. Даем браузеру команду "Просыпайся и создавай движок!"
-  Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
-  Edge.CreateWebView;
+  SafeCreateWebView(Edge, 'EdgeCache');
 end;
 
 procedure TfrmPaySlip.ShowSinglePayslip(Dataset: TDataSet; Period: string);
 begin
   FHtmlContent := GenerateSlips(Dataset, Period, True); // True = только текущий
-  Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
-  Edge.CreateWebView;
+  SafeCreateWebView(Edge, 'EdgeCache');
 end;
 
 function TfrmPaySlip.GetHtmlTemplate: string;

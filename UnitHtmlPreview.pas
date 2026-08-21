@@ -36,8 +36,7 @@ begin
   FHtmlContent := HtmlText;
 
   // ”казываем папку дл€ кэша движка (как у вас в квитках)
-  Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
-  Edge.CreateWebView;
+  SafeCreateWebView(Edge, 'EdgeCache');
 
   Self.ShowModal; // ќткрываем форму как модальное окно
 end;

@@ -36,8 +36,7 @@ begin
   FHtmlContent := GenerateReportHtml(Dataset, Period);
 
   // 2. Инициализируем браузер
-  Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
-  Edge.CreateWebView;
+  SafeCreateWebView(Edge, 'EdgeCache');
 end;
 
 procedure TfrmReportPayroll.EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);

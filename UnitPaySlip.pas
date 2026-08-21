@@ -95,6 +95,7 @@ function TfrmPaySlip.GenerateAllSlips(Dataset: TDataSet; Period: string): string
 var
   Body, Item: string;
   Bookmark: TBookmark;
+  BootstrapPath, BootstrapCSS: string;
 begin
   Body := '';
 
@@ -131,9 +132,15 @@ begin
   end;
 
   // Оборачиваем всё в стандартный контейнер Bootstrap
+  BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\css\bootstrap.min.css';
+  BootstrapCSS := '';
+  if TFile.Exists(BootstrapPath) then
+    BootstrapCSS := TFile.ReadAllText(BootstrapPath)
+  else
+    ShowMessage('Внимание: Файл ' + BootstrapPath + ' не найден! Вёрстка может поехать.');
   Result :=
     '<html><head>' +
-    '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">' +
+    '<style>' + BootstrapCSS + '</style>' +
     '<style>' +
     '  @media print { .no-print { display: none; } }' +
     '  .payslip-card { page-break-inside: avoid; border: 1px solid #dee2e6; }' +

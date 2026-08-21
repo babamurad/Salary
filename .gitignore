@@ -22,7 +22,7 @@ Win64/
 Win32/Debug/*.dcu
 Win32/Debug/*.exe
 
-# Портативный (Fixed Version) рантайм WebView2 — тяжёлый (150-200 МБ) бинарный
-# редистрибутив Microsoft, его не нужно хранить в git. Скачивается отдельно
-# и кладётся рядом с exe при сборке дистрибутива, см. DEPLOY_WEBVIEW2.md
-WebView2Runtime/
+# Портативный (Fixed Version) рантайм WebView2 хранится в репозитории через
+# Git LFS (см. .gitattributes и DEPLOY_WEBVIEW2.md), поэтому явно снимаем
+# с него действие правил *.exe/*.dll выше.
+!WebView2Runtime/**

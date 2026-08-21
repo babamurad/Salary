@@ -1,5 +1,0 @@
-2026/07/01-12:08:39.832 6bc0 Log #6: 0 ops saved to Table #7 OK
-2026/07/01-12:08:39.845 6bc0 Archiving C:\OSPanel\domains\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Site Characteristics Database/000006.log: OK
-2026/07/01-12:08:39.846 6bc0 Table #4: 1 entries OK
-2026/07/01-12:08:39.854 6bc0 Archiving C:\OSPanel\domains\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Site Characteristics Database/MANIFEST-000001: OK
-2026/07/01-12:08:39.864 6bc0 **** Repaired leveldb C:\OSPanel\domains\Salary\Win32\Debug\EdgeCache\EBWebView\Default\Site Characteristics Database; recovered 1 files; 130 bytes. Some data may have been lost. ****

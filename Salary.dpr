@@ -27,7 +27,7 @@ uses
   UnitFrameVacations in 'UnitFrameVacations.pas' {frameVacations: TFrame},
   UnitHtmlPreview in 'UnitHtmlPreview.pas' {frmHtmlPreview},
   UnitLogin in 'UnitLogin.pas' {frmLogin},
-  UnitWebView2Utils in 'UnitWebView2Utils.pas';
+  UnitReportBrowserUtils in 'UnitReportBrowserUtils.pas';
 
 {$R *.res}
 
@@ -36,6 +36,11 @@ var
 
 begin
   Application.Initialize;
+
+  // 0. Включаем для TWebBrowser современный режим рендеринга ("IE11 Edge
+  // mode"), иначе отчёты будут выглядеть сломанными
+  EnsureIE11BrowserEmulation;
+
   // 1. Первым делом поднимаем базу данных (чтобы логин мог проверить пароль)
   Application.CreateForm(TdmMain, dmMain);
 

@@ -5,17 +5,17 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, UnitWebView2Utils;
+  SHDocVw, UnitReportBrowserUtils;
 
 type
   TfrmHtmlPreview = class(TForm)
-    Edge: TEdgeBrowser;
     PanelBottom: TPanel;
     btnPrint: TButton;
     procedure btnPrintClick(Sender: TObject);
-    procedure EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure FormCreate(Sender: TObject);
   private
     FHtmlContent: string;
+    FBrowser: TWebBrowser;
   public
     // √лавный метод: передаем сюда заголовок окна и сам HTML-код
     procedure ShowDocument(const FormCaption, HtmlText: string);
@@ -30,29 +30,29 @@ implementation
 
 { TfrmHtmlPreview }
 
+procedure TfrmHtmlPreview.FormCreate(Sender: TObject);
+begin
+  // TWebBrowser создаЄтс€ кодом, а не кладЄтс€ на форму в дизайнере Ч
+  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
+  // не нуждаетс€.
+  FBrowser := TWebBrowser.Create(Self);
+  FBrowser.Parent := Self;
+  FBrowser.Align := alClient;
+end;
+
 procedure TfrmHtmlPreview.ShowDocument(const FormCaption, HtmlText: string);
 begin
   Self.Caption := FormCaption;
   FHtmlContent := HtmlText;
 
-  // ”казываем папку дл€ кэша движка (как у вас в квитках)
-  SafeCreateWebView(Edge, 'EdgeCache');
+  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'HtmlPreview');
 
   Self.ShowModal; // ќткрываем форму как модальное окно
 end;
 
-procedure TfrmHtmlPreview.EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-begin
-  if Succeeded(AResult) then
-    Edge.NavigateToString(FHtmlContent)
-  else
-    ShowWebView2Error(AResult);
-end;
-
 procedure TfrmHtmlPreview.btnPrintClick(Sender: TObject);
 begin
-  Edge.SetFocus; // ¬ажно дл€ фокуса модального окна
-  Edge.ExecuteScript('window.print();');
+  PrintBrowser(FBrowser);
 end;
 
 end.

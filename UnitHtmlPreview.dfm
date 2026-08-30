@@ -12,17 +12,9 @@
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poMainFormCenter
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 21
-  object Edge: TEdgeBrowser
-    Left = 0
-    Top = 0
-    Width = 900
-    Height = 690
-    Align = alClient
-    TabOrder = 0
-    OnCreateWebViewCompleted = EdgeCreateWebViewCompleted
-  end
   object PanelBottom: TPanel
     Left = 0
     Top = 690
@@ -30,7 +22,7 @@
     Height = 60
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 1
+    TabOrder = 0
     object btnPrint: TButton
       Left = 380
       Top = 12

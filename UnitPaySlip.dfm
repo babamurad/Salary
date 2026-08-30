@@ -12,24 +12,16 @@ object frmPaySlip: TfrmPaySlip
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poMainFormCenter
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 21
-  object Edge: TEdgeBrowser
-    Left = 0
-    Top = 0
-    Width = 832
-    Height = 661
-    Align = alClient
-    TabOrder = 0
-    OnCreateWebViewCompleted = EdgeCreateWebViewCompleted
-  end
   object PanelBottom: TPanel
     Left = 0
     Top = 661
     Width = 832
     Height = 41
     Align = alBottom
-    TabOrder = 1
+    TabOrder = 0
     object btnPdf: TButton
       Left = 304
       Top = 8

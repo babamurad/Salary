@@ -5,8 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, System.IOUtils, Data.DB, ComObj,
-  UnitWebView2Utils,
+  SHDocVw, System.IOUtils, Data.DB, ComObj,
+  UnitReportBrowserUtils,
   FireDAC.Comp.Client, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
   System.DateUtils,
@@ -21,20 +21,17 @@ type
     btnGenerate: TButton;
     btnPrint: TButton;
     btnExcel: TButton;
-    Edge: TEdgeBrowser;
     qryReport: TFDQuery;
     dsReport: TDataSource; // Ваш запрос к БД
     procedure btnGenerateClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
     procedure btnExcelClick(Sender: TObject);
-    procedure EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
   private
     FHtmlContent: string;
+    FBrowser: TWebBrowser;
     function GenerateReportHtml(Dataset: TDataSet; Period: string): string;
     procedure LoadData;
     procedure LoadDepartments;
-  protected
-    procedure SetParent(AParent: TWinControl); override;
   public
     constructor Create(AOwner: TComponent); override;
     // Процедура инициализации (можно вызывать при показе фрейма)
@@ -110,14 +107,6 @@ begin
     cmbDept.ItemIndex := 0;
 end;
 
-procedure TframeReportSummary.SetParent(AParent: TWinControl);
-begin
-  inherited;
-  // Как только у фрейма появился родитель (вкладка) — безопасно запускаем браузер!
-  if (AParent <> nil) and not Assigned(Edge.DefaultInterface) then
-    SafeCreateWebView(Edge, 'EdgeCacheReports');
-end;
-
 procedure TframeReportSummary.btnGenerateClick(Sender: TObject);
 var
   PeriodStr: string;
@@ -142,28 +131,16 @@ begin
 
   // Генерируем HTML и отправляем в браузер
   FHtmlContent := GenerateReportHtml(qryReport, PeriodStr);
-  Edge.NavigateToString(FHtmlContent);
+  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'ReportSummary');
 
   // Включаем кнопки экспорта
   btnPrint.Enabled := True;
   btnExcel.Enabled := True;
 end;
 
-procedure TframeReportSummary.EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-begin
-  if not Succeeded(AResult) then
-    ShowWebView2Error(AResult);
-end;
-
 procedure TframeReportSummary.btnPrintClick(Sender: TObject);
 begin
-  // 1. Передаем фокус визуальному компоненту на форме
-  if Edge.CanFocus then
-    Edge.SetFocus;
-
-  // 2. Двойной удар JS: сначала заставляем сам документ перехватить фокус,
-  // а затем с чуть большей задержкой вызываем окно печати
-  Edge.ExecuteScript('window.focus(); setTimeout(function() { window.print(); }, 250);');
+  PrintBrowser(FBrowser);
 end;
 
 constructor TframeReportSummary.Create(AOwner: TComponent);
@@ -171,6 +148,13 @@ var
   i, vYear: Integer;
 begin
   inherited;
+
+  // TWebBrowser создаётся кодом, а не кладётся на фрейм в дизайнере —
+  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
+  // не нуждается.
+  FBrowser := TWebBrowser.Create(Self);
+  FBrowser.Parent := Self;
+  FBrowser.Align := alClient;
 
   cmbMonth.Items.CommaText := 'Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь';
   vYear := YearOf(Date);
@@ -182,10 +166,6 @@ begin
   cmbYear.Text := IntToStr(vYear);
 
   LoadDepartments;
-
-  // ЭТИ ДВЕ СТРОЧКИ НУЖНО УДАЛИТЬ:
-  // Edge.UserDataFolder := ExtractFilePath(ParamStr(0)) + 'EdgeCache';
-  // Edge.CreateWebView;
 end;
 
 // --- ТУТ ВАШ КОД ИЗ ПРОШЛОГО ШАГА ---
@@ -194,17 +174,17 @@ end;
 
 function TframeReportSummary.GenerateReportHtml(Dataset: TDataSet; Period: string): string;
 var
-  BootstrapPath, BootstrapCSS: string;
+  ReportCssPath, ReportCSS: string;
   TBody, CurrentDept, DeptName, TFoot: string;
   RowIndex: Integer;
   GrandGross, GrandTax, GrandPens, GrandUnion, GrandAlim, GrandNet: Double;
   DeptGross, DeptTax, DeptPens, DeptUnion, DeptAlim, DeptNet: Double;
 begin
-  // 1. Подгружаем локальный CSS Bootstrap
-  BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\bootstrap.min.css';
-  BootstrapCSS := '';
-  if TFile.Exists(BootstrapPath) then
-    BootstrapCSS := TFile.ReadAllText(BootstrapPath);
+  // 1. Подгружаем локальный CSS отчётов
+  ReportCssPath := ExtractFilePath(ParamStr(0)) + 'assets\report.css';
+  ReportCSS := '';
+  if TFile.Exists(ReportCssPath) then
+    ReportCSS := TFile.ReadAllText(ReportCssPath);
 
   // 2. Инициализируем переменные для итогов
   GrandGross := 0; GrandTax := 0; GrandPens := 0; GrandUnion := 0; GrandAlim := 0; GrandNet := 0;
@@ -316,7 +296,7 @@ begin
 
   // 3. Собираем финальный HTML документ (разбито на короткие строки)
   Result :=
-    '<html><head><style>' + BootstrapCSS + '</style><style>' +
+    '<html><head><style>' + ReportCSS + '</style><style>' +
     '  @media print { .no-print { display: none; } @page { size: landscape; margin: 10mm; } }' +
     '  body { background: #f8f9fa; padding: 20px; font-family: "Segoe UI", sans-serif; }' +
     '  .report-container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }' +

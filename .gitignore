@@ -21,24 +21,3 @@ Win64/
 *.sqlite
 Win32/Debug/*.dcu
 Win32/Debug/*.exe
-
-# Профили WebView2 (кэш, cookies, IndexedDB, crash-репорты) — создаются
-# заново при каждом запуске программы, меняются на каждом запуске
-# и не нужны в git. Имена папок заданы в коде (UnitHtmlPreview, UnitPaySlip,
-# UnitReportPayroll — 'EdgeCache'; UnitFrameReportSummary — 'EdgeCacheReports');
-# *.WebView2/ — папка по умолчанию, которую WebView2 создаёт сам,
-# если UserDataFolder ещё не был выставлен.
-Win32/*/EdgeCache/
-Win32/*/EdgeCacheReports/
-Win32/*/*.WebView2/
-
-# Случайные лишние копии WebView2Loader.dll, оставшиеся не рядом с exe
-# (сама нужная копия — Win32/Debug/WebView2Loader.dll — не трогаем).
-Win32/Debug/w32/
-Win32/Debug/w64/
-Win32/Debug/database/Webview2Loader.dll
-
-# Портативный (Fixed Version) рантайм WebView2 хранится в репозитории через
-# Git LFS (см. .gitattributes и DEPLOY_WEBVIEW2.md), поэтому явно снимаем
-# с него действие правил *.exe/*.dll выше.
-!WebView2Runtime/**

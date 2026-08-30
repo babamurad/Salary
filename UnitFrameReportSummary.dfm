@@ -64,15 +64,6 @@ object FrameReportSummary: TFrameReportSummary
       OnClick = btnExcelClick
     end
   end
-  object Edge: TEdgeBrowser
-    Left = 0
-    Top = 49
-    Width = 1061
-    Height = 603
-    Align = alClient
-    TabOrder = 1
-    OnCreateWebViewCompleted = EdgeCreateWebViewCompleted
-  end
   object qryReport: TFDQuery
     Connection = dmMain.conn
     Left = 968

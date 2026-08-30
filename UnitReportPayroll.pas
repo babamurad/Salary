@@ -5,17 +5,17 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, System.IOUtils, Data.DB, UnitWebView2Utils;
+  SHDocVw, System.IOUtils, Data.DB, UnitReportBrowserUtils;
 
 type
   TfrmReportPayroll = class(TForm)
     PanelTop: TPanel;
-    Edge: TEdgeBrowser;
     btnPrint: TButton;
     procedure btnPrintClick(Sender: TObject);
-    procedure EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure FormCreate(Sender: TObject);
   private
     FHtmlContent: string;
+    FBrowser: TWebBrowser;
     function GenerateReportHtml(Dataset: TDataSet; Period: string): string;
   public
     procedure ShowReport(Dataset: TDataSet; Period: string);
@@ -30,26 +30,28 @@ implementation
 
 { TfrmReportPayroll }
 
+procedure TfrmReportPayroll.FormCreate(Sender: TObject);
+begin
+  // TWebBrowser создаётся кодом, а не кладётся на форму в дизайнере —
+  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
+  // не нуждается.
+  FBrowser := TWebBrowser.Create(Self);
+  FBrowser.Parent := Self;
+  FBrowser.Align := alClient;
+end;
+
 procedure TfrmReportPayroll.ShowReport(Dataset: TDataSet; Period: string);
 begin
   // 1. Генерируем HTML-отчет
   FHtmlContent := GenerateReportHtml(Dataset, Period);
 
-  // 2. Инициализируем браузер
-  SafeCreateWebView(Edge, 'EdgeCache');
-end;
-
-procedure TfrmReportPayroll.EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-begin
-  if Succeeded(AResult) then
-    Edge.NavigateToString(FHtmlContent)
-  else
-    ShowWebView2Error(AResult);
+  // 2. Показываем его в браузере
+  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'ReportPayroll');
 end;
 
 function TfrmReportPayroll.GenerateReportHtml(Dataset: TDataSet; Period: string): string;
 var
-  BootstrapPath, BootstrapCSS: string;
+  ReportCssPath, ReportCSS: string;
   TBody, CurrentDept, DeptName: string;
   RowIndex: Integer;
   // Итоги по предприятию (Grand Totals)
@@ -57,9 +59,9 @@ var
   // Промежуточные итоги по отделу (Department Totals)
   DeptGross, DeptTax, DeptPens, DeptUnion, DeptAlim, DeptNet: Double;
 begin
-  BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\bootstrap.min.css';
-  BootstrapCSS := '';
-  if TFile.Exists(BootstrapPath) then BootstrapCSS := TFile.ReadAllText(BootstrapPath);
+  ReportCssPath := ExtractFilePath(ParamStr(0)) + 'assets\report.css';
+  ReportCSS := '';
+  if TFile.Exists(ReportCssPath) then ReportCSS := TFile.ReadAllText(ReportCssPath);
 
   GrandGross := 0; GrandTax := 0; GrandPens := 0; GrandUnion := 0; GrandAlim := 0; GrandNet := 0;
   DeptGross := 0; DeptTax := 0; DeptPens := 0; DeptUnion := 0; DeptAlim := 0; DeptNet := 0;
@@ -155,7 +157,7 @@ begin
 
   // 4. Собираем весь документ (разбили длинные строки на части!)
   Result :=
-    '<html><head><style>' + BootstrapCSS + '</style><style>' +
+    '<html><head><style>' + ReportCSS + '</style><style>' +
     '  @media print { .no-print { display: none; } @page { size: landscape; margin: 10mm; } }' +
     '  body { background: #f8f9fa; padding: 20px; font-family: "Segoe UI", sans-serif; }' +
     '  .report-container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }' +
@@ -201,8 +203,7 @@ end;
 
 procedure TfrmReportPayroll.btnPrintClick(Sender: TObject);
 begin
-  Edge.SetFocus;
-  Edge.ExecuteScript('setTimeout(function() { window.print(); }, 100);');
+  PrintBrowser(FBrowser);
 end;
 
 end.

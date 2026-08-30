@@ -6,15 +6,14 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls,
   System.IOUtils,
-  Vcl.ExtCtrls, Winapi.WebView2, Winapi.ActiveX, Vcl.Edge, UnitWebView2Utils;
+  Vcl.ExtCtrls, SHDocVw, UnitReportBrowserUtils;
 
 type
   TfrmPaySlip = class(TForm)
-    Edge: TEdgeBrowser;
     PanelBottom: TPanel;
     btnPdf: TButton;
     procedure btnPdfClick(Sender: TObject);
-    procedure EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure FormCreate(Sender: TObject);
   private
     FHtmlContent: string; // --- ПЕРЕМЕННАЯ ДЛЯ ХРАНЕНИЯ HTML ---
     function GetHtmlTemplate: string;
@@ -26,6 +25,8 @@ type
     procedure ShowPayroll(Dataset: TDataSet; Period: string);
     procedure ShowAllPayslips(Dataset: TDataSet; Period: string);
     procedure ShowSinglePayslip(Dataset: TDataSet; Period: string);
+  private
+    FBrowser: TWebBrowser;
   end;
 
   var
@@ -37,24 +38,34 @@ implementation
 
 { TfrmPaySlip }
 
+procedure TfrmPaySlip.FormCreate(Sender: TObject);
+begin
+  // TWebBrowser создаётся кодом, а не кладётся на форму в дизайнере —
+  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
+  // не нуждается.
+  FBrowser := TWebBrowser.Create(Self);
+  FBrowser.Parent := Self;
+  FBrowser.Align := alClient;
+end;
+
 procedure TfrmPaySlip.ShowAllPayslips(Dataset: TDataSet; Period: string);
 begin
   FHtmlContent := GenerateSlips(Dataset, Period, False); // False = цикл по всем
-  SafeCreateWebView(Edge, 'EdgeCache');
+  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'PaySlip');
 end;
 
 procedure TfrmPaySlip.ShowPayroll(Dataset: TDataSet; Period: string);
 begin
   // 1. Генерируем HTML и прячем его в нашу переменную
   FHtmlContent := GenerateAllSlips(Dataset, Period);
-  // 2. Даем браузеру команду "Просыпайся и создавай движок!"
-  SafeCreateWebView(Edge, 'EdgeCache');
+  // 2. Показываем его в браузере
+  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'PaySlip');
 end;
 
 procedure TfrmPaySlip.ShowSinglePayslip(Dataset: TDataSet; Period: string);
 begin
   FHtmlContent := GenerateSlips(Dataset, Period, True); // True = только текущий
-  SafeCreateWebView(Edge, 'EdgeCache');
+  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'PaySlip');
 end;
 
 function TfrmPaySlip.GetHtmlTemplate: string;
@@ -83,19 +94,11 @@ begin
     '</div>';
 end;
 
-procedure TfrmPaySlip.EdgeCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-begin
-  if Succeeded(AResult) then
-    Edge.NavigateToString(FHtmlContent)
-  else
-    ShowWebView2Error(AResult);
-end;
-
 function TfrmPaySlip.GenerateAllSlips(Dataset: TDataSet; Period: string): string;
 var
   Body, Item: string;
   Bookmark: TBookmark;
-  BootstrapPath, BootstrapCSS: string;
+  ReportCssPath, ReportCSS: string;
 begin
   Body := '';
 
@@ -132,15 +135,15 @@ begin
   end;
 
   // Оборачиваем всё в стандартный контейнер Bootstrap
-  BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\css\bootstrap.min.css';
-  BootstrapCSS := '';
-  if TFile.Exists(BootstrapPath) then
-    BootstrapCSS := TFile.ReadAllText(BootstrapPath)
+  ReportCssPath := ExtractFilePath(ParamStr(0)) + 'assets\report.css';
+  ReportCSS := '';
+  if TFile.Exists(ReportCssPath) then
+    ReportCSS := TFile.ReadAllText(ReportCssPath)
   else
-    ShowMessage('Внимание: Файл ' + BootstrapPath + ' не найден! Вёрстка может поехать.');
+    ShowMessage('Внимание: Файл ' + ReportCssPath + ' не найден! Вёрстка может поехать.');
   Result :=
     '<html><head>' +
-    '<style>' + BootstrapCSS + '</style>' +
+    '<style>' + ReportCSS + '</style>' +
     '<style>' +
     '  @media print { .no-print { display: none; } }' +
     '  .payslip-card { page-break-inside: avoid; border: 1px solid #dee2e6; }' +
@@ -156,7 +159,7 @@ function TfrmPaySlip.GenerateSlips(Dataset: TDataSet; Period: string;
 var
   Body, Item: string;
   Bookmark: TBookmark;
-  BootstrapPath, BootstrapCSS: string;
+  ReportCssPath, ReportCSS: string;
 begin
   Body := '';
   if IsSingle then
@@ -207,15 +210,15 @@ begin
       Dataset.EnableControls;
     end;
   end;
-  BootstrapPath := ExtractFilePath(ParamStr(0)) + 'assets\css\bootstrap.min.css';
-  BootstrapCSS := '';
-  if TFile.Exists(BootstrapPath) then
-    BootstrapCSS := TFile.ReadAllText(BootstrapPath) // Читаем весь файл в память
+  ReportCssPath := ExtractFilePath(ParamStr(0)) + 'assets\report.css';
+  ReportCSS := '';
+  if TFile.Exists(ReportCssPath) then
+    ReportCSS := TFile.ReadAllText(ReportCssPath) // Читаем весь файл в память
   else
-    ShowMessage('Внимание: Файл ' + BootstrapPath + ' не найден! Верстка может поехать.');
+    ShowMessage('Внимание: Файл ' + ReportCssPath + ' не найден! Верстка может поехать.');
   Result :=
     '<html><head>' +
-    '<style>' + BootstrapCSS + '</style>' +
+    '<style>' + ReportCSS + '</style>' +
     '<style>' +
     '  @media print { .no-print { display: none; } }' +
     '  .payslip-card { page-break-inside: avoid; border: 1px solid #dee2e6; }' +
@@ -228,10 +231,7 @@ end;
 
 procedure TfrmPaySlip.btnPdfClick(Sender: TObject);
 begin
-  // 1. Принудительно отдаем фокус браузеру (очень важно для модальных окон!)
-  Edge.SetFocus;
-  // Вызываем диалог печати браузера (там есть кнопка "Сохранить в PDF")
-  Edge.ExecuteScript('window.print();');
+  PrintBrowser(FBrowser);
 end;
 
 end.

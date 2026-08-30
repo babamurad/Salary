@@ -11,6 +11,7 @@ object frmReportPayroll: TfrmReportPayroll
   Font.Name = 'Segoe UI'
   Font.Style = []
   WindowState = wsMaximized
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 15
   object PanelTop: TPanel
@@ -32,18 +33,5 @@ object frmReportPayroll: TfrmReportPayroll
       TabOrder = 0
       OnClick = btnPrintClick
     end
-  end
-  object Edge: TEdgeBrowser
-    Left = 0
-    Top = 41
-    Width = 624
-    Height = 400
-    Align = alClient
-    TabOrder = 1
-    OnCreateWebViewCompleted = EdgeCreateWebViewCompleted
-    ExplicitLeft = 320
-    ExplicitTop = 240
-    ExplicitWidth = 100
-    ExplicitHeight = 40
   end
 end

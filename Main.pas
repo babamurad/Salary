@@ -73,7 +73,7 @@ implementation
 uses
   UnitframeEmployees,
   UnitframePayroll,
-  UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
+  UnitframeReports, UnitBaseEditForm, UnitdmMain,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
   UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp,
   UnitframeTimesheet, UnitFrameReportSummary, UnitFrameVacations, UnitLogin;

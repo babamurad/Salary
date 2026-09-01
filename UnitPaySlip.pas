@@ -14,7 +14,6 @@ type
     btnPdf: TButton;
     WebBrowser: TWebBrowser;
     procedure btnPdfClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
   private
     FHtmlContent: string; // --- ѕ≈–≈ћ≈ЌЌјя ƒЋя ’–јЌ≈Ќ»я HTML ---
     function GetHtmlTemplate: string;
@@ -26,8 +25,6 @@ type
     procedure ShowPayroll(Dataset: TDataSet; Period: string);
     procedure ShowAllPayslips(Dataset: TDataSet; Period: string);
     procedure ShowSinglePayslip(Dataset: TDataSet; Period: string);
-  private
-    FBrowser: TWebBrowser;
   end;
 
   var
@@ -39,20 +36,10 @@ implementation
 
 { TfrmPaySlip }
 
-procedure TfrmPaySlip.FormCreate(Sender: TObject);
-begin
-  // TWebBrowser создаЄтс€ кодом, а не кладЄтс€ на форму в дизайнере Ч
-  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
-  // не нуждаетс€.
-  FBrowser := TWebBrowser.Create(Self);
-  FBrowser.Parent := Self;
-  FBrowser.Align := alClient;
-end;
-
 procedure TfrmPaySlip.ShowAllPayslips(Dataset: TDataSet; Period: string);
 begin
   FHtmlContent := GenerateSlips(Dataset, Period, False); // False = цикл по всем
-  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'PaySlip');
+  ShowHtmlInBrowser(WebBrowser, FHtmlContent, 'PaySlip');
 end;
 
 procedure TfrmPaySlip.ShowPayroll(Dataset: TDataSet; Period: string);
@@ -60,13 +47,13 @@ begin
   // 1. √енерируем HTML и пр€чем его в нашу переменную
   FHtmlContent := GenerateAllSlips(Dataset, Period);
   // 2. ѕоказываем его в браузере
-  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'PaySlip');
+  ShowHtmlInBrowser(WebBrowser, FHtmlContent, 'PaySlip');
 end;
 
 procedure TfrmPaySlip.ShowSinglePayslip(Dataset: TDataSet; Period: string);
 begin
   FHtmlContent := GenerateSlips(Dataset, Period, True); // True = только текущий
-  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'PaySlip');
+  ShowHtmlInBrowser(WebBrowser, FHtmlContent, 'PaySlip');
 end;
 
 function TfrmPaySlip.GetHtmlTemplate: string;
@@ -232,7 +219,7 @@ end;
 
 procedure TfrmPaySlip.btnPdfClick(Sender: TObject);
 begin
-  PrintBrowser(FBrowser);
+  PrintBrowser(WebBrowser);
 end;
 
 end.

@@ -1,1 +1,0 @@
-INSERT INTO settings (key_name, key_value) VALUES ('dependent_deduction', 50.0);

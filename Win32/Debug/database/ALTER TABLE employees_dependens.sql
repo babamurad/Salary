@@ -1,1 +1,0 @@
-ALTER TABLE employees ADD COLUMN dependents_count INTEGER DEFAULT 0;

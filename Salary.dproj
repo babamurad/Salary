@@ -119,10 +119,6 @@
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
-        <DCCReference Include="UnitMusor.pas">
-            <Form>Form2</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
         <DCCReference Include="UnitframeReports.pas">
             <Form>frameReports</Form>
             <FormType>dfm</FormType>

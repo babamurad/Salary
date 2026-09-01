@@ -18,6 +18,11 @@ Win64/
 *.apk
 *.ipa
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
-Win32/Debug/*.dcu
-Win32/Debug/*.exe
+
+# Файлы сессии "DB Browser for SQLite" (просто список открытых вкладок
+# на конкретном компьютере) — не имеют отношения к самому проекту.
+*.sqbpro

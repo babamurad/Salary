@@ -13,10 +13,8 @@ type
     btnPrint: TButton;
     WebBrowser: TWebBrowser;
     procedure btnPrintClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
   private
     FHtmlContent: string;
-    FBrowser: TWebBrowser;
     function GenerateReportHtml(Dataset: TDataSet; Period: string): string;
   public
     procedure ShowReport(Dataset: TDataSet; Period: string);
@@ -31,23 +29,13 @@ implementation
 
 { TfrmReportPayroll }
 
-procedure TfrmReportPayroll.FormCreate(Sender: TObject);
-begin
-  // TWebBrowser создаётся кодом, а не кладётся на форму в дизайнере —
-  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
-  // не нуждается.
-  FBrowser := TWebBrowser.Create(Self);
-  FBrowser.Parent := Self;
-  FBrowser.Align := alClient;
-end;
-
 procedure TfrmReportPayroll.ShowReport(Dataset: TDataSet; Period: string);
 begin
   // 1. Генерируем HTML-отчет
   FHtmlContent := GenerateReportHtml(Dataset, Period);
 
   // 2. Показываем его в браузере
-  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'ReportPayroll');
+  ShowHtmlInBrowser(WebBrowser, FHtmlContent, 'ReportPayroll');
 end;
 
 function TfrmReportPayroll.GenerateReportHtml(Dataset: TDataSet; Period: string): string;
@@ -204,7 +192,7 @@ end;
 
 procedure TfrmReportPayroll.btnPrintClick(Sender: TObject);
 begin
-  PrintBrowser(FBrowser);
+  PrintBrowser(WebBrowser);
 end;
 
 end.

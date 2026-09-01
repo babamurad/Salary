@@ -11,7 +11,6 @@ object frmReportPayroll: TfrmReportPayroll
   Font.Name = 'Segoe UI'
   Font.Style = []
   WindowState = wsMaximized
-  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 15
   object PanelTop: TPanel

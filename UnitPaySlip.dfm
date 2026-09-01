@@ -12,7 +12,6 @@ object frmPaySlip: TfrmPaySlip
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poMainFormCenter
-  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 21
   object PanelBottom: TPanel

@@ -23,14 +23,13 @@ type
     btnPrint: TButton;
     btnExcel: TButton;
     qryReport: TFDQuery;
-    dsReport: TDataSource;
-    WebBrowser: TWebBrowser; // Ваш запрос к БД
+    dsReport: TDataSource; // Ваш запрос к БД
+    WebBrowser: TWebBrowser;
     procedure btnGenerateClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
     procedure btnExcelClick(Sender: TObject);
   private
     FHtmlContent: string;
-    FBrowser: TWebBrowser;
     function GenerateReportHtml(Dataset: TDataSet; Period: string): string;
     procedure LoadData;
     procedure LoadDepartments;
@@ -133,7 +132,7 @@ begin
 
   // Генерируем HTML и отправляем в браузер
   FHtmlContent := GenerateReportHtml(qryReport, PeriodStr);
-  ShowHtmlInBrowser(FBrowser, FHtmlContent, 'ReportSummary');
+  ShowHtmlInBrowser(WebBrowser, FHtmlContent, 'ReportSummary');
 
   // Включаем кнопки экспорта
   btnPrint.Enabled := True;
@@ -142,7 +141,7 @@ end;
 
 procedure TframeReportSummary.btnPrintClick(Sender: TObject);
 begin
-  PrintBrowser(FBrowser);
+  PrintBrowser(WebBrowser);
 end;
 
 constructor TframeReportSummary.Create(AOwner: TComponent);
@@ -150,13 +149,6 @@ var
   i, vYear: Integer;
 begin
   inherited;
-
-  // TWebBrowser создаётся кодом, а не кладётся на фрейм в дизайнере —
-  // компонент, встроенный в Windows/Delphi (модуль SHDocVw), в этом
-  // не нуждается.
-  FBrowser := TWebBrowser.Create(Self);
-  FBrowser.Parent := Self;
-  FBrowser.Align := alClient;
 
   cmbMonth.Items.CommaText := 'Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь';
   vYear := YearOf(Date);

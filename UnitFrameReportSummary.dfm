@@ -64,6 +64,24 @@ object FrameReportSummary: TFrameReportSummary
       OnClick = btnExcelClick
     end
   end
+  object WebBrowser: TWebBrowser
+    Left = 0
+    Top = 49
+    Width = 1061
+    Height = 603
+    Align = alClient
+    TabOrder = 1
+    ExplicitLeft = 392
+    ExplicitTop = 296
+    ExplicitWidth = 300
+    ExplicitHeight = 150
+    ControlData = {
+      4C000000A86D0000523E00000000000000000000000000000000000000000000
+      000000004C000000000000000000000001000000E0D057007335CF11AE690800
+      2B2E126208000000000000004C0000000114020000000000C000000000000046
+      8000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000100000000000000000000000000000000000000}
+  end
   object qryReport: TFDQuery
     Connection = dmMain.conn
     Left = 968

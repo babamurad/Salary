@@ -90,11 +90,16 @@ begin
 end;
 
 procedure PrintBrowser(WB: TWebBrowser);
+var
+  ParamIn, ParamOut: OleVariant;
 begin
   try
+    // pvaIn/pvaOut у IWebBrowser2.ExecWB объявлены как var-параметры —
+    // нужны настоящие переменные, EmptyParam напрямую сюда не передать.
     // OLECMDID_PRINT / OLECMDEXECOPT_PROMPTUSER — стандартный вызов диалога
     // печати Internet Explorer для загруженной в браузер страницы.
-    WB.ExecWB(OLECMDID_PRINT, OLECMDEXECOPT_PROMPTUSER, EmptyParam, EmptyParam);
+    ParamIn := EmptyParam;
+    WB.ExecWB(OLECMDID_PRINT, OLECMDEXECOPT_PROMPTUSER, ParamIn, ParamOut);
   except
     on E: Exception do
       ShowMessage('Не удалось открыть диалог печати: ' + E.Message);

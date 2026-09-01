@@ -5,12 +5,13 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  SHDocVw, System.IOUtils, Data.DB, UnitReportBrowserUtils;
+  SHDocVw, System.IOUtils, Data.DB, UnitReportBrowserUtils, Vcl.OleCtrls;
 
 type
   TfrmReportPayroll = class(TForm)
     PanelTop: TPanel;
     btnPrint: TButton;
+    WebBrowser: TWebBrowser;
     procedure btnPrintClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private

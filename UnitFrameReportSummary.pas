@@ -10,7 +10,8 @@ uses
   FireDAC.Comp.Client, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
   System.DateUtils,
-  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.DataSet; // Добавьте модули вашей БД, если нужно
+  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.DataSet,
+  Vcl.OleCtrls; // Добавьте модули вашей БД, если нужно
 
 type
   TframeReportSummary = class(TFrame)
@@ -22,7 +23,8 @@ type
     btnPrint: TButton;
     btnExcel: TButton;
     qryReport: TFDQuery;
-    dsReport: TDataSource; // Ваш запрос к БД
+    dsReport: TDataSource;
+    WebBrowser: TWebBrowser; // Ваш запрос к БД
     procedure btnGenerateClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
     procedure btnExcelClick(Sender: TObject);

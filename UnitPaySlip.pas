@@ -6,12 +6,13 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls,
   System.IOUtils,
-  Vcl.ExtCtrls, SHDocVw, UnitReportBrowserUtils;
+  Vcl.ExtCtrls, SHDocVw, UnitReportBrowserUtils, Vcl.OleCtrls;
 
 type
   TfrmPaySlip = class(TForm)
     PanelBottom: TPanel;
     btnPdf: TButton;
+    WebBrowser: TWebBrowser;
     procedure btnPdfClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private

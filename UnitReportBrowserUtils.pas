@@ -9,7 +9,7 @@ interface
 
 uses
   Winapi.Windows, System.SysUtils, System.IOUtils, System.Win.Registry,
-  System.Variants, Vcl.Dialogs, SHDocVw;
+  System.Variants, Vcl.Dialogs, Vcl.Forms, SHDocVw;
 
 // Разово (при старте программы) включает для текущего exe режим рендеринга
 // "как в IE11" вместо режима совместимости с IE7, который Internet Explorer
@@ -64,7 +64,19 @@ end;
 procedure ShowHtmlInBrowser(WB: TWebBrowser; const Html: string; const CacheName: string);
 var
   Folder, FileName, Url: string;
+  ForceHandle: HWND;
 begin
+  // Отчёты открываются из форм, которые в момент вызова ещё скрыты
+  // (создаются один раз при старте программы через Application.CreateForm
+  // и показываются позже через ShowModal). У скрытого окна ActiveX-контрол
+  // TWebBrowser ещё не имеет реального оконного handle — Navigate,
+  // вызванный до его появления, молча "теряется", и когда форма потом
+  // показывается, контрол остаётся пустым белым полем. Чтение свойства
+  // Handle форсирует создание окна (и инициализацию ActiveX-объекта)
+  // прямо сейчас, ещё до показа формы.
+  ForceHandle := WB.Handle;
+  Application.ProcessMessages;
+
   Folder := IncludeTrailingPathDelimiter(TPath.GetTempPath) + 'SalaryReports';
   ForceDirectories(Folder);
   FileName := IncludeTrailingPathDelimiter(Folder) + CacheName + '.html';

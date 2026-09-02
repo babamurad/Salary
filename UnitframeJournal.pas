@@ -91,25 +91,21 @@ begin
   // Отвязываем обработчики от общего (на весь datamodule) датасета —
   // иначе после закрытия вкладки эти события продолжат ссылаться на
   // уже уничтоженный фрейм.
+  // Экземпляр этого фрейма всегда один (Main.pas переиспользует
+  // существующую вкладку вместо создания второй с тем же именем), так
+  // что можно просто безусловно обнулять — сравнивать TMethod с "голым"
+  // именем метода без контекста присваивания компилятор не даёт (E2089).
   if Assigned(dmMain) then
   begin
-    if TMethod(dmMain.qryJournalEntries.AfterScroll).Code = TMethod(EntriesAfterScroll).Code then
-      dmMain.qryJournalEntries.AfterScroll := nil;
-    if TMethod(dmMain.qryJournalEntries.AfterInsert).Code = TMethod(EntriesAfterInsert).Code then
-      dmMain.qryJournalEntries.AfterInsert := nil;
-    if TMethod(dmMain.qryJournalEntries.AfterPost).Code = TMethod(EntriesAfterPost).Code then
-      dmMain.qryJournalEntries.AfterPost := nil;
-    if TMethod(dmMain.qryJournalEntries.BeforeEdit).Code = TMethod(EntriesBeforeEdit).Code then
-      dmMain.qryJournalEntries.BeforeEdit := nil;
-    if TMethod(dmMain.qryJournalEntries.BeforeDelete).Code = TMethod(EntriesBeforeDelete).Code then
-      dmMain.qryJournalEntries.BeforeDelete := nil;
+    dmMain.qryJournalEntries.AfterScroll := nil;
+    dmMain.qryJournalEntries.AfterInsert := nil;
+    dmMain.qryJournalEntries.AfterPost := nil;
+    dmMain.qryJournalEntries.BeforeEdit := nil;
+    dmMain.qryJournalEntries.BeforeDelete := nil;
 
-    if TMethod(dmMain.qryJournalLines.AfterInsert).Code = TMethod(LinesAfterInsert).Code then
-      dmMain.qryJournalLines.AfterInsert := nil;
-    if TMethod(dmMain.qryJournalLines.AfterPost).Code = TMethod(LinesAfterPost).Code then
-      dmMain.qryJournalLines.AfterPost := nil;
-    if TMethod(dmMain.qryJournalLines.AfterDelete).Code = TMethod(LinesAfterDelete).Code then
-      dmMain.qryJournalLines.AfterDelete := nil;
+    dmMain.qryJournalLines.AfterInsert := nil;
+    dmMain.qryJournalLines.AfterPost := nil;
+    dmMain.qryJournalLines.AfterDelete := nil;
   end;
   inherited;
 end;

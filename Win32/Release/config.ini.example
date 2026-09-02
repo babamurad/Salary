@@ -1,0 +1,15 @@
+[Database]
+; Driver=SQLite — прежнее поведение (локальный файл, как раньше).
+; Driver=PG     — PostgreSQL (Этап 1 перехода на бухучёт).
+Driver=SQLite
+
+; --- Используется, если Driver=SQLite ---
+Path=database\salarydb.db
+
+; --- Используется, если Driver=PG --- (заполните под свой сервер;
+; этот файл — только пример, реальный config.ini с паролем в git не попадает)
+Host=localhost
+Port=5432
+DBName=salary
+User=postgres
+Password=

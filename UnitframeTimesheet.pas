@@ -245,6 +245,8 @@ begin
       Title.Alignment := taCenter;
       Alignment := taCenter;
       Width := 80;
+      ReadOnly := True; // «апрет редактировани€ именно в гриде Ч само поле
+                        // остаЄтс€ доступным дл€ записи из кода (см. ниже)
     end;
     with DBGridTimesheet.Columns.Add do
     begin
@@ -253,6 +255,7 @@ begin
       Title.Alignment := taCenter;
       Alignment := taCenter;
       Width := 80;
+      ReadOnly := True;
     end;
     with DBGridTimesheet.Columns.Add do
     begin
@@ -275,9 +278,10 @@ begin
     TFloatField(FieldByName('days_worked')).DisplayFormat := '0.##';
     TFloatField(FieldByName('hours_worked')).DisplayFormat := '0.##';
 
-    // Ќорма Ч справочна€, редактировать еЄ нельз€
-    FieldByName('norm_days').ReadOnly := True;
-    FieldByName('norm_hours').ReadOnly := True;
+    // Ќорма Ч справочна€. –едактирование запрещено на уровне колонки грида
+    // (Column.ReadOnly выше), а не самого пол€ Ч иначе код ниже, который
+    // сам заполн€ет эти значени€ (FillEmployeesList/btnAutoFillClick), тоже
+    // не смог бы их записать: EDatabaseError "Field ... cannot be modified".
 
     // "ƒней" и "„асов" Ч то, что реально вводит бухгалтер
     FieldByName('days_worked').ReadOnly := False;

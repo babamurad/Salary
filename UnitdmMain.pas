@@ -447,6 +447,19 @@ begin
     conn.Params.Values['User_Name'] := AUser;
     conn.Params.Values['Password'] := APassword;
 
+    // PostgreSQL сообщает NUMERIC(18,2) (деньги) как FMTBcd произвольной
+    // точности, а не как Currency (в SQLite эти же колонки были объ€влены
+    // типом CURRENCY, и FireDAC-драйвер SQLite узнавал это им€ напр€мую).
+    // —тарый код и persistent-пол€ датасетов ждут именно Currency Ч без
+    // этого правила при открытии запроса падает EDatabaseError
+    // 'Type mismatch ... expecting: Currency actual: FMTBcd'.
+    conn.FormatOptions.MapRules.Clear;
+    with conn.FormatOptions.MapRules.Add do
+    begin
+      SourceDataType := dtFmtBCD;
+      TargetDataType := dtCurrency;
+    end;
+
     // ƒл€ статус-бара Ч показываем куда именно подключены, без парол€
     FullPath := Format('PostgreSQL: %s@%s:%s/%s', [AUser, AHost, APort, ADBName]);
 

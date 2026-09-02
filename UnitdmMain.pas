@@ -66,6 +66,15 @@ type
     qryVacationfio: TWideStringField;
     qrySickLeaveRatesmin_years: TIntegerField;
     qrySickLeaveRatespercent: TFloatField;
+
+    { Этап 2: бухгалтерский учёт (план счетов и проводки) }
+    qryAccounts: TFDQuery;
+    dsAccounts: TDataSource;
+    qryJournalEntries: TFDQuery;
+    dsJournalEntries: TDataSource;
+    qryJournalLines: TFDQuery;
+    dsJournalLines: TDataSource;
+
     scrCreateDb: TFDScript;
     memTimesheet: TFDMemTable;
     dsTimesheet: TDataSource;

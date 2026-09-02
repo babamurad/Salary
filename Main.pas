@@ -76,7 +76,8 @@ uses
   UnitframeReports, UnitBaseEditForm, UnitdmMain,
   UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
   UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp,
-  UnitframeTimesheet, UnitFrameReportSummary, UnitFrameVacations, UnitLogin;
+  UnitframeTimesheet, UnitFrameReportSummary, UnitFrameVacations, UnitLogin,
+  UnitframeAccounts, UnitframeJournal;
 
 { ================= TREE ================= }
 
@@ -122,6 +123,12 @@ begin
   Root := AddMenuNode(nil, 'Отчеты', nil, 5);
   AddMenuNode(Root, 'Ведомость', TframeReports, 12);
   AddMenuNode(Root, 'Ведомость Св.', TframeReportSummary, 20);
+  Root.Expand(True);
+
+  // Этап 2: ядро двойной записи (план счетов + проводки)
+  Root := AddMenuNode(nil, 'Бухгалтерия', nil, 5);
+  AddMenuNode(Root, 'План счетов', TframeAccounts, 5);
+  AddMenuNode(Root, 'Проводки', TframeJournal, 5);
   Root.Expand(True);
 end;
 

@@ -752,4 +752,55 @@ object dmMain: TdmMain
     Left = 728
     Top = 256
   end
+  object qryAccounts: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM accounts ORDER BY code')
+    Left = 848
+    Top = 168
+  end
+  object dsAccounts: TDataSource
+    DataSet = qryAccounts
+    Left = 848
+    Top = 248
+  end
+  object qryJournalEntries: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT * FROM journal_entries ORDER BY entry_date DESC, id DESC')
+    Left = 968
+    Top = 168
+  end
+  object dsJournalEntries: TDataSource
+    DataSet = qryJournalEntries
+    Left = 968
+    Top = 248
+  end
+  object qryJournalLines: TFDQuery
+    Connection = conn
+    SQL.Strings = (
+      'SELECT jl.*, '
+      '  ad.name AS debit_name, '
+      '  ac.name AS credit_name '
+      'FROM journal_lines jl '
+      'JOIN accounts ad ON ad.code = jl.account_debit_code '
+      'JOIN accounts ac ON ac.code = jl.account_credit_code '
+      'WHERE jl.entry_id = :entry_id '
+      'ORDER BY jl.line_no')
+    UpdateOptions.UpdateTableName = 'journal_lines'
+    UpdateOptions.KeyFields = 'id'
+    Left = 1088
+    Top = 168
+    ParamData = <
+      item
+        Name = 'ENTRY_ID'
+        ParamType = ptInput
+        Value = Null
+      end>
+  end
+  object dsJournalLines: TDataSource
+    DataSet = qryJournalLines
+    Left = 1088
+    Top = 248
+  end
 end

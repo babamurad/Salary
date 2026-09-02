@@ -39,6 +39,17 @@ actual: FMTBcd` (или наоборот, `expecting: FMTBcd actual: Currency`,
 несовместимы в рамках одной группы полей, нужно разделять именно на
 уровне типа колонки).
 
+Также если база была создана до исправления `sick_leave_rates` (`001`
+со старым `INTEGER` вместо `BIGINT` для `min_years`/`max_years`) —
+примените и:
+
+```
+psql -U <ваш_пользователь> -d <имя_базы> -f 005_fix_sick_leave_rates_bigint.sql
+```
+
+Иначе `qrySickLeaveRates` падает с `Type mismatch ... expecting:
+LargeInt actual: Integer`.
+
 ## Что внутри
 
 - **`001_initial_schema.sql`** — точный перевод действующей схемы SQLite
@@ -61,6 +72,30 @@ actual: FMTBcd` (или наоборот, `expecting: FMTBcd actual: Currency`,
 - **`004_fix_currency_columns.sql`** — миграция для баз, созданных ДО
   исправления денежных типов: переводит `base_salary` и денежные поля
   `payroll_journal` из `NUMERIC(18,2)` в `MONEY` на уже существующей базе.
+- **`005_fix_sick_leave_rates_bigint.sql`** — миграция для баз, созданных
+  ДО исправления `sick_leave_rates`: переводит `min_years`/`max_years`
+  из `INTEGER` в `BIGINT` на уже существующей базе.
+
+## Про ошибки "Type mismatch" в целом
+
+Все выше — один и тот же класс проблемы: в DFM-файлах форм есть
+persistent-поля (созданные когда-то в дизайнере при подключении к
+SQLite), которые жёстко запоминают тип поля на момент создания. SQLite
+из-за динамической типизации (manifest typing) иногда даёт для одной и
+той же объявленной колонки более широкий/другой тип, чем строгий
+PostgreSQL. Проверить конкретное поле заранее (не дожидаясь падения
+программы) можно в psql:
+
+```sql
+SELECT column_name, data_type FROM information_schema.columns
+WHERE table_name = '<имя_таблицы>';
+```
+
+и сравнить со строкой в `database/schema/salarydb_schema_only.sql` для
+той же колонки — если там `INTEGER PRIMARY KEY` (без AUTOINCREMENT) или
+видно, что значения могут быть очень большими (условная
+"бесконечность", коды-счётчики и т.п.) — велик шанс, что нужен `BIGINT`,
+а не `INTEGER`, в Postgres.
 
 ## Что дальше
 

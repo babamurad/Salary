@@ -11,6 +11,11 @@ uses
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.DBCtrls;
 
+const
+  // Часов в одном полном рабочем дне — используется и при пересчёте
+  // "дней" в "часы", и как база расчёта в UnitframePayroll.
+  HOURS_PER_DAY = 8.0;
+
 type
   TframeTimesheet = class(TFrame)
     Panel1: TPanel;
@@ -35,13 +40,14 @@ type
     procedure btnAutoFillClick(Sender: TObject);
     procedure btnSaveClick(Sender: TObject);
   private
-    FCurYear: Integer;   // Текущий год табеля на экране
-    FCurMonth: Integer;  // Текущий месяц табеля на экране
+    FCurYear: Integer;   // Текущий год отчета из формы
+    FCurMonth: Integer;  // Текущий месяц отчета из формы
     FCurrentEmpID: Integer;
     procedure ReadPeriodFromUI;
     procedure LoadDepartments;
-    procedure memTimesheetBeforePost(DataSet: TDataSet);
     procedure memTimesheetAfterScroll(DataSet: TDataSet);
+    procedure DaysWorkedChange(Sender: TField);
+    function GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
   public
     procedure PrepareMemTable(AYear, AMonth: Integer);
     procedure FillEmployeesList;
@@ -75,14 +81,14 @@ begin
 
   LoadDepartments;
 
-  // --- МАГИЯ АВТОЗАГРУЗКИ ---
-  // Привязываем пересчет ко всем выпадающим спискам.
-  // Теперь, как только вы поменяете месяц, год или отдел — табель сам мгновенно перерисуется!
+  // --- Автообновление ---
+  // Подключаем события на сами компоненты выбора периода.
+  // Теперь, при смене года/месяца/отдела, табель перезагружается автоматически!
   cbMonth.OnChange := btnLoadClick;
   cbYear.OnChange := btnLoadClick;
   cmbDept.OnChange := btnLoadClick;
 
-  // Имитируем нажатие кнопки "Сформировать табель" сразу при открытии вкладки
+  // Выполняем первую загрузку "Текущего периода" сразу при создании фрейма
   btnLoadClick(nil);
 end;
 
@@ -106,11 +112,49 @@ begin
   cmbDept.ItemIndex := 0;
 end;
 
+// Норма рабочих дней за месяц — сперва пытаемся взять из производственного
+// календаря (production_calendar), если его для этого периода не заполнили —
+// считаем "по старинке" (все дни кроме сб/вс). Та же логика, что и в
+// UnitframePayroll.GetWorkingDaysNorm, продублирована здесь, чтобы не тянуть
+// зависимость между фреймами ради одной небольшой функции.
+function TframeTimesheet.GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
+var
+  Q: TFDQuery;
+  i, DaysCount: Integer;
+  D: TDateTime;
+begin
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := dmMain.conn;
+    Q.SQL.Text := 'SELECT working_days FROM production_calendar WHERE year = :y AND month = :m';
+    Q.ParamByName('y').AsInteger := AYear;
+    Q.ParamByName('m').AsInteger := AMonth;
+    Q.Open;
+
+    if not Q.IsEmpty and (Q.FieldByName('working_days').AsInteger > 0) then
+    begin
+      Result := Q.FieldByName('working_days').AsInteger;
+      Exit;
+    end;
+  finally
+    Q.Free;
+  end;
+
+  Result := 0;
+  DaysCount := DaysInAMonth(AYear, AMonth);
+  for i := 1 to DaysCount do
+  begin
+    D := EncodeDate(AYear, AMonth, i);
+    if not (DayOfTheWeek(D) in [6, 7]) then
+      Inc(Result);
+  end;
+end;
+
 procedure TframeTimesheet.memTimesheetAfterScroll(DataSet: TDataSet);
 begin
   if DataSet.Active and not DataSet.IsEmpty then
   begin
-    // Запоминаем текущего сотрудника
+    // Показываем текущего сотрудника
     lblCurrentEmp.Caption := DataSet.FieldByName('fio').AsString;
     FCurrentEmpID := DataSet.FieldByName('emp_id').AsInteger;
   end
@@ -120,91 +164,21 @@ begin
     FCurrentEmpID := -1;
   end;
 
-  // --- ЗАСТАВЛЯЕМ ПЕРЕРИСОВАТЬСЯ ОБА ГРИДА! ---
+  // --- Перерисовываем обе таблицы, чтобы подсветить строку ---
   if Assigned(DBGridTimesheet) then
-    DBGridTimesheet.Invalidate; // Обновляем правый
+    DBGridTimesheet.Invalidate;
 
   if Assigned(DBGridNames) then
-    DBGridNames.Invalidate;     // Обновляем левый (ВОТ ЭТУ СТРОЧКУ МЫ ЗАБЫЛИ!)
+    DBGridNames.Invalidate;
 end;
 
-procedure TframeTimesheet.memTimesheetBeforePost(DataSet: TDataSet);
-var
-  i, DaysCount: Integer;
-  CellVal: string;
-  Hrs: Double;
-  WorkDays, VacDays, SickDays, Weekends: Integer;
-  TotalHrs, NightHrs, HolHrs, PayHrs: Double;
+// При ручном вводе "Отработано дней" сразу пересчитываем "Отработано часов"
+// (дни * HOURS_PER_DAY) — так бухгалтеру не нужно вручную умножать.
+// Поле "часы" при этом остаётся доступным для правки напрямую — на случай
+// неполного дня или другой особой ситуации.
+procedure TframeTimesheet.DaysWorkedChange(Sender: TField);
 begin
-  WorkDays := 0; VacDays := 0; SickDays := 0; Weekends := 0;
-  TotalHrs := 0; NightHrs := 0; HolHrs := 0; PayHrs := 0;
-
-  DaysCount := DaysInAMonth(FCurYear, FCurMonth);
-  for i := 1 to DaysCount do
-  begin
-    CellVal := Trim(DataSet.FieldByName('day_' + IntToStr(i)).AsString);
-    if CellVal = '' then Continue;
-    CellVal := UpperCase(CellVal);
-
-    Hrs := StrToFloatDef(StringReplace(CellVal, ',', '.', [rfReplaceAll]), -1);
-
-    if Hrs >= 0 then
-    begin
-      Inc(WorkDays);
-      TotalHrs := TotalHrs + Hrs;
-      PayHrs := PayHrs + Hrs;
-    end
-    else
-    begin
-      if CellVal = 'Б' then Inc(SickDays)
-      else if CellVal = 'О' then Inc(VacDays)
-      else if (CellVal = 'В') or (CellVal = 'П') then Inc(Weekends)
-      else if CellVal = 'Я' then
-      begin
-        Inc(WorkDays);
-        TotalHrs := TotalHrs + 8;
-        PayHrs := PayHrs + 8;
-      end
-      else if Pos('Н', CellVal) = 1 then
-      begin
-        Hrs := StrToFloatDef(StringReplace(Copy(CellVal, 2, Length(CellVal)), ',', '.', [rfReplaceAll]), 0);
-        NightHrs := NightHrs + Hrs;
-        TotalHrs := TotalHrs + Hrs;
-        PayHrs := PayHrs + Hrs;
-        if Hrs > 0 then Inc(WorkDays);
-      end;
-    end;
-  end;
-
-  // --- МАГИЯ: СНИМАЕМ БЛОКИРОВКУ ДЛЯ ПРОГРАММЫ ---
-  DataSet.FieldByName('total_work_days').ReadOnly := False;
-  DataSet.FieldByName('total_hours').ReadOnly := False;
-  DataSet.FieldByName('sick_days').ReadOnly := False;
-  DataSet.FieldByName('vacation_days').ReadOnly := False;
-  DataSet.FieldByName('weekend_days').ReadOnly := False;
-  DataSet.FieldByName('night_hours').ReadOnly := False;
-  DataSet.FieldByName('holiday_hours').ReadOnly := False;
-  DataSet.FieldByName('payable_hours').ReadOnly := False;
-
-  // ЗАПИСЫВАЕМ ИТОГИ
-  DataSet.FieldByName('total_work_days').AsInteger := WorkDays;
-  DataSet.FieldByName('total_hours').AsFloat := TotalHrs;
-  DataSet.FieldByName('sick_days').AsInteger := SickDays;
-  DataSet.FieldByName('vacation_days').AsInteger := VacDays;
-  DataSet.FieldByName('weekend_days').AsInteger := Weekends;
-  DataSet.FieldByName('night_hours').AsFloat := NightHrs;
-  DataSet.FieldByName('holiday_hours').AsFloat := 0; // Или HolHrs, если добавите логику
-  DataSet.FieldByName('payable_hours').AsFloat := PayHrs;
-
-  // --- МАГИЯ: ВЕШАЕМ БЛОКИРОВКУ ОБРАТНО ---
-  DataSet.FieldByName('total_work_days').ReadOnly := True;
-  DataSet.FieldByName('total_hours').ReadOnly := True;
-  DataSet.FieldByName('sick_days').ReadOnly := True;
-  DataSet.FieldByName('vacation_days').ReadOnly := True;
-  DataSet.FieldByName('weekend_days').ReadOnly := True;
-  DataSet.FieldByName('night_hours').ReadOnly := True;
-  DataSet.FieldByName('holiday_hours').ReadOnly := True;
-  DataSet.FieldByName('payable_hours').ReadOnly := True;
+  Sender.DataSet.FieldByName('hours_worked').AsFloat := Sender.AsFloat * HOURS_PER_DAY;
 end;
 
 procedure TframeTimesheet.ReadPeriodFromUI;
@@ -216,57 +190,44 @@ end;
 
 procedure TframeTimesheet.btnLoadClick(Sender: TObject);
 begin
-  ReadPeriodFromUI; // 1. Читаем и ЗАПОМИНАЕМ выбор пользователя в FCurYear/FCurMonth
+  ReadPeriodFromUI; // 1. Читаем и сохраняем период редактирования в FCurYear/FCurMonth
 
-  // 2. Создаем сетку, передавая наши глобальные переменные
+  // 2. Готовим сетку, задаём поля структуры документа
   PrepareMemTable(FCurYear, FCurMonth);
 
-  // 3. Заполняем её сотрудниками
+  // 3. Заполняем сотрудниками
   FillEmployeesList;
 end;
 
 procedure TframeTimesheet.PrepareMemTable(AYear, AMonth: Integer);
-var
-  i, DaysCount: Integer;
 begin
   if not Assigned(dmMain) then Exit;
 
-  // Отключаем оба грида на время перестройки
+  // Отключаем обе сетки на время перестройки структуры
   DBGridNames.DataSource := nil;
   DBGridTimesheet.DataSource := nil;
 
   with dmMain.memTimesheet do
   begin
     Active := False;
-    BeforePost := nil;
     Fields.Clear;
     FieldDefs.Clear;
 
     FieldDefs.Add('emp_id', ftInteger);
     FieldDefs.Add('fio', ftString, 100);
-
-    DaysCount := DaysInAMonth(AYear, AMonth);
-    for i := 1 to DaysCount do
-      FieldDefs.Add('day_' + IntToStr(i), ftString, 5);
-
-    FieldDefs.Add('total_work_days', ftInteger);
-    FieldDefs.Add('total_hours', ftFloat);
-    FieldDefs.Add('sick_days', ftInteger);
-    FieldDefs.Add('vacation_days', ftInteger);
-    FieldDefs.Add('weekend_days', ftInteger);
-    FieldDefs.Add('night_hours', ftFloat);
-    FieldDefs.Add('holiday_hours', ftFloat);
-    FieldDefs.Add('payable_hours', ftFloat);
+    FieldDefs.Add('norm_days', ftInteger);
+    FieldDefs.Add('norm_hours', ftFloat);
+    FieldDefs.Add('days_worked', ftFloat);
+    FieldDefs.Add('hours_worked', ftFloat);
 
     CreateDataSet;
-    BeforePost := memTimesheetBeforePost;
     AfterScroll := memTimesheetAfterScroll;
 
-    // Подключаем базу обратно к ОБОИМ гридам
+    // Подключаем обе таблицы к общему набору данных
     DBGridNames.DataSource := dmMain.dsTimesheet;
     DBGridTimesheet.DataSource := dmMain.dsTimesheet;
 
-    // --- 1. НАСТРАИВАЕМ ЛЕВЫЙ ГРИД (ТОЛЬКО ФИО) ---
+    // --- 1. Левая (замороженная) панель — только ФИО ---
     DBGridNames.Columns.Clear;
     with DBGridNames.Columns.Add do
     begin
@@ -275,52 +236,63 @@ begin
       Width := 220;
     end;
 
-    // --- 2. НАСТРАИВАЕМ ПРАВЫЙ ГРИД (ДНИ И ИТОГИ) ---
+    // --- 2. Правая панель — норма (справочно) + факт (для ввода) ---
     DBGridTimesheet.Columns.Clear;
-    for i := 1 to DaysCount do
+    with DBGridTimesheet.Columns.Add do
     begin
-      with DBGridTimesheet.Columns.Add do
-      begin
-        FieldName := 'day_' + IntToStr(i);
-        Title.Caption := IntToStr(i);
-        Title.Alignment := taCenter;
-        Alignment := taCenter;
-        Width := 25; // Делаем дни компактными
-      end;
+      FieldName := 'norm_days';
+      Title.Caption := 'Норма, дн.';
+      Title.Alignment := taCenter;
+      Alignment := taCenter;
+      Width := 80;
+    end;
+    with DBGridTimesheet.Columns.Add do
+    begin
+      FieldName := 'norm_hours';
+      Title.Caption := 'Норма, ч.';
+      Title.Alignment := taCenter;
+      Alignment := taCenter;
+      Width := 80;
+    end;
+    with DBGridTimesheet.Columns.Add do
+    begin
+      FieldName := 'days_worked';
+      Title.Caption := 'Отработано, дн.';
+      Title.Alignment := taCenter;
+      Alignment := taCenter;
+      Width := 110;
+    end;
+    with DBGridTimesheet.Columns.Add do
+    begin
+      FieldName := 'hours_worked';
+      Title.Caption := 'Отработано, ч.';
+      Title.Alignment := taCenter;
+      Alignment := taCenter;
+      Width := 110;
     end;
 
-    // Итоги в правом гриде
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'total_work_days'; Title.Caption := 'Отр. дни'; Width := 65; end;
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'total_hours'; Title.Caption := 'Часы'; Width := 50; end;
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'sick_days'; Title.Caption := 'Больн.(Б)'; Width := 65; end;
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'vacation_days'; Title.Caption := 'Отпуск(О)'; Width := 65; end;
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'weekend_days'; Title.Caption := 'Вых.(В)'; Width := 50; end;
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'night_hours'; Title.Caption := 'Ночн.(Н)'; Width := 60; end;
-    with DBGridTimesheet.Columns.Add do begin FieldName := 'payable_hours'; Title.Caption := 'К оплате'; Width := 65; end;
+    TFloatField(FieldByName('norm_hours')).DisplayFormat := '0.##';
+    TFloatField(FieldByName('days_worked')).DisplayFormat := '0.##';
+    TFloatField(FieldByName('hours_worked')).DisplayFormat := '0.##';
 
-    // Форматы цифр
-    TFloatField(FieldByName('total_hours')).DisplayFormat := '0.##';
-    TFloatField(FieldByName('night_hours')).DisplayFormat := '0.##';
-    TFloatField(FieldByName('holiday_hours')).DisplayFormat := '0.##';
-    TFloatField(FieldByName('payable_hours')).DisplayFormat := '0.##';
+    // Норма — справочная, редактировать её нельзя
+    FieldByName('norm_days').ReadOnly := True;
+    FieldByName('norm_hours').ReadOnly := True;
 
-    // ВЕШАЕМ НАДЕЖНЫЙ ЗАМОК НА УРОВНЕ ДАННЫХ
-    FieldByName('total_work_days').ReadOnly := True;
-    FieldByName('total_hours').ReadOnly := True;
-    FieldByName('sick_days').ReadOnly := True;
-    FieldByName('vacation_days').ReadOnly := True;
-    FieldByName('weekend_days').ReadOnly := True;
-    FieldByName('night_hours').ReadOnly := True;
-    FieldByName('holiday_hours').ReadOnly := True;
-    FieldByName('payable_hours').ReadOnly := True;
+    // "Дней" и "Часов" — то, что реально вводит бухгалтер
+    FieldByName('days_worked').ReadOnly := False;
+    FieldByName('hours_worked').ReadOnly := False;
+
+    // Ввод дней сразу пересчитывает часы (см. DaysWorkedChange)
+    FieldByName('days_worked').OnChange := DaysWorkedChange;
   end;
 end;
 
 procedure TframeTimesheet.FillEmployeesList;
 var
-  DeptID, DayNum, EmpID: Integer;
+  DeptID, EmpID, NormDays: Integer;
   LoadQuery: TFDQuery;
-  CellValue: string;
+  TotalHours: Double;
 begin
   if not Assigned(dmMain) then Exit;
 
@@ -337,19 +309,25 @@ begin
     dmMain.qryEmployees.Filtered := True;
   end;
 
+  NormDays := GetWorkingDaysNorm(FCurYear, FCurMonth);
+
   LoadQuery := TFDQuery.Create(nil);
   dmMain.memTimesheet.DisableControls;
   try
     LoadQuery.Connection := dmMain.conn;
-    LoadQuery.SQL.Text := 'SELECT strftime(''%d'', work_date) as dday, hours_worked, status_code ' +
+    LoadQuery.SQL.Text := 'SELECT SUM(hours_worked) as total_hours ' +
                           'FROM timesheet WHERE emp_id = :emp_id AND strftime(''%Y-%m'', work_date) = :ym';
 
     dmMain.memTimesheet.FieldByName('fio').ReadOnly := False;
+    // На время загрузки отключаем автопересчёт часов из дней —
+    // здесь мы, наоборот, вычисляем "дни" из уже сохранённых часов.
+    dmMain.memTimesheet.FieldByName('days_worked').OnChange := nil;
+
     dmMain.qryEmployees.First;
 
     if dmMain.qryEmployees.IsEmpty then
     begin
-      ShowMessage('Для выбранного отдела нет сотрудников!');
+      ShowMessage('Нет активных сотрудников для отображения!');
       Exit;
     end;
 
@@ -360,32 +338,22 @@ begin
       begin
         EmpID := dmMain.qryEmployees.FieldByName('id').AsInteger;
 
-        dmMain.memTimesheet.Append;
-        dmMain.memTimesheet.FieldByName('emp_id').AsInteger := EmpID;
-        dmMain.memTimesheet.FieldByName('fio').AsString := dmMain.qryEmployees.FieldByName('fio').AsString;
-
         LoadQuery.Close;
         LoadQuery.ParamByName('emp_id').AsInteger := EmpID;
-        // Используем наши глобальные FCurYear и FCurMonth!
         LoadQuery.ParamByName('ym').AsString := Format('%.4d-%.2d', [FCurYear, FCurMonth]);
         LoadQuery.Open;
 
-        while not LoadQuery.Eof do
-        begin
-          DayNum := StrToIntDef(LoadQuery.FieldByName('dday').AsString, 0);
+        TotalHours := 0;
+        if not LoadQuery.FieldByName('total_hours').IsNull then
+          TotalHours := LoadQuery.FieldByName('total_hours').AsFloat;
 
-          if DayNum > 0 then
-          begin
-            if LoadQuery.FieldByName('hours_worked').AsFloat > 0 then
-              CellValue := FloatToStr(LoadQuery.FieldByName('hours_worked').AsFloat)
-            else
-              CellValue := LoadQuery.FieldByName('status_code').AsString;
-
-            dmMain.memTimesheet.FieldByName('day_' + IntToStr(DayNum)).AsString := CellValue;
-          end;
-          LoadQuery.Next;
-        end;
-
+        dmMain.memTimesheet.Append;
+        dmMain.memTimesheet.FieldByName('emp_id').AsInteger := EmpID;
+        dmMain.memTimesheet.FieldByName('fio').AsString := dmMain.qryEmployees.FieldByName('fio').AsString;
+        dmMain.memTimesheet.FieldByName('norm_days').AsInteger := NormDays;
+        dmMain.memTimesheet.FieldByName('norm_hours').AsFloat := NormDays * HOURS_PER_DAY;
+        dmMain.memTimesheet.FieldByName('hours_worked').AsFloat := TotalHours;
+        dmMain.memTimesheet.FieldByName('days_worked').AsFloat := TotalHours / HOURS_PER_DAY;
         dmMain.memTimesheet.Post;
       end;
       dmMain.qryEmployees.Next;
@@ -398,6 +366,8 @@ begin
   finally
     LoadQuery.Free;
     dmMain.memTimesheet.FieldByName('fio').ReadOnly := True;
+    // Возвращаем автопересчёт "дни -> часы" для ручного ввода в гриде
+    dmMain.memTimesheet.FieldByName('days_worked').OnChange := DaysWorkedChange;
     dmMain.memTimesheet.EnableControls;
     dmMain.qryEmployees.Filtered := False;
   end;
@@ -405,7 +375,7 @@ end;
 
 procedure TframeTimesheet.btnAutoFillClick(Sender: TObject);
 var
-  i, DaysCount, EmpID: Integer;
+  i, DaysCount, EmpID, NormDays, WorkDaysCount: Integer;
   CurrentDate, FirstDay, LastDay: TDateTime;
   QryVac, QrySick: TFDQuery;
   IsVacation, IsSick: Boolean;
@@ -414,7 +384,6 @@ begin
   if dmMain.memTimesheet.IsEmpty then Exit;
 
   DaysCount := DaysInAMonth(FCurYear, FCurMonth);
-  // Определяем первый и последний день выбранного месяца
   FirstDay := EncodeDate(FCurYear, FCurMonth, 1);
   LastDay := EncodeDate(FCurYear, FCurMonth, DaysCount);
 
@@ -422,47 +391,48 @@ begin
   QrySick := TFDQuery.Create(nil);
   try
     QryVac.Connection := dmMain.conn;
-    // Запрос: ищем любые отпуска, которые пересекаются с текущим месяцем
+    // Ищем: есть ли отпуск, который пересекается с текущим периодом
     QryVac.SQL.Text := 'SELECT start_date, end_date FROM vacation_journal ' +
                        'WHERE emp_id = :emp AND start_date <= :end_dt AND end_date >= :start_dt';
 
     QrySick.Connection := dmMain.conn;
-    // Запрос: ищем любые больничные, которые пересекаются с текущим месяцем
+    // Ищем: есть ли больничный, который пересекается с текущим периодом
     QrySick.SQL.Text := 'SELECT start_date, end_date FROM sick_leave_journal ' +
                         'WHERE emp_id = :emp AND start_date <= :end_dt AND end_date >= :start_dt';
 
     dmMain.memTimesheet.DisableControls;
+    dmMain.memTimesheet.FieldByName('days_worked').OnChange := nil;
     try
       dmMain.memTimesheet.First;
 
       while not dmMain.memTimesheet.Eof do
       begin
         EmpID := dmMain.memTimesheet.FieldByName('emp_id').AsInteger;
+        NormDays := dmMain.memTimesheet.FieldByName('norm_days').AsInteger;
 
-        // 1. Загружаем отпуска сотрудника
+        // 1. Подтягиваем отпуска сотрудника
         QryVac.Close;
         QryVac.ParamByName('emp').AsInteger := EmpID;
         QryVac.ParamByName('start_dt').AsDate := FirstDay;
         QryVac.ParamByName('end_dt').AsDate := LastDay;
         QryVac.Open;
 
-        // 2. Загружаем больничные сотрудника
+        // 2. Подтягиваем больничные сотрудника
         QrySick.Close;
         QrySick.ParamByName('emp').AsInteger := EmpID;
         QrySick.ParamByName('start_dt').AsDate := FirstDay;
         QrySick.ParamByName('end_dt').AsDate := LastDay;
         QrySick.Open;
 
-        dmMain.memTimesheet.Edit;
-
-        // 3. Пробегаемся по каждому дню месяца
+        // 3. Проходим по каждому дню месяца и считаем итог
+        WorkDaysCount := 0;
         for i := 1 to DaysCount do
         begin
           CurrentDate := EncodeDate(FCurYear, FCurMonth, i);
           IsVacation := False;
           IsSick := False;
 
-          // Проверяем, попадает ли день на больничный
+          // Проверяем, попадает ли день в больничный
           QrySick.First;
           while not QrySick.Eof do
           begin
@@ -475,7 +445,7 @@ begin
             QrySick.Next;
           end;
 
-          // Проверяем, попадает ли день на отпуск (если он не болел)
+          // Проверяем, попадает ли день в отпуск (если он не на больничном)
           if not IsSick then
           begin
             QryVac.First;
@@ -491,23 +461,22 @@ begin
             end;
           end;
 
-          // --- ПРОСТАВЛЯЕМ ЗНАЧЕНИЯ ---
-          if IsSick then
-            dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := 'Б'
-          else if IsVacation then
-            dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := 'О'
-          else if DayOfTheWeek(CurrentDate) in [6, 7] then
-            dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := 'В'
-          else
-            dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString := '8';
+          // Рабочий день — если не выходной, не отпуск и не больничный
+          if (not IsSick) and (not IsVacation) and not (DayOfTheWeek(CurrentDate) in [6, 7]) then
+            Inc(WorkDaysCount);
         end;
 
+        dmMain.memTimesheet.Edit;
+        dmMain.memTimesheet.FieldByName('days_worked').AsFloat := WorkDaysCount;
+        dmMain.memTimesheet.FieldByName('hours_worked').AsFloat := WorkDaysCount * HOURS_PER_DAY;
         dmMain.memTimesheet.Post;
+
         dmMain.memTimesheet.Next;
       end;
 
       dmMain.memTimesheet.First;
     finally
+      dmMain.memTimesheet.FieldByName('days_worked').OnChange := DaysWorkedChange;
       dmMain.memTimesheet.EnableControls;
     end;
   finally
@@ -515,27 +484,23 @@ begin
     QrySick.Free;
   end;
 
-  ShowMessage('Табель успешно заполнен! Отпуска и больничные учтены автоматически.');
+  ShowMessage('Дни/часы рассчитаны по норме, отпускам и больничным. Поправьте вручную, если по бумажному табелю есть отклонения, и нажмите "Сохранить".');
 end;
 
 procedure TframeTimesheet.btnSaveClick(Sender: TObject);
 var
-  DaysCount, i, EmpID: Integer;
-  CurrentDate: TDateTime;
-  CellText: string;
+  EmpID: Integer;
   Hours: Double;
   SaveQuery: TFDQuery;
-  Bookmark: TBookmark; // Для запоминания строки
+  Bookmark: TBookmark;
 begin
   if not Assigned(dmMain) or not dmMain.memTimesheet.Active then Exit;
   if dmMain.memTimesheet.IsEmpty then Exit;
 
-  DaysCount := DaysInAMonth(FCurYear, FCurMonth);
   SaveQuery := TFDQuery.Create(nil);
 
-  // --- ОТКЛЮЧАЕМ ПРОРИСОВКУ ГРИДА (Ускоряет в 10 раз и убирает мигание) ---
   dmMain.memTimesheet.DisableControls;
-  Bookmark := dmMain.memTimesheet.GetBookmark; // Запоминаем, где стоял курсор
+  Bookmark := dmMain.memTimesheet.GetBookmark;
   try
     SaveQuery.Connection := dmMain.conn;
     dmMain.conn.StartTransaction;
@@ -545,38 +510,25 @@ begin
       while not dmMain.memTimesheet.Eof do
       begin
         EmpID := dmMain.memTimesheet.FieldByName('emp_id').AsInteger;
+        Hours := dmMain.memTimesheet.FieldByName('hours_worked').AsFloat;
 
+        // Удаляем всё, что раньше было сохранено на этот месяц по сотруднику
+        // (в том числе старые подневные записи, если табель вёлся ранее по дням)
         SaveQuery.SQL.Text := 'DELETE FROM timesheet WHERE emp_id = :emp_id AND strftime(''%Y-%m'', work_date) = :ym';
         SaveQuery.ParamByName('emp_id').AsInteger := EmpID;
         SaveQuery.ParamByName('ym').AsString := Format('%.4d-%.2d', [FCurYear, FCurMonth]);
         SaveQuery.ExecSQL;
 
-        SaveQuery.SQL.Text := 'INSERT INTO timesheet (emp_id, work_date, hours_worked, status_code) ' +
-                              'VALUES (:emp_id, :wdate, :hrs, :code)';
-
-        for i := 1 to DaysCount do
+        // И сохраняем итог одной строкой на весь месяц —
+        // именно её суммирует UnitframePayroll как факт. часы сотрудника.
+        if Hours > 0 then
         begin
-          CellText := Trim(dmMain.memTimesheet.FieldByName('day_' + IntToStr(i)).AsString);
-          if CellText = '' then Continue;
-
-          CurrentDate := EncodeDate(FCurYear, FCurMonth, i);
-
+          SaveQuery.SQL.Text := 'INSERT INTO timesheet (emp_id, work_date, hours_worked, status_code) ' +
+                                'VALUES (:emp_id, :wdate, :hrs, :code)';
           SaveQuery.ParamByName('emp_id').AsInteger := EmpID;
-          SaveQuery.ParamByName('wdate').AsDate := CurrentDate;
-
-          Hours := StrToFloatDef(CellText, 0);
-
-          if Hours > 0 then
-          begin
-            SaveQuery.ParamByName('hrs').AsFloat := Hours;
-            SaveQuery.ParamByName('code').AsString := 'Я';
-          end
-          else
-          begin
-            SaveQuery.ParamByName('hrs').AsFloat := 0;
-            SaveQuery.ParamByName('code').AsString := UpperCase(Copy(CellText, 1, 5));
-          end;
-
+          SaveQuery.ParamByName('wdate').AsDate := EncodeDate(FCurYear, FCurMonth, 1);
+          SaveQuery.ParamByName('hrs').AsFloat := Hours;
+          SaveQuery.ParamByName('code').AsString := 'Я';
           SaveQuery.ExecSQL;
         end;
 
@@ -584,19 +536,18 @@ begin
       end;
 
       dmMain.conn.Commit;
-      ShowMessage('Табель успешно сохранен в базу данных!');
+      ShowMessage('Табель успешно сохранён в базу данных!');
 
     except
       on E: Exception do
       begin
         dmMain.conn.Rollback;
-        ShowMessage('Ошибка при сохранении табеля: ' + E.Message);
+        ShowMessage('Ошибка при сохранении данных: ' + E.Message);
       end;
     end;
   finally
     SaveQuery.Free;
 
-    // --- ВОЗВРАЩАЕМ КУРСОР НА МЕСТО И ВКЛЮЧАЕМ ГРИД ---
     if dmMain.memTimesheet.BookmarkValid(Bookmark) then
     begin
       dmMain.memTimesheet.GotoBookmark(Bookmark);
@@ -609,52 +560,31 @@ end;
 procedure TframeTimesheet.DBGridTimesheetDrawColumnCell(Sender: TObject;
   const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
 var
-  DayNum: Integer;
-  CurrentDate: TDateTime;
   IsActiveRow: Boolean;
   Grid: TDBGrid;
 begin
-  Grid := Sender as TDBGrid; // Магия: понимаем, какой грид себя сейчас рисует (левый или правый)
+  Grid := Sender as TDBGrid; // Важно: работает, когда этот хендлер общий (общий для обеих сеток)
   IsActiveRow := False;
 
   if (dmMain.memTimesheet.Active) and (dmMain.memTimesheet.FindField('emp_id') <> nil) then
     IsActiveRow := (dmMain.memTimesheet.FieldByName('emp_id').AsInteger = FCurrentEmpID);
 
-  // Базовый цвет активной строки
+  // Подсветка строки текущего сотрудника
   if IsActiveRow then
   begin
     Grid.Canvas.Brush.Color := $00FFF0E0;
     Grid.Canvas.Font.Style := [fsBold];
   end;
 
-  // Раскраска выходных дней
-  if Pos('day_', Column.FieldName) = 1 then
-  begin
-    DayNum := StrToIntDef(Copy(Column.FieldName, 5, Length(Column.FieldName)), 1);
-    if (FCurYear > 0) and (FCurMonth > 0) then
-    begin
-      if TryEncodeDate(Word(FCurYear), Word(FCurMonth), Word(DayNum), CurrentDate) then
-      begin
-        if DayOfTheWeek(CurrentDate) in [6, 7] then
-        begin
-          if IsActiveRow then Grid.Canvas.Brush.Color := $00FFD2D2
-          else Grid.Canvas.Brush.Color := $00E1E1FF;
-        end;
-      end;
-    end;
-  end
-  // Раскраска итоговых колонок
-  else if (Column.FieldName = 'total_work_days') or (Column.FieldName = 'total_hours') or
-          (Column.FieldName = 'sick_days') or (Column.FieldName = 'vacation_days') or
-          (Column.FieldName = 'weekend_days') or (Column.FieldName = 'payable_hours') or
-          (Column.FieldName = 'night_hours') or (Column.FieldName = 'holiday_hours') then
+  // Дополнительная подсветка редактируемых колонок (факт)
+  if (Column.FieldName = 'days_worked') or (Column.FieldName = 'hours_worked') then
   begin
     if IsActiveRow then Grid.Canvas.Brush.Color := $00C0FFFF
     else Grid.Canvas.Brush.Color := $00E0FFFF;
     Grid.Canvas.Font.Style := [fsBold];
   end;
 
-  // Оставляем стандартное синее выделение
+  // Подсветка выделенной ячейки редактором
   if gdSelected in State then
   begin
     Grid.Canvas.Brush.Color := clHighlight;
@@ -663,6 +593,5 @@ begin
 
   Grid.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
-
 
 end.

@@ -29,7 +29,7 @@ object frameAccounts: TframeAccounts
       Top = 13
       Width = 38
       Height = 13
-      Caption = 'Поиск:'
+      Caption = #1055#1086#1080#1089#1082':'
     end
     object EditFilter: TEdit
       Left = 325

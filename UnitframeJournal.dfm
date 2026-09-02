@@ -28,7 +28,7 @@ object frameJournal: TframeJournal
       Top = 13
       Width = 111
       Height = 13
-      Caption = 'Документы (проводки)'
+      Caption = #1044#1086#1082#1091#1084#1077#1085#1090#1099' ('#1087#1088#1086#1074#1086#1076#1082#1080')'
     end
     object ButtonToggleStatus: TButton
       Left = 780
@@ -36,7 +36,7 @@ object frameJournal: TframeJournal
       Width = 110
       Height = 29
       Anchors = [akTop, akRight]
-      Caption = 'Провести'
+      Caption = #1055#1088#1086#1074#1077#1089#1090#1080
       TabOrder = 1
       OnClick = ButtonToggleStatusClick
     end
@@ -84,7 +84,7 @@ object frameJournal: TframeJournal
       Top = 13
       Width = 96
       Height = 13
-      Caption = 'Строки проводки'
+      Caption = #1057#1090#1088#1086#1082#1080' '#1087#1088#1086#1074#1086#1076#1082#1080
     end
     object LabelTotal: TLabel
       Left = 620
@@ -93,7 +93,7 @@ object frameJournal: TframeJournal
       Height = 13
       Anchors = [akTop, akRight]
       Alignment = taRightJustify
-      Caption = 'Итого по документу: 0.00'
+      Caption = #1048#1090#1086#1075#1086' '#1087#1086' '#1076#1086#1082#1091#1084#1077#1085#1090#1091': 0.00'
     end
   end
   object DBGridLines: TDBGrid

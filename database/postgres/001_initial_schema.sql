@@ -14,43 +14,52 @@
 --                                          чтобы не менять поведение поля
 --                                          в Delphi (TIntegerField, не
 --                                          TBooleanField)
---   TEXT(N) с длиной                   -> TEXT без ограничения длины
+--   TEXT(N) с длиной                   -> VARCHAR(N) (щедрый запас длины) —
+--                                          НЕ голый TEXT: у голого TEXT в
+--                                          Postgres нет объявленной длины,
+--                                          и FireDAC поэтому маппит такую
+--                                          колонку в WideMemo вместо
+--                                          WideString, а старый код ждёт
+--                                          обычную строку (WideString) —
+--                                          получаем EDatabaseError "Type
+--                                          mismatch ... expecting:
+--                                          WideString actual: WideMemo".
 --
 -- Порядок создания таблиц — с учётом внешних ключей (employees раньше того,
 -- что на неё ссылается).
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS closed_periods (
-    period_str  TEXT PRIMARY KEY
+    period_str  VARCHAR(20) PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS company_info (
     id            SERIAL PRIMARY KEY,
-    key_name      TEXT NOT NULL UNIQUE,
-    display_name  TEXT NOT NULL,
-    key_value     TEXT
+    key_name      VARCHAR(100) NOT NULL UNIQUE,
+    display_name  VARCHAR(255) NOT NULL,
+    key_value     VARCHAR(1000)
 );
 
 CREATE TABLE IF NOT EXISTS const_settings (
-    key_name   TEXT PRIMARY KEY,
+    key_name   VARCHAR(100) PRIMARY KEY,
     key_value  DOUBLE PRECISION
 );
 
 CREATE TABLE IF NOT EXISTS departments (
     id         SERIAL PRIMARY KEY,
-    dept_name  TEXT NOT NULL UNIQUE
+    dept_name  VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS positions (
     id        SERIAL PRIMARY KEY,
-    name      TEXT NOT NULL UNIQUE,
-    category  TEXT
+    name      VARCHAR(255) NOT NULL UNIQUE,
+    category  VARCHAR(100)
 );
 
 CREATE TABLE IF NOT EXISTS employees (
     id                    SERIAL PRIMARY KEY,
     tabno                 INTEGER NOT NULL UNIQUE,
-    fio                   TEXT NOT NULL,
+    fio                   VARCHAR(255) NOT NULL,
     hire_date             DATE,
     base_salary           NUMERIC(18,2) DEFAULT 0,
     dept_id               INTEGER REFERENCES departments(id) ON DELETE SET NULL,
@@ -70,14 +79,14 @@ CREATE TABLE IF NOT EXISTS employees (
     class_rank            INTEGER DEFAULT 0,
     trade_union           INTEGER DEFAULT 0,
     alimony_percent       DOUBLE PRECISION DEFAULT 0.0,
-    bank_account          TEXT,
+    bank_account          VARCHAR(100),
     sick_leave_percent    INTEGER DEFAULT 60,
     birth_date            DATE
 );
 
 CREATE TABLE IF NOT EXISTS emp_adjustments (
     emp_id      INTEGER REFERENCES employees(id),
-    adj_name    TEXT,          -- 'Премия', 'Доплата за выслугу'
+    adj_name    VARCHAR(255),  -- 'Премия', 'Доплата за выслугу'
     adj_value   DOUBLE PRECISION,
     is_percent  INTEGER        -- 1 если %, 0 если фикс. сумма
 );
@@ -114,8 +123,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_salary_history_emp_period
 
 CREATE TABLE IF NOT EXISTS settings (
     id            SERIAL PRIMARY KEY,
-    sys_name      TEXT UNIQUE,
-    display_name  TEXT,
+    sys_name      VARCHAR(100) UNIQUE,
+    display_name  VARCHAR(255),
     calc_type     INTEGER,
     key_value     DOUBLE PRECISION,
     is_active     INTEGER DEFAULT 1
@@ -146,8 +155,8 @@ CREATE TABLE IF NOT EXISTS timesheet (
     emp_id        INTEGER NOT NULL REFERENCES employees(id),
     work_date     DATE NOT NULL,
     hours_worked  DOUBLE PRECISION DEFAULT 0,
-    status_code   TEXT DEFAULT 'Я',
-    notes         TEXT
+    status_code   VARCHAR(10) DEFAULT 'Я',
+    notes         VARCHAR(500)
 );
 
 CREATE INDEX IF NOT EXISTS idx_timesheet_date ON timesheet (work_date);

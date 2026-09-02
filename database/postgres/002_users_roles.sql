@@ -9,11 +9,11 @@
 
 CREATE TABLE IF NOT EXISTS app_users (
     id             SERIAL PRIMARY KEY,
-    username       TEXT NOT NULL UNIQUE,
-    password_hash  TEXT NOT NULL,   -- SHA-256(password_salt + пароль), hex-строка
-    password_salt  TEXT NOT NULL,   -- случайная строка, своя для каждого пользователя
-    full_name      TEXT,
-    role           TEXT NOT NULL DEFAULT 'accountant',
+    username       VARCHAR(100) NOT NULL UNIQUE,
+    password_hash  VARCHAR(128) NOT NULL,   -- SHA-256(password_salt + пароль), hex-строка
+    password_salt  VARCHAR(128) NOT NULL,   -- случайная строка, своя для каждого пользователя
+    full_name      VARCHAR(255),
+    role           VARCHAR(50) NOT NULL DEFAULT 'accountant',
         -- 'admin'      — полный доступ, настройки, пользователи
         -- 'accountant' — расчёт зарплаты, отчёты, справочники (текущий режим работы)
         -- 'cashier'    — касса/банк (появится на Этапе 4)
@@ -27,11 +27,11 @@ CREATE TABLE IF NOT EXISTS app_users (
 CREATE TABLE IF NOT EXISTS audit_log (
     id           SERIAL PRIMARY KEY,
     user_id      INTEGER REFERENCES app_users(id),
-    username     TEXT,             -- дублируем имя на случай удаления пользователя
-    action       TEXT NOT NULL,    -- 'insert' / 'update' / 'delete' / 'login' и т.п.
-    table_name   TEXT,
-    record_id    TEXT,
-    details      TEXT,             -- краткое описание/дельта изменений
+    username     VARCHAR(100),         -- дублируем имя на случай удаления пользователя
+    action       VARCHAR(50) NOT NULL, -- 'insert' / 'update' / 'delete' / 'login' и т.п.
+    table_name   VARCHAR(100),
+    record_id    VARCHAR(100),
+    details      VARCHAR(2000),        -- краткое описание/дельта изменений
     created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

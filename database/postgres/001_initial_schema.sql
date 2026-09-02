@@ -4,9 +4,27 @@
 --
 -- Правила перевода типов:
 --   INTEGER PRIMARY KEY AUTOINCREMENT  -> SERIAL PRIMARY KEY
---   CURRENCY (денежные суммы)          -> NUMERIC(18,2)  — как и уже
---                                          существующие в этой же схеме
---                                          DECIMAL(18,2)-поля
+--   CURRENCY (денежные суммы)          -> MONEY  — специально НЕ то же
+--                                          самое, что DECIMAL(18,2) ниже:
+--                                          в SQLite FireDAC узнаёт имя типа
+--                                          CURRENCY и даёт полю Currency
+--                                          напрямую, а DECIMAL — обычный
+--                                          FMTBcd. Если оба слить в один
+--                                          NUMERIC(18,2), это различие
+--                                          пропадает, и часть persistent-
+--                                          полей (которые ждут именно
+--                                          Currency) даёт EDatabaseError
+--                                          "Type mismatch ... expecting:
+--                                          Currency actual: FMTBcd" — а
+--                                          если "починить" общим правилом
+--                                          на всё подключение, ломаются
+--                                          уже поля, которые ждут FMTBcd.
+--                                          Родной тип MONEY в Postgres
+--                                          FireDAC сам мапит в Currency —
+--                                          без всяких MapRules.
+--   DECIMAL(x,y) (проценты сумм и т.п.
+--   не CURRENCY-поля)                  -> NUMERIC(x,y) — маппится в
+--                                          FMTBcd, как и раньше в SQLite
 --   REAL (проценты, ставки, часы)      -> DOUBLE PRECISION  (не REAL/float4
 --                                          PostgreSQL — SQLite REAL физически
 --                                          8-байтный double, сохраняем точность)
@@ -61,7 +79,7 @@ CREATE TABLE IF NOT EXISTS employees (
     tabno                 INTEGER NOT NULL UNIQUE,
     fio                   VARCHAR(255) NOT NULL,
     hire_date             DATE,
-    base_salary           NUMERIC(18,2) DEFAULT 0,
+    base_salary           MONEY DEFAULT 0,
     dept_id               INTEGER REFERENCES departments(id) ON DELETE SET NULL,
     pos_id                INTEGER REFERENCES positions(id) ON DELETE SET NULL,
     status                INTEGER DEFAULT 1,
@@ -95,12 +113,12 @@ CREATE TABLE IF NOT EXISTS payroll_journal (
     id               SERIAL PRIMARY KEY,
     emp_id           INTEGER REFERENCES employees(id),
     period_date      DATE,               -- Первое число месяца
-    gross_amount     NUMERIC(18,2),      -- Начислено
-    tax_amount       NUMERIC(18,2),      -- Подоходный
-    pension_amount   NUMERIC(18,2),      -- Пенсионный
-    net_amount       NUMERIC(18,2),      -- К выдаче
-    union_amount     NUMERIC(18,2) DEFAULT 0,  -- Профсоюз
-    alimony_amount   NUMERIC(18,2) DEFAULT 0   -- Алименты
+    gross_amount     MONEY,               -- Начислено
+    tax_amount       MONEY,               -- Подоходный
+    pension_amount   MONEY,               -- Пенсионный
+    net_amount       MONEY,               -- К выдаче
+    union_amount     MONEY DEFAULT 0,     -- Профсоюз
+    alimony_amount   MONEY DEFAULT 0      -- Алименты
 );
 
 CREATE TABLE IF NOT EXISTS production_calendar (

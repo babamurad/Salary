@@ -163,13 +163,16 @@ CREATE TABLE IF NOT EXISTS sick_leave_journal (
 
 CREATE TABLE IF NOT EXISTS sick_leave_rates (
     id         INTEGER PRIMARY KEY,
+    min_years  INTEGER,
     -- BIGINT, не INTEGER: у верхней ступени стажа обычно стоит
     -- условная "бесконечность" (например 999999999) как значение
     -- max_years — SQLite хранит INTEGER произвольной величины и
     -- FireDAC для такой колонки определял поле как LargeInt; обычный
     -- 4-байтовый INTEGER в Postgres даёт EDatabaseError "Type mismatch
-    -- ... expecting: LargeInt actual: Integer".
-    min_years  BIGINT,
+    -- ... expecting: LargeInt actual: Integer". min_years при этом
+    -- остаётся обычным Integer — там всегда небольшие значения, и
+    -- перевод в BIGINT ломает его в обратную сторону: "expecting:
+    -- Integer actual: LargeInt".
     max_years  BIGINT,
     percent    DOUBLE PRECISION
 );

@@ -1,0 +1,21 @@
+-- ============================================================================
+-- Исправление ошибки предыдущей миграции: min_years должен остаться
+-- INTEGER, а не BIGINT (005_fix_sick_leave_rates_bigint.sql перевёл в
+-- BIGINT обе колонки сразу, но широким значением бывает только
+-- max_years — условная "бесконечность" верхней ступени стажа;
+-- min_years всегда небольшое число, и BIGINT для него ломает
+-- persistent-поле датасета в обратную сторону: EDatabaseError "Type
+-- mismatch ... expecting: Integer actual: LargeInt".
+--
+-- Применять один раз на базу, где уже выполнялся
+-- 005_fix_sick_leave_rates_bigint.sql:
+--
+--   psql -U <пользователь> -d <база> -f 006_fix_sick_leave_rates_min_years.sql
+--
+-- На новых базах, где 001_initial_schema.sql выполняется впервые (уже
+-- с правильным разделением min_years=INTEGER / max_years=BIGINT), этот
+-- файл не нужен.
+-- ============================================================================
+
+ALTER TABLE sick_leave_rates ALTER COLUMN min_years TYPE INTEGER;
+-- max_years остаётся BIGINT (уже применено в 005) — не трогаем.

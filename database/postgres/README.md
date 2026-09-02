@@ -40,15 +40,21 @@ actual: FMTBcd` (или наоборот, `expecting: FMTBcd actual: Currency`,
 уровне типа колонки).
 
 Также если база была создана до исправления `sick_leave_rates` (`001`
-со старым `INTEGER` вместо `BIGINT` для `min_years`/`max_years`) —
-примените и:
+со старым `INTEGER` вместо `BIGINT` для `max_years`) — примените по
+порядку оба:
 
 ```
 psql -U <ваш_пользователь> -d <имя_базы> -f 005_fix_sick_leave_rates_bigint.sql
+psql -U <ваш_пользователь> -d <имя_базы> -f 006_fix_sick_leave_rates_min_years.sql
 ```
 
-Иначе `qrySickLeaveRates` падает с `Type mismatch ... expecting:
-LargeInt actual: Integer`.
+(`005` переводит обе колонки в `BIGINT`; это оказалось неверно для
+`min_years` — там всегда небольшое число, и `006` возвращает её обратно
+в `INTEGER`, оставляя `max_years` в `BIGINT`). Без `005` падает
+`qrySickLeaveRates` с `Type mismatch ... expecting: LargeInt actual:
+Integer` (на `max_years`); применив только `005` без `006` — тот же
+запрос падает наоборот, `expecting: Integer actual: LargeInt` (на
+`min_years`).
 
 ## Что внутри
 
@@ -75,6 +81,9 @@ LargeInt actual: Integer`.
 - **`005_fix_sick_leave_rates_bigint.sql`** — миграция для баз, созданных
   ДО исправления `sick_leave_rates`: переводит `min_years`/`max_years`
   из `INTEGER` в `BIGINT` на уже существующей базе.
+- **`006_fix_sick_leave_rates_min_years.sql`** — правка поверх `005`:
+  возвращает `min_years` обратно в `INTEGER` (в `BIGINT` нужно было
+  перевести только `max_years`).
 
 ## Про ошибки "Type mismatch" в целом
 

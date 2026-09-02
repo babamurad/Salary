@@ -70,16 +70,21 @@ CREATE INDEX IF NOT EXISTS idx_journal_entries_doc ON journal_entries (doc_type,
 -- балансируются самой её структурой — отдельная проверка "сумма
 -- дебета = сумме кредита по документу" не нужна, это гарантировано
 -- конструкцией таблицы.
+--
+-- Счета — по КОДУ (account_debit_code/credit_code), а не по внутреннему
+-- id: бухгалтер вводит проводку, думая кодами счетов ("Дт 70, Кт 68"),
+-- а не служебными числовыми id — так поле в сетке Delphi можно просто
+-- печатать, без отдельного визуального компонента-подбора счёта.
 CREATE TABLE IF NOT EXISTS journal_lines (
-    id                 SERIAL PRIMARY KEY,
-    entry_id           INTEGER NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
-    line_no            INTEGER NOT NULL DEFAULT 1,
-    account_debit_id   INTEGER NOT NULL REFERENCES accounts(id),
-    account_credit_id  INTEGER NOT NULL REFERENCES accounts(id),
-    amount             MONEY NOT NULL DEFAULT 0,
-    description        VARCHAR(500)
+    id                  SERIAL PRIMARY KEY,
+    entry_id            INTEGER NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+    line_no             INTEGER NOT NULL DEFAULT 1,
+    account_debit_code  VARCHAR(20) NOT NULL REFERENCES accounts(code),
+    account_credit_code VARCHAR(20) NOT NULL REFERENCES accounts(code),
+    amount              MONEY NOT NULL DEFAULT 0,
+    description         VARCHAR(500)
 );
 
 CREATE INDEX IF NOT EXISTS idx_journal_lines_entry ON journal_lines (entry_id);
-CREATE INDEX IF NOT EXISTS idx_journal_lines_debit ON journal_lines (account_debit_id);
-CREATE INDEX IF NOT EXISTS idx_journal_lines_credit ON journal_lines (account_credit_id);
+CREATE INDEX IF NOT EXISTS idx_journal_lines_debit ON journal_lines (account_debit_code);
+CREATE INDEX IF NOT EXISTS idx_journal_lines_credit ON journal_lines (account_credit_code);

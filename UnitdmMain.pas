@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
   FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.SQLite,
-  FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
+  FireDAC.Phys.SQLiteDef, FireDAC.Phys.PG, FireDAC.Phys.PGDef, FireDAC.Stan.ExprFuncs,
   FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.VCLUI.Wait, FireDAC.Comp.UI, Data.DB,
   FireDAC.Comp.Client, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
   Vcl.Controls, System.IniFiles, System.DateUtils,
@@ -17,6 +17,7 @@ type
   TdmMain = class(TDataModule)
     conn: TFDConnection;
     FDPhysSQLiteDriverLink1: TFDPhysSQLiteDriverLink;
+    FDPhysPgDriverLink1: TFDPhysPgDriverLink;
     FDGUIxWaitCursor1: TFDGUIxWaitCursor;
 
     { Оперативные данные }
@@ -139,6 +140,7 @@ type
     function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
     procedure SwitchDatabase(const ANewPath: string);
     procedure ApplyDatabase(const APath: string);
+    procedure ApplyPostgresConnection(const AHost, APort, ADBName, AUser, APassword: string);
     procedure CreateNewDb(const APath: string);
     procedure LoadConfig;
     procedure SaveConfig(const APath: string);
@@ -333,21 +335,21 @@ begin
   try
     Qry.Connection := conn;
 
-    // Отключаем макросы FireDAC, чтобы символ % из strftime не ломал парсер
+    // Отключаем макросы FireDAC (защита от лишней подстановки в SQL-тексте)
     Qry.ResourceOptions.MacroCreate := False;
     Qry.ResourceOptions.MacroExpand := False;
 
     // Формируем запрос (используем единые имена параметров везде)
     Qry.SQL.Clear;
-    Qry.SQL.Add('SELECT SUM(TotalAmount) as SumTotal, COUNT(DISTINCT strftime(''%Y-%m'', period_date)) as MonthsCount');
+    Qry.SQL.Add('SELECT SUM(TotalAmount) as SumTotal, COUNT(DISTINCT TO_CHAR(period_date, ''YYYY-MM'')) as MonthsCount');
     Qry.SQL.Add('FROM (');
     Qry.SQL.Add('  SELECT gross_amount AS TotalAmount, period_date FROM payroll_journal');
     Qry.SQL.Add('  WHERE emp_id = :emp_id AND period_date >= :start_dt AND period_date < :end_dt');
     Qry.SQL.Add('  UNION ALL');
     Qry.SQL.Add('  SELECT amount AS TotalAmount, period_date FROM salary_history');
     Qry.SQL.Add('  WHERE emp_id = :emp_id AND period_date >= :start_dt AND period_date < :end_dt');
-    Qry.SQL.Add('  AND strftime(''%Y-%m'', period_date) NOT IN (');
-    Qry.SQL.Add('      SELECT strftime(''%Y-%m'', period_date) FROM payroll_journal');
+    Qry.SQL.Add('  AND TO_CHAR(period_date, ''YYYY-MM'') NOT IN (');
+    Qry.SQL.Add('      SELECT TO_CHAR(period_date, ''YYYY-MM'') FROM payroll_journal');
     Qry.SQL.Add('      WHERE emp_id = :emp_id AND period_date >= :start_dt');
     Qry.SQL.Add('  )');
     Qry.SQL.Add(')');
@@ -388,10 +390,27 @@ var
   SavedPath: string;
   ExePath: string;
   DBDir: string;
+  Driver: string;
 begin
   ExePath := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
   Ini := TIniFile.Create(ExePath + 'config.ini');
   try
+    // Driver=PG — подключаемся к PostgreSQL (Этап 1 перехода на бухучёт).
+    // Driver=SQLite (или ключ вообще отсутствует) — прежнее поведение,
+    // локальный файл рядом с exe, как раньше.
+    Driver := UpperCase(Trim(Ini.ReadString('Database', 'Driver', 'SQLite')));
+
+    if Driver = 'PG' then
+    begin
+      ApplyPostgresConnection(
+        Ini.ReadString('Database', 'Host', 'localhost'),
+        Ini.ReadString('Database', 'Port', '5432'),
+        Ini.ReadString('Database', 'DBName', 'salary'),
+        Ini.ReadString('Database', 'User', 'postgres'),
+        Ini.ReadString('Database', 'Password', ''));
+      Exit;
+    end;
+
     // Читаем путь из INI. По умолчанию: папка\файл
     SavedPath := Ini.ReadString('Database', 'Path', 'database\salarydb.db');
     // === ЗАЩИТА 1: Если указана только папка (без .db) ===
@@ -412,6 +431,34 @@ begin
     ApplyDatabase(FullPath);
   finally
     Ini.Free;
+  end;
+end;
+
+procedure TdmMain.ApplyPostgresConnection(const AHost, APort, ADBName, AUser, APassword: string);
+begin
+  try
+    CloseAllQueries;
+    conn.Close;
+    conn.Params.Clear;
+    conn.Params.DriverID := 'PG';
+    conn.Params.Values['Server'] := AHost;
+    conn.Params.Values['Port'] := APort;
+    conn.Params.Values['Database'] := ADBName;
+    conn.Params.Values['User_Name'] := AUser;
+    conn.Params.Values['Password'] := APassword;
+
+    // Для статус-бара — показываем куда именно подключены, без пароля
+    FullPath := Format('PostgreSQL: %s@%s:%s/%s', [AUser, AHost, APort, ADBName]);
+
+    conn.Connected := True;
+    OpenAllQueries;
+    if Assigned(MainForm) then
+      MainForm.RefreshDashboard;
+  except
+    on E: Exception do
+      ShowMessage('Ошибка подключения к PostgreSQL:' + sLineBreak +
+                  Format('%s@%s:%s/%s', [AUser, AHost, APort, ADBName]) + sLineBreak +
+                  'Детали: ' + E.Message);
   end;
 end;
 

@@ -27,6 +27,10 @@ object dmMain: TdmMain
     Left = 168
     Top = 16
   end
+  object FDPhysPgDriverLink1: TFDPhysPgDriverLink
+    Left = 168
+    Top = 64
+  end
   object FDGUIxWaitCursor1: TFDGUIxWaitCursor
     Provider = 'Forms'
     Left = 336

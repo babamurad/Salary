@@ -81,7 +81,7 @@ begin
     'JOIN employees e ON p.emp_id = e.id ' +
     'LEFT JOIN departments d ON e.dept_id = d.id ' +
     'LEFT JOIN positions pos ON e.pos_id = pos.id ' +
-    'WHERE strftime(''%Y-%m'', p.period_date) = :period ' +
+    'WHERE TO_CHAR(p.period_date, ''YYYY-MM'') = :period ' +
     'ORDER BY d.dept_name, e.fio';
 
   qryReport.ParamByName('period').AsString := PeriodStr;

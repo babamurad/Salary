@@ -320,7 +320,7 @@ begin
   try
     LoadQuery.Connection := dmMain.conn;
     LoadQuery.SQL.Text := 'SELECT SUM(hours_worked) as total_hours ' +
-                          'FROM timesheet WHERE emp_id = :emp_id AND strftime(''%Y-%m'', work_date) = :ym';
+                          'FROM timesheet WHERE emp_id = :emp_id AND TO_CHAR(work_date, ''YYYY-MM'') = :ym';
 
     dmMain.memTimesheet.FieldByName('fio').ReadOnly := False;
     // Ќа врем€ загрузки отключаем автопересчЄт часов из дней Ч
@@ -518,7 +518,7 @@ begin
 
         // ”дал€ем всЄ, что раньше было сохранено на этот мес€ц по сотруднику
         // (в том числе старые подневные записи, если табель вЄлс€ ранее по дн€м)
-        SaveQuery.SQL.Text := 'DELETE FROM timesheet WHERE emp_id = :emp_id AND strftime(''%Y-%m'', work_date) = :ym';
+        SaveQuery.SQL.Text := 'DELETE FROM timesheet WHERE emp_id = :emp_id AND TO_CHAR(work_date, ''YYYY-MM'') = :ym';
         SaveQuery.ParamByName('emp_id').AsInteger := EmpID;
         SaveQuery.ParamByName('ym').AsString := Format('%.4d-%.2d', [FCurYear, FCurMonth]);
         SaveQuery.ExecSQL;

@@ -108,10 +108,10 @@ begin
     // --- 1. ДНИ РОЖДЕНИЯ В ЭТОМ МЕСЯЦЕ ---
     lblBirthdaysList.Caption := ''; // Очищаем текст
     Qry.Close;
-    Qry.SQL.Text := 'SELECT fio, strftime(''%d.%m'', birth_date) as bdate ' +
+    Qry.SQL.Text := 'SELECT fio, TO_CHAR(birth_date, ''DD.MM'') as bdate ' +
                     'FROM employees ' +
-                    'WHERE strftime(''%m'', birth_date) = strftime(''%m'', ''now'') AND status = 1 ' +
-                    'ORDER BY strftime(''%d'', birth_date)';
+                    'WHERE TO_CHAR(birth_date, ''MM'') = TO_CHAR(CURRENT_DATE, ''MM'') AND status = 1 ' +
+                    'ORDER BY TO_CHAR(birth_date, ''DD'')';
     Qry.Open;
 
     while not Qry.Eof do
@@ -135,13 +135,13 @@ begin
     lblAbsentList.Caption := ''; // Очищаем текст
     Qry.Close;
     Qry.SQL.Text :=
-      'SELECT e.fio, ''Отпуск'' as reason, strftime(''%d.%m.%Y'', v.end_date) as end_dt ' +
+      'SELECT e.fio, ''Отпуск'' as reason, TO_CHAR(v.end_date, ''DD.MM.YYYY'') as end_dt ' +
       'FROM vacation_journal v JOIN employees e ON v.emp_id = e.id ' +
-      'WHERE date(''now'') BETWEEN v.start_date AND v.end_date ' +
+      'WHERE CURRENT_DATE BETWEEN v.start_date AND v.end_date ' +
       'UNION ALL ' +
-      'SELECT e.fio, ''Больничный'' as reason, strftime(''%d.%m.%Y'', s.end_date) as end_dt ' +
+      'SELECT e.fio, ''Больничный'' as reason, TO_CHAR(s.end_date, ''DD.MM.YYYY'') as end_dt ' +
       'FROM sick_leave_journal s JOIN employees e ON s.emp_id = e.id ' +
-      'WHERE date(''now'') BETWEEN s.start_date AND s.end_date';
+      'WHERE CURRENT_DATE BETWEEN s.start_date AND s.end_date';
     Qry.Open;
 
     while not Qry.Eof do

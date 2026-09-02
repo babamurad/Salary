@@ -61,8 +61,8 @@ begin
   try
     Qry.Connection := dmMain.conn;
     // ¬ыт€гиваем уникальные мес€цы в формате "YYYY-MM" и дл€ отображени€ "MM.YYYY"
-    Qry.SQL.Text := 'SELECT DISTINCT strftime(''%Y-%m'', calc_date) AS ym, ' +
-                    'strftime(''%m.%Y'', calc_date) AS m_disp ' +
+    Qry.SQL.Text := 'SELECT DISTINCT TO_CHAR(calc_date, ''YYYY-MM'') AS ym, ' +
+                    'TO_CHAR(calc_date, ''MM.YYYY'') AS m_disp ' +
                     'FROM sick_leave_journal ORDER BY ym DESC';
     Qry.Open;
 
@@ -105,7 +105,7 @@ begin
     // ≈сли выбран конкретный мес€ц, достаем его YYYY-MM из скрытого объекта
     FilterYM := Trim(TStringList(cmbMonthFilter.Items.Objects[cmbMonthFilter.ItemIndex]).Text);
 
-    dmMain.qrySickLeave.SQL.Text := BaseSQL + ' WHERE strftime(''%Y-%m'', s.calc_date) = :ym ORDER BY s.calc_date DESC';
+    dmMain.qrySickLeave.SQL.Text := BaseSQL + ' WHERE TO_CHAR(s.calc_date, ''YYYY-MM'') = :ym ORDER BY s.calc_date DESC';
     dmMain.qrySickLeave.ParamByName('ym').AsString := FilterYM;
   end;
 

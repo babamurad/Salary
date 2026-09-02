@@ -103,7 +103,7 @@ begin
     'JOIN employees e ON p.emp_id = e.id ' +
     'LEFT JOIN departments d ON e.dept_id = d.id ' +
     'LEFT JOIN positions pos ON e.pos_id = pos.id ' +
-    'WHERE strftime(''%Y-%m'', p.period_date) = :period ';
+    'WHERE TO_CHAR(p.period_date, ''YYYY-MM'') = :period ';
 
   if DeptID > 0 then
     qryPayroll.SQL.Text := qryPayroll.SQL.Text + ' AND e.dept_id = ' + IntToStr(DeptID);
@@ -261,7 +261,7 @@ begin
     // --- ДОСТАЕМ СОТРУДНИКОВ ---
     QryEmp.SQL.Text :=
       'SELECT e.*, ' +
-      ' (SELECT IFNULL(SUM(t.hours_worked), 0) FROM timesheet t WHERE t.emp_id = e.id AND strftime(''%Y-%m'', t.work_date) = :p) as fact_hours ' +
+      ' (SELECT COALESCE(SUM(t.hours_worked), 0) FROM timesheet t WHERE t.emp_id = e.id AND TO_CHAR(t.work_date, ''YYYY-MM'') = :p) as fact_hours ' +
       'FROM employees e WHERE e.status = 1';
 
     if DeptID > 0 then
@@ -274,9 +274,9 @@ begin
     try
       // Очищаем старые начисления
       if DeptID > 0 then
-        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + ')'
+        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE TO_CHAR(period_date, ''YYYY-MM'') = :P AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + ')'
       else
-        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
+        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE TO_CHAR(period_date, ''YYYY-MM'') = :P';
       QryExec.ParamByName('P').AsString := SelectedPeriod;
       QryExec.ExecSQL;
 
@@ -409,13 +409,13 @@ begin
       dmMain.conn.ExecSQL('INSERT INTO closed_periods (period_str) VALUES (:p)', [Period]);
 
       // 2. Очищаем историю за этот месяц (на случай, если месяц перепроводили)
-      dmMain.conn.ExecSQL('DELETE FROM salary_history WHERE strftime(''%Y-%m'', period_date) = :p', [Period]);
+      dmMain.conn.ExecSQL('DELETE FROM salary_history WHERE TO_CHAR(period_date, ''YYYY-MM'') = :p', [Period]);
 
       // 3. Копируем начисления (ГРЯЗНЫМИ) в историю!
       dmMain.conn.ExecSQL(
         'INSERT INTO salary_history (emp_id, period_date, amount) ' +
         'SELECT emp_id, period_date, gross_amount FROM payroll_journal ' +
-        'WHERE strftime(''%Y-%m'', period_date) = :p',
+        'WHERE TO_CHAR(period_date, ''YYYY-MM'') = :p',
         [Period]
       );
 

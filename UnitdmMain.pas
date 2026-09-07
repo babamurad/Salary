@@ -140,6 +140,7 @@ type
     procedure SwitchDatabase(const ANewPath: string);
     procedure ApplyDatabase(const APath: string);
     procedure EnsurePayrollDetailsTable;
+    procedure EnsurePayrollCalcInputsTable;
     procedure CreateNewDb(const APath: string);
     procedure LoadConfig;
     procedure SaveConfig(const APath: string);
@@ -180,6 +181,7 @@ begin
     // ======================================
     conn.Connected := True;
     EnsurePayrollDetailsTable;
+    EnsurePayrollCalcInputsTable;
     OpenAllQueries;
     SaveConfig(APath);
     if Assigned(MainForm) then
@@ -213,6 +215,38 @@ begin
     '  sort_order INTEGER NOT NULL DEFAULT 0' +
     ')');
   conn.ExecSQL('CREATE INDEX IF NOT EXISTS idx_payroll_details_payroll ON payroll_details (payroll_id)');
+end;
+
+// ¬ходные данные, с которыми считалась конкретна€ строка payroll_journal Ч
+// нужны, чтобы форма детализации могла честно ѕ≈–≈—„»“ј“№ начисление после
+// правки бухгалтером (часы, оклад, надбавки, удержани€), а не просто мен€ть
+// готовую сумму вручную. ѕо одной строке на каждую строку payroll_journal.
+procedure TdmMain.EnsurePayrollCalcInputsTable;
+begin
+  conn.ExecSQL(
+    'CREATE TABLE IF NOT EXISTS payroll_calc_inputs (' +
+    '  payroll_id INTEGER PRIMARY KEY REFERENCES payroll_journal(id) ON DELETE CASCADE,' +
+    '  work_days REAL,' +
+    '  work_hours REAL,' +
+    '  norm_days INTEGER,' +
+    '  norm_hours REAL,' +
+    '  wage_type INTEGER,' +
+    '  work_fraction REAL,' +
+    '  hourly_rate_db REAL,' +
+    '  base_salary CURRENCY,' +
+    '  is_rotation INTEGER,' +
+    '  rotation_rate REAL,' +
+    '  class_rank INTEGER,' +
+    '  class_rate REAL,' +
+    '  pension_rate REAL,' +
+    '  is_trade_union INTEGER,' +
+    '  union_rate REAL,' +
+    '  is_tax_exempt INTEGER,' +
+    '  tax_rate REAL,' +
+    '  dep_count INTEGER,' +
+    '  dep_deduction REAL,' +
+    '  alimony_pct REAL' +
+    ')');
 end;
 
 procedure TdmMain.CloseAllQueries;

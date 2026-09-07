@@ -133,6 +133,11 @@
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
+        <DCCReference Include="UnitPayrollCalc.pas"/>
+        <DCCReference Include="UnitPayrollDetail.pas">
+            <Form>frmPayrollDetail</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="UnitBaseEditForm.pas">
             <Form>frmBaseEdit</Form>
             <FormType>dfm</FormType>

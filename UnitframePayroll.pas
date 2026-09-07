@@ -45,7 +45,7 @@ implementation
 
 {$R *.dfm}
 
-uses UnitdmMain, UnitPaySlip, UnitReportPayroll;
+uses UnitdmMain, UnitPaySlip, UnitReportPayroll, UnitPayrollCalc, UnitPayrollDetail;
 
 { TframePayroll }
 
@@ -187,20 +187,17 @@ end;
 
 procedure TframePayroll.btnCalcClick(Sender: TObject);
 var
-  QryEmp, QrySet, QryExec, QryDetail: TFDQuery;
+  QryEmp, QrySet, QryExec, QryDetail, QryCalcInputs: TFDQuery;
   // Настройки
   TaxRate, DepDeduction, UnionRate, RotationRate: Double;
   Class1Rate, Class2Rate, Class3Rate: Double;
 
-  // Данные сотрудника
-  EmpId, DepCount, NormDays: Integer;
-  WageType, IsRotation, IsTaxExempt, ClassRank, IsTradeUnion: Integer;
-  FactHours, NormHours, HourlyRateDB, WorkFrac, AlimonyPct, EmpPensionRate: Double;
-
-  // Расчетные переменные
-  HourlyRate, RegularHours, OvertimeHours, BaseSal: Double;
-  BaseGross, RotationBonus, ClassBonus, ClassRateUsed, TotalGross: Double;
-  TaxBase, Tax, Pension, UnionAmount, AlimonyAmount, NetBeforeAlimony, Net: Double;
+  // Данные сотрудника — входные данные расчёта (то же самое, что потом можно
+  // поправить в форме детализации и пересчитать по той же формуле)
+  Inp: TPayrollCalcInputs;
+  R: TPayrollCalcResult;
+  ClassRateUsed: Double;
+  NormDays: Integer;
 
   SelectedPeriod, CalcDateStr, SysName: string;
   DeptID, NewPayrollId: Integer;
@@ -222,6 +219,35 @@ var
     QryDetail.ExecSQL;
   end;
 
+  // Пишет все "входные данные" (Inp) для только что сохранённой строки
+  // payroll_journal — форма детализации потом читает их обратно, даёт
+  // бухгалтеру поправить и пересчитывает по той же формуле (UnitPayrollCalc).
+  procedure SaveCalcInputs;
+  begin
+    QryCalcInputs.ParamByName('pid').AsInteger := NewPayrollId;
+    QryCalcInputs.ParamByName('wdays').AsFloat := Inp.WorkDays;
+    QryCalcInputs.ParamByName('whours').AsFloat := Inp.WorkHours;
+    QryCalcInputs.ParamByName('ndays').AsInteger := NormDays;
+    QryCalcInputs.ParamByName('nhours').AsFloat := Inp.NormHours;
+    QryCalcInputs.ParamByName('wtype').AsInteger := Inp.WageType;
+    QryCalcInputs.ParamByName('wfrac').AsFloat := Inp.WorkFraction;
+    QryCalcInputs.ParamByName('hrdb').AsFloat := Inp.HourlyRateDB;
+    QryCalcInputs.ParamByName('bsal').AsFloat := Inp.BaseSalary;
+    QryCalcInputs.ParamByName('isrot').AsInteger := Inp.IsRotation;
+    QryCalcInputs.ParamByName('rotrate').AsFloat := Inp.RotationRate;
+    QryCalcInputs.ParamByName('crank').AsInteger := Inp.ClassRank;
+    QryCalcInputs.ParamByName('crate').AsFloat := Inp.ClassRate;
+    QryCalcInputs.ParamByName('penrate').AsFloat := Inp.PensionRate;
+    QryCalcInputs.ParamByName('istu').AsInteger := Inp.IsTradeUnion;
+    QryCalcInputs.ParamByName('unrate').AsFloat := Inp.UnionRate;
+    QryCalcInputs.ParamByName('istaxex').AsInteger := Inp.IsTaxExempt;
+    QryCalcInputs.ParamByName('taxrate').AsFloat := Inp.TaxRate;
+    QryCalcInputs.ParamByName('depcnt').AsInteger := Inp.DepCount;
+    QryCalcInputs.ParamByName('depded').AsFloat := Inp.DepDeduction;
+    QryCalcInputs.ParamByName('alimpct').AsFloat := Inp.AlimonyPct;
+    QryCalcInputs.ExecSQL;
+  end;
+
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
@@ -231,12 +257,13 @@ begin
     Exit;
   end;
 
-  if MessageDlg('Рассчитать зарплату за ' + cmbMonth.Text + ' ' + cmbYear.Text + '?',
+  if MessageDlg('Рассчитать зарплату за ' + cmbMonth.Text + ' ' + cmbYear.Text + '?' + sLineBreak +
+     'Все ручные правки в детализации по этому месяцу (если они были) будут заменены новым расчётом.',
      mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
 
   NormDays := GetWorkingDaysNorm(StrToIntDef(cmbYear.Text, YearOf(Now)), cmbMonth.ItemIndex + 1);
   if NormDays = 0 then NormDays := 1;
-  NormHours := NormDays * 8.0;
+  Inp.NormHours := NormDays * 8.0;
 
   CalcDateStr := SelectedPeriod + '-01';
 
@@ -248,14 +275,23 @@ begin
   QrySet := TFDQuery.Create(nil);
   QryExec := TFDQuery.Create(nil);
   QryDetail := TFDQuery.Create(nil);
+  QryCalcInputs := TFDQuery.Create(nil);
   try
     QryEmp.Connection := dmMain.conn;
     QrySet.Connection := dmMain.conn;
     QryExec.Connection := dmMain.conn;
     QryDetail.Connection := dmMain.conn;
+    QryCalcInputs.Connection := dmMain.conn;
     QryDetail.SQL.Text :=
       'INSERT INTO payroll_details (payroll_id, item_type, item_name, details, base_amount, rate_percent, amount, sort_order) ' +
       'VALUES (:pid, :itype, :iname, :idet, :ibase, :irate, :iamt, :isort)';
+    QryCalcInputs.SQL.Text :=
+      'INSERT INTO payroll_calc_inputs (payroll_id, work_days, work_hours, norm_days, norm_hours, ' +
+      'wage_type, work_fraction, hourly_rate_db, base_salary, is_rotation, rotation_rate, ' +
+      'class_rank, class_rate, pension_rate, is_trade_union, union_rate, is_tax_exempt, tax_rate, ' +
+      'dep_count, dep_deduction, alimony_pct) VALUES (:pid, :wdays, :whours, :ndays, :nhours, ' +
+      ':wtype, :wfrac, :hrdb, :bsal, :isrot, :rotrate, :crank, :crate, :penrate, :istu, :unrate, ' +
+      ':istaxex, :taxrate, :depcnt, :depded, :alimpct)';
 
     // --- ЧИТАЕМ ГЛОБАЛЬНЫЕ НАСТРОЙКИ ---
     QrySet.SQL.Text := 'SELECT sys_name, key_value, is_active FROM settings';
@@ -295,11 +331,18 @@ begin
 
     dmMain.conn.StartTransaction;
     try
-      // Очищаем старую детализацию (по ещё не удалённым строкам payroll_journal)
-      // и сами старые начисления — на случай, если месяц пересчитывают повторно
+      // Очищаем старую детализацию и входные данные (по ещё не удалённым
+      // строкам payroll_journal), и сами старые начисления — на случай,
+      // если месяц пересчитывают повторно
       if DeptID > 0 then
       begin
         QryExec.SQL.Text := 'DELETE FROM payroll_details WHERE payroll_id IN (' +
+          'SELECT id FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P ' +
+          'AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + '))';
+        QryExec.ParamByName('P').AsString := SelectedPeriod;
+        QryExec.ExecSQL;
+
+        QryExec.SQL.Text := 'DELETE FROM payroll_calc_inputs WHERE payroll_id IN (' +
           'SELECT id FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P ' +
           'AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + '))';
         QryExec.ParamByName('P').AsString := SelectedPeriod;
@@ -314,6 +357,11 @@ begin
         QryExec.ParamByName('P').AsString := SelectedPeriod;
         QryExec.ExecSQL;
 
+        QryExec.SQL.Text := 'DELETE FROM payroll_calc_inputs WHERE payroll_id IN (' +
+          'SELECT id FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P)';
+        QryExec.ParamByName('P').AsString := SelectedPeriod;
+        QryExec.ExecSQL;
+
         QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
       end;
       QryExec.ParamByName('P').AsString := SelectedPeriod;
@@ -324,127 +372,82 @@ begin
 
       while not QryEmp.Eof do
       begin
-        // Читаем все параметры сотрудника
-        BaseSal := QryEmp.FieldByName('base_salary').AsFloat;
-        HourlyRateDB := QryEmp.FieldByName('hourly_rate').AsFloat;
-        WorkFrac := QryEmp.FieldByName('work_fraction').AsFloat;
-        if WorkFrac <= 0 then WorkFrac := 1.0; // Защита
+        // --- Собираем входные данные сотрудника ---
+        Inp.BaseSalary := QryEmp.FieldByName('base_salary').AsFloat;
+        Inp.HourlyRateDB := QryEmp.FieldByName('hourly_rate').AsFloat;
+        Inp.WorkFraction := QryEmp.FieldByName('work_fraction').AsFloat;
+        Inp.DepCount := QryEmp.FieldByName('dependents_count').AsInteger;
+        Inp.WorkHours := QryEmp.FieldByName('fact_hours').AsFloat;
+        Inp.WorkDays := Inp.WorkHours / 8.0;
+        Inp.WageType := QryEmp.FieldByName('wage_type').AsInteger;
+        Inp.IsRotation := QryEmp.FieldByName('is_rotation').AsInteger;
+        Inp.IsTaxExempt := QryEmp.FieldByName('is_tax_exempt').AsInteger;
+        Inp.ClassRank := QryEmp.FieldByName('class_rank').AsInteger;
+        Inp.IsTradeUnion := QryEmp.FieldByName('trade_union').AsInteger;
+        Inp.AlimonyPct := QryEmp.FieldByName('alimony_percent').AsFloat;
+        Inp.PensionRate := QryEmp.FieldByName('pension_rate').AsFloat;
 
-        DepCount := QryEmp.FieldByName('dependents_count').AsInteger;
-        FactHours := QryEmp.FieldByName('fact_hours').AsFloat;
-        WageType := QryEmp.FieldByName('wage_type').AsInteger;
-        IsRotation := QryEmp.FieldByName('is_rotation').AsInteger;
-        IsTaxExempt := QryEmp.FieldByName('is_tax_exempt').AsInteger;
-        ClassRank := QryEmp.FieldByName('class_rank').AsInteger;
-        IsTradeUnion := QryEmp.FieldByName('trade_union').AsInteger;
-        AlimonyPct := QryEmp.FieldByName('alimony_percent').AsFloat;
-        EmpPensionRate := QryEmp.FieldByName('pension_rate').AsFloat;
+        Inp.RotationRate := RotationRate;
+        Inp.UnionRate := UnionRate;
+        Inp.TaxRate := TaxRate;
+        Inp.DepDeduction := DepDeduction;
 
-        // --- 1. СТОИМОСТЬ ЧАСА ---
-        if WageType = 1 then
-          HourlyRate := HourlyRateDB
-        else
-          HourlyRate := (BaseSal * WorkFrac) / NormHours; // Оклад делится пропорционально ставке!
-
-        // --- 2. ЧАСЫ ---
-        if FactHours > NormHours then
-        begin
-          RegularHours := NormHours;
-          OvertimeHours := FactHours - NormHours;
-        end
-        else
-        begin
-          RegularHours := FactHours;
-          OvertimeHours := 0;
-        end;
-
-        // --- 3. БАЗА ---
-        BaseGross := SimpleRoundTo((RegularHours * HourlyRate) + (OvertimeHours * HourlyRate * 2.0), -2);
-
-        // --- 4. НАДБАВКИ ---
-        RotationBonus := 0;
-        if IsRotation = 1 then RotationBonus := SimpleRoundTo(BaseGross * (RotationRate / 100.0), -2);
-
-        ClassBonus := 0;
         ClassRateUsed := 0;
-        if ClassRank = 1 then begin ClassRateUsed := Class1Rate; ClassBonus := SimpleRoundTo(BaseGross * (Class1Rate / 100.0), -2); end
-        else if ClassRank = 2 then begin ClassRateUsed := Class2Rate; ClassBonus := SimpleRoundTo(BaseGross * (Class2Rate / 100.0), -2); end
-        else if ClassRank = 3 then begin ClassRateUsed := Class3Rate; ClassBonus := SimpleRoundTo(BaseGross * (Class3Rate / 100.0), -2); end;
+        if Inp.ClassRank = 1 then ClassRateUsed := Class1Rate
+        else if Inp.ClassRank = 2 then ClassRateUsed := Class2Rate
+        else if Inp.ClassRank = 3 then ClassRateUsed := Class3Rate;
+        Inp.ClassRate := ClassRateUsed;
 
-        TotalGross := BaseGross + RotationBonus + ClassBonus;
-
-        // --- 5. УДЕРЖАНИЯ (До вычета алиментов) ---
-        Pension := SimpleRoundTo((TotalGross * EmpPensionRate) / 100.0, -2);
-
-        UnionAmount := 0;
-        if IsTradeUnion = 1 then
-          UnionAmount := SimpleRoundTo(TotalGross * (UnionRate / 100.0), -2);
-
-        if IsTaxExempt = 1 then
-        begin
-          Tax := 0;
-          TaxBase := 0;
-        end
-        else
-        begin
-          TaxBase := BaseGross - (DepCount * DepDeduction);
-          Tax := SimpleRoundTo(Max(0, TaxBase * TaxRate / 100.0), -2);
-        end;
-
-        // --- 6. АЛИМЕНТЫ (Строго после налогов!) ---
-        NetBeforeAlimony := TotalGross - Tax - Pension - UnionAmount;
-        AlimonyAmount := 0;
-        if AlimonyPct > 0 then
-          AlimonyAmount := SimpleRoundTo(NetBeforeAlimony * (AlimonyPct / 100.0), -2);
-
-        // --- 7. К ВЫПЛАТЕ ---
-        Net := SimpleRoundTo(NetBeforeAlimony - AlimonyAmount, -2);
+        R := CalcPayroll(Inp);
 
         // --- СОХРАНЕНИЕ ---
         QryExec.ParamByName('emp').AsInteger := QryEmp.FieldByName('id').AsInteger;
         QryExec.ParamByName('dt').AsString := CalcDateStr;
-        QryExec.ParamByName('gross').AsFloat := TotalGross;
-        QryExec.ParamByName('tax').AsFloat := Tax;
-        QryExec.ParamByName('pens').AsFloat := Pension;
-        QryExec.ParamByName('union_amt').AsFloat := UnionAmount;
-        QryExec.ParamByName('alim_amt').AsFloat := AlimonyAmount;
-        QryExec.ParamByName('net').AsFloat := Net;
+        QryExec.ParamByName('gross').AsFloat := R.TotalGross;
+        QryExec.ParamByName('tax').AsFloat := R.Tax;
+        QryExec.ParamByName('pens').AsFloat := R.Pension;
+        QryExec.ParamByName('union_amt').AsFloat := R.UnionAmount;
+        QryExec.ParamByName('alim_amt').AsFloat := R.AlimonyAmount;
+        QryExec.ParamByName('net').AsFloat := R.Net;
         QryExec.ExecSQL;
 
-        // --- ДЕТАЛИЗАЦИЯ: из чего именно сложились начисления и удержания ---
+        // --- ДЕТАЛИЗАЦИЯ + ВХОДНЫЕ ДАННЫЕ: чтобы форму детализации потом
+        // можно было честно пересчитать, а не просто показать готовые цифры ---
         NewPayrollId := dmMain.conn.ExecSQLScalar('SELECT last_insert_rowid()');
+
+        SaveCalcInputs;
 
         AddDetail('accrual', 'Оплата за отработанное время',
           Format('Обычные часы: %.2f, сверхурочные: %.2f, ставка часа: %.2f',
-                 [RegularHours, OvertimeHours, HourlyRate]),
-          0, 0, BaseGross, 1);
+                 [R.RegularHours, R.OvertimeHours, R.HourlyRate]),
+          0, 0, R.BaseGross, 1);
 
-        if RotationBonus > 0 then
+        if R.RotationBonus > 0 then
           AddDetail('accrual', 'Надбавка за вахтовый метод',
-            'От оплаты за отработанное время', BaseGross, RotationRate, RotationBonus, 2);
+            'От оплаты за отработанное время', R.BaseGross, RotationRate, R.RotationBonus, 2);
 
-        if ClassBonus > 0 then
+        if R.ClassBonus > 0 then
           AddDetail('accrual', 'Надбавка за классность',
-            Format('Класс %d, от оплаты за отработанное время', [ClassRank]),
-            BaseGross, ClassRateUsed, ClassBonus, 3);
+            Format('Класс %d, от оплаты за отработанное время', [Inp.ClassRank]),
+            R.BaseGross, ClassRateUsed, R.ClassBonus, 3);
 
-        if IsTaxExempt = 1 then
+        if Inp.IsTaxExempt = 1 then
           AddDetail('deduction', 'Подоходный налог', 'Сотрудник освобождён от налога', 0, 0, 0, 10)
         else
           AddDetail('deduction', 'Подоходный налог',
-            Format('Вычет на %d иждивенца(ев) по %.2f из базы начисления', [DepCount, DepDeduction]),
-            TaxBase, TaxRate, Tax, 10);
+            Format('Вычет на %d иждивенца(ев) по %.2f из базы начисления', [Inp.DepCount, DepDeduction]),
+            R.TaxBase, TaxRate, R.Tax, 10);
 
         AddDetail('deduction', 'Пенсионный взнос', 'От суммы начисленного (с надбавками)',
-          TotalGross, EmpPensionRate, Pension, 11);
+          R.TotalGross, Inp.PensionRate, R.Pension, 11);
 
-        if IsTradeUnion = 1 then
+        if Inp.IsTradeUnion = 1 then
           AddDetail('deduction', 'Профсоюзный взнос', 'От суммы начисленного (с надбавками)',
-            TotalGross, UnionRate, UnionAmount, 12);
+            R.TotalGross, UnionRate, R.UnionAmount, 12);
 
-        if AlimonyPct > 0 then
+        if Inp.AlimonyPct > 0 then
           AddDetail('deduction', 'Алименты', 'Удержаны после налога, пенсионного и профсоюза',
-            NetBeforeAlimony, AlimonyPct, AlimonyAmount, 13);
+            R.NetBeforeAlimony, Inp.AlimonyPct, R.AlimonyAmount, 13);
 
         QryEmp.Next;
       end;
@@ -461,7 +464,7 @@ begin
       end;
     end;
   finally
-    QryEmp.Free; QrySet.Free; QryExec.Free; QryDetail.Free;
+    QryEmp.Free; QrySet.Free; QryExec.Free; QryDetail.Free; QryCalcInputs.Free;
   end;
 end;
 
@@ -757,17 +760,22 @@ end;
 
 procedure TframePayroll.DBGrid1DblClick(Sender: TObject);
 var
-  SlipForm: TfrmPaySlip;
-  Period: string;
+  DetailForm: TfrmPayrollDetail;
+  PayrollId: Integer;
 begin
   if qryPayroll.IsEmpty then Exit;
-  Period := cmbMonth.Text + ' ' + cmbYear.Text;
-  SlipForm := TfrmPaySlip.Create(Self);
+  PayrollId := qryPayroll.FieldByName('id').AsInteger;
+
+  DetailForm := TfrmPayrollDetail.Create(Self);
   try
-    SlipForm.ShowSinglePayslip(qryPayroll, Period); // ВЫЗЫВАЕМ SINGLE
-    SlipForm.ShowModal;
+    DetailForm.LoadForPayroll(PayrollId);
+    DetailForm.ShowModal;
+    // Сохранение изменений закрывает форму с mrOk — обновляем сетку,
+    // чтобы сразу увидеть новые итоговые суммы
+    if DetailForm.ModalResult = mrOk then
+      RefreshData;
   finally
-    SlipForm.Free;
+    DetailForm.Free;
   end;
 end;
 

@@ -10,9 +10,11 @@ uses
 type
   TfrmReportPayroll = class(TForm)
     PanelTop: TPanel;
+    btnPreview: TButton;
     btnPrint: TButton;
     WebBrowser: TWebBrowser;
     procedure btnPrintClick(Sender: TObject);
+    procedure btnPreviewClick(Sender: TObject);
   private
     FHtmlContent: string;
     function GenerateReportHtml(Dataset: TDataSet; Period: string): string;
@@ -193,6 +195,11 @@ end;
 procedure TfrmReportPayroll.btnPrintClick(Sender: TObject);
 begin
   PrintBrowser(WebBrowser);
+end;
+
+procedure TfrmReportPayroll.btnPreviewClick(Sender: TObject);
+begin
+  PrintPreviewBrowser(WebBrowser);
 end;
 
 end.

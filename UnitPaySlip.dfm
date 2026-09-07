@@ -21,13 +21,22 @@ object frmPaySlip: TfrmPaySlip
     Height = 41
     Align = alBottom
     TabOrder = 0
+    object btnPreview: TButton
+      Left = 208
+      Top = 8
+      Width = 90
+      Height = 25
+      Caption = #1055#1088#1086#1089#1084#1086#1090#1088
+      TabOrder = 0
+      OnClick = btnPreviewClick
+    end
     object btnPdf: TButton
       Left = 304
       Top = 8
       Width = 75
       Height = 25
       Caption = #1055#1077#1095#1072#1090#1100
-      TabOrder = 0
+      TabOrder = 1
       OnClick = btnPdfClick
     end
   end

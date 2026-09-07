@@ -20,6 +20,15 @@ object frmReportPayroll: TfrmReportPayroll
     Height = 41
     Align = alTop
     TabOrder = 0
+    object btnPreview: TButton
+      Left = 100
+      Top = 10
+      Width = 130
+      Height = 25
+      Caption = #1055#1088#1077#1076#1074#1072#1088#1080#1090#1077#1083#1100#1085#1099#1081' '#1087#1088#1086#1089#1084#1086#1090#1088
+      TabOrder = 1
+      OnClick = btnPreviewClick
+    end
     object btnPrint: TButton
       Left = 16
       Top = 10

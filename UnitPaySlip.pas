@@ -12,9 +12,11 @@ uses
 type
   TfrmPaySlip = class(TForm)
     PanelBottom: TPanel;
+    btnPreview: TButton;
     btnPdf: TButton;
     WebBrowser: TWebBrowser;
     procedure btnPdfClick(Sender: TObject);
+    procedure btnPreviewClick(Sender: TObject);
   private
     FHtmlContent: string; // --- œ≈–≈Ã≈ÕÕ¿ﬂ ƒÀﬂ ’–¿Õ≈Õ»ﬂ HTML ---
     function GetHtmlTemplate: string;
@@ -332,6 +334,11 @@ end;
 procedure TfrmPaySlip.btnPdfClick(Sender: TObject);
 begin
   PrintBrowser(WebBrowser);
+end;
+
+procedure TfrmPaySlip.btnPreviewClick(Sender: TObject);
+begin
+  PrintPreviewBrowser(WebBrowser);
 end;
 
 end.

@@ -25,9 +25,11 @@ type
     qryReport: TFDQuery;
     dsReport: TDataSource; // Ваш запрос к БД
     WebBrowser: TWebBrowser;
+    btnPreview: TButton;
     procedure btnGenerateClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
     procedure btnExcelClick(Sender: TObject);
+    procedure btnPreviewClick(Sender: TObject);
   private
     FHtmlContent: string;
     function GenerateReportHtml(Dataset: TDataSet; Period: string): string;
@@ -137,11 +139,17 @@ begin
   // Включаем кнопки экспорта
   btnPrint.Enabled := True;
   btnExcel.Enabled := True;
+  btnPreview.Enabled := True;
 end;
 
 procedure TframeReportSummary.btnPrintClick(Sender: TObject);
 begin
   PrintBrowser(WebBrowser);
+end;
+
+procedure TframeReportSummary.btnPreviewClick(Sender: TObject);
+begin
+  PrintPreviewBrowser(WebBrowser);
 end;
 
 constructor TframeReportSummary.Create(AOwner: TComponent);

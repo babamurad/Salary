@@ -29,6 +29,10 @@ procedure ShowHtmlInBrowser(WB: TWebBrowser; const Html: string; const CacheName
 // печати Windows/Internet Explorer.
 procedure PrintBrowser(WB: TWebBrowser);
 
+// Предварительный просмотр перед печатью (постраничный вид с масштабом) —
+// отдельная команда IE, не то же самое, что диалог печати.
+procedure PrintPreviewBrowser(WB: TWebBrowser);
+
 implementation
 
 const
@@ -103,6 +107,22 @@ begin
   except
     on E: Exception do
       ShowMessage('Не удалось открыть диалог печати: ' + E.Message);
+  end;
+end;
+
+procedure PrintPreviewBrowser(WB: TWebBrowser);
+var
+  ParamIn, ParamOut: OleVariant;
+begin
+  try
+    ParamIn := EmptyParam;
+    // OLECMDID_PRINTPREVIEW — открывает окно предпросмотра печати
+    // (постраничный вид, масштаб, переход по страницам). Это отдельная
+    // команда IE, не параметр диалога OLECMDID_PRINT.
+    WB.ExecWB(OLECMDID_PRINTPREVIEW, OLECMDEXECOPT_DODEFAULT, ParamIn, ParamOut);
+  except
+    on E: Exception do
+      ShowMessage('Не удалось открыть предварительный просмотр: ' + E.Message);
   end;
 end;
 

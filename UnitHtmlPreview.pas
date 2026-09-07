@@ -10,9 +10,11 @@ uses
 type
   TfrmHtmlPreview = class(TForm)
     PanelBottom: TPanel;
+    btnPreview: TButton;
     btnPrint: TButton;
     WebBrowser: TWebBrowser;
     procedure btnPrintClick(Sender: TObject);
+    procedure btnPreviewClick(Sender: TObject);
   private
     FHtmlContent: string;
   public
@@ -42,6 +44,11 @@ end;
 procedure TfrmHtmlPreview.btnPrintClick(Sender: TObject);
 begin
   PrintBrowser(WebBrowser);
+end;
+
+procedure TfrmHtmlPreview.btnPreviewClick(Sender: TObject);
+begin
+  PrintPreviewBrowser(WebBrowser);
 end;
 
 end.

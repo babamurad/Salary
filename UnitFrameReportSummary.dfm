@@ -63,6 +63,15 @@ object FrameReportSummary: TFrameReportSummary
       TabOrder = 5
       OnClick = btnExcelClick
     end
+    object btnPreview: TButton
+      Left = 849
+      Top = 10
+      Width = 130
+      Height = 25
+      Caption = #1055#1088#1077#1076#1074#1072#1088#1080#1090#1077#1083#1100#1085#1099#1081' '#1087#1088#1086#1089#1084#1086#1090#1088
+      TabOrder = 6
+      OnClick = btnPreviewClick
+    end
   end
   object WebBrowser: TWebBrowser
     Left = 0

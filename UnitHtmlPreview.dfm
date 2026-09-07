@@ -22,13 +22,22 @@ object frmHtmlPreview: TfrmHtmlPreview
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 0
+    object btnPreview: TButton
+      Left = 230
+      Top = 12
+      Width = 140
+      Height = 35
+      Caption = #1055#1088#1077#1076#1074#1072#1088#1080#1090#1077#1083#1100#1085#1099#1081' '#1087#1088#1086#1089#1084#1086#1090#1088
+      TabOrder = 0
+      OnClick = btnPreviewClick
+    end
     object btnPrint: TButton
       Left = 380
       Top = 12
       Width = 140
       Height = 35
       Caption = #1055#1077#1095#1072#1090#1100' '#1076#1086#1082#1091#1084#1077#1085#1090#1072
-      TabOrder = 0
+      TabOrder = 1
       OnClick = btnPrintClick
     end
   end

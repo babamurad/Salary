@@ -58,6 +58,7 @@ type
     chkRotation: TCheckBox;
 
     edtBankAccount: TEdit;
+    edtPensionAccount: TEdit;
     cmbWorkFraction: TComboBox;
     cmbClassRank: TComboBox;
     chkTaxExempt: TCheckBox;
@@ -260,6 +261,7 @@ begin
   dtpHireDate.Date := DataSet.FieldByName('hire_date').AsDateTime;
   chkActive.Checked := DataSet.FieldByName('status').AsInteger = 1;
   edtBankAccount.Text := DataSet.FieldByName('bank_account').AsString;
+  edtPensionAccount.Text := DataSet.FieldByName('pension_account').AsString;
 
   rgWageType.ItemIndex := DataSet.FieldByName('wage_type').AsInteger;
   edtSalary.Text := FormatFloat('#,##0.00', DataSet.FieldByName('base_salary').AsFloat); // Форматируем при загрузке
@@ -359,6 +361,7 @@ begin
   DataSet.FieldByName('tabno').AsString := edtTabNo.Text;
   DataSet.FieldByName('hire_date').AsDateTime := dtpHireDate.Date;
   DataSet.FieldByName('bank_account').AsString := edtBankAccount.Text;
+  DataSet.FieldByName('pension_account').AsString := edtPensionAccount.Text;
 
   if chkActive.Checked then DataSet.FieldByName('status').AsInteger := 1
   else DataSet.FieldByName('status').AsInteger := 0;

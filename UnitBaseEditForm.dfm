@@ -359,6 +359,21 @@ object frmBaseEdit: TfrmBaseEdit
           TabOrder = 6
           Value = 0
         end
+        object Label18: TLabel
+          Left = 431
+          Top = 112
+          Width = 220
+          Height = 20
+          Caption = #1053#1086#1084#1077#1088' '#1087#1077#1085#1089#1080#1086#1085#1085#1086#1075#1086' '#1089#1095#1105#1090#1072' ('#1076#1083#1103' '#1073#1072#1085#1082#1072'):'
+        end
+        object edtPensionAccount: TEdit
+          Left = 431
+          Top = 138
+          Width = 250
+          Height = 28
+          MaxLength = 23
+          TabOrder = 7
+        end
       end
     end
     object tsHistory: TTabSheet

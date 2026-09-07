@@ -179,6 +179,12 @@ object dmMain: TdmMain
       FieldName = 'sick_leave_percent'
       Origin = 'sick_leave_percent'
     end
+    object qryEmployeespension_account: TWideStringField
+      DisplayLabel = #1053#1086#1084#1077#1088' '#1087#1077#1085#1089#1080#1086#1085#1085#1086#1075#1086' '#1089#1095#1105#1090#1072
+      FieldName = 'pension_account'
+      Origin = 'pension_account'
+      Size = 32767
+    end
   end
   object dsEmployees: TDataSource
     DataSet = qryEmployees
@@ -451,6 +457,26 @@ object dmMain: TdmMain
           #9'"period_str"'#9'TEXT,'
           #9'PRIMARY KEY("period_str")'
           ');'
+      'CREATE TABLE IF NOT EXISTS "company_info" ("id" INTEGER, "key_name" TEXT NOT NULL UNIQUE, "display_name" TEXT NOT NULL, "key_value" TEXT, PRIMARY KEY("id" AUTOINCREMENT));'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''company_name'', '''#1053#1072#1079#1074#1072#1085#1080#1077' '#1082#1086#1084#1087#1072#1085#1080#1080''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''address'', '''#1070#1088#1080#1076#1080#1095#1077#1089#1082#1080#1081' '#1072#1076#1088#1077#1089''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''phone'', '''#1058#1077#1083#1077#1092#1086#1085' / WhatsApp'', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''email'', '''#1069#1083#1077#1082#1090#1088#1086#1085#1085#1072#1103' '#1087#1086#1095#1090#1072''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''website'', '''#1042#1077#1073'-'#1089#1072#1081#1090''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''bank_name'', '''#1053#1072#1080#1084#1077#1085#1086#1074#1072#1085#1080#1077' '#1073#1072#1085#1082#1072''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''bank_account'', '''#1056#1072#1089#1095#1077#1090#1085#1099#1081' '#1089#1095#1077#1090''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''director_title'', '''#1044#1086#1083#1078#1085#1086#1089#1090#1100' '#1088#1091#1082#1086#1074#1086#1076#1080#1090#1077#1083#1103''', '''#1044#1080#1088#1077#1082#1090#1086#1088''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''director_fio'', '''#1060'.'#1048'.'#1054'. '#1088#1091#1082#1086#1074#1086#1076#1080#1090#1077#1083#1103''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''accountant_title'', '''#1044#1086#1083#1078#1085#1086#1089#1090#1100' '#1075#1083'. '#1073#1091#1093#1075#1072#1083#1090#1077#1088#1072''', '''#1043#1083#1072#1074#1085#1099#1081' '#1073#1091#1093#1075#1072#1083#1090#1077#1088''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''accountant_fio'', '''#1060'.'#1048'.'#1054'. '#1075#1083'. '#1073#1091#1093#1075#1072#1083#1090#1077#1088#1072''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''org_code'', '''#1050#1086#1076' '#1086#1088#1075#1072#1085#1080#1079#1072#1094#1080#1080' ('#1054#1050#1055#1054'/'#1061#1057#1059#1050')'', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''tax_code'', '''#1053#1072#1083#1086#1075#1086#1074#1099#1081' '#1082#1086#1076' ('#1048#1053#1053')'', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''ownership_type_code'', '''#1050#1086#1076' '#1092#1086#1088#1084#1099' '#1089#1086#1073#1089#1090#1074#1077#1085#1085#1086#1089#1090#1080''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''ministry_code'', '''#1050#1086#1076' '#1084#1080#1085#1080#1089#1090#1077#1088#1089#1090#1074#1072'/'#1074#1077#1076#1086#1084#1089#1090#1074#1072''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''region_code'', '''#1050#1086#1076' '#1088#1077#1075#1080#1086#1085#1072''', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''pension_fund_bank'', '''#1041#1072#1085#1082'-'#1087#1086#1083#1091#1095#1072#1090#1077#1083#1100' ('#1055#1077#1085#1089#1080#1086#1085#1085#1099#1081' '#1092#1086#1085#1076')'', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''pension_fund_account'', '''#1057#1095#1105#1090' '#1087#1086#1083#1091#1095#1072#1090#1077#1083#1103' ('#1055#1077#1085#1089#1080#1086#1085#1085#1099#1081' '#1092#1086#1085#1076')'', '''');'
+      'INSERT OR IGNORE INTO "company_info" ("key_name", "display_name", "key_value") VALUES (''mandatory_pension_rate'', '''#1054#1073#1103#1079#1072#1090#1077#1083#1100#1085#1099#1081' '#1087#1077#1085#1089#1080#1086#1085#1085#1099#1081' '#1074#1079#1085#1086#1089', %'', ''20'');'
           'CREATE TABLE IF NOT EXISTS "const_settings" ('
           #9'"key_name"'#9'TEXT,'
           #9'"key_value"'#9'REAL,'
@@ -484,6 +510,7 @@ object dmMain: TdmMain
           #9'"pay_type"'#9'INTEGER DEFAULT 0,'
           #9'"schedule_type"'#9'INTEGER DEFAULT 0,'
           #9'"hourly_rate"'#9'REAL DEFAULT 0,'
+          #9'"pension_account"'#9'TEXT,'
           #9'PRIMARY KEY("id" AUTOINCREMENT),'
           
             #9'FOREIGN KEY("dept_id") REFERENCES "departments"("id") ON DELETE' +

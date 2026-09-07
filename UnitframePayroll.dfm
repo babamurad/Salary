@@ -16,7 +16,7 @@ object framePayroll: TframePayroll
     Left = 0
     Top = 0
     Width = 1221
-    Height = 57
+    Height = 96
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
@@ -89,12 +89,30 @@ object framePayroll: TframePayroll
       TabOrder = 7
       OnClick = btnSummaryReportClick
     end
+    object btnPensionReport: TButton
+      Left = 16
+      Top = 54
+      Width = 180
+      Height = 25
+      Caption = #1055#1077#1085#1089#1080#1086#1085#1085#1099#1081' '#1074#1079#1085#1086#1089
+      TabOrder = 8
+      OnClick = btnPensionReportClick
+    end
+    object btnBankTransferReport: TButton
+      Left = 204
+      Top = 54
+      Width = 260
+      Height = 25
+      Caption = #1057#1087#1080#1089#1086#1082' '#1085#1072' '#1087#1077#1088#1077#1095#1080#1089#1083#1077#1085#1080#1077' ('#1082#1072#1088#1090#1099')'
+      TabOrder = 9
+      OnClick = btnBankTransferReportClick
+    end
   end
   object DBGrid1: TDBGrid
     Left = 0
-    Top = 57
+    Top = 96
     Width = 1221
-    Height = 443
+    Height = 404
     Align = alClient
     DataSource = dmMain.dsVacation
     TabOrder = 1

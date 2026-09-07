@@ -21,6 +21,8 @@ type
     cmbDept: TComboBox;
     btnPrintAllSlips: TButton;
     btnSummaryReport: TButton;
+    btnPensionReport: TButton;
+    btnBankTransferReport: TButton;
     procedure btnCalcClick(Sender: TObject);
     procedure btnCloseMonthClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
@@ -28,6 +30,8 @@ type
     procedure btnExportClick(Sender: TObject);
     procedure btnPrintAllSlipsClick(Sender: TObject);
     procedure btnSummaryReportClick(Sender: TObject);
+    procedure btnPensionReportClick(Sender: TObject);
+    procedure btnBankTransferReportClick(Sender: TObject);
   private
     qryPayroll: TFDQuery;
     dsPayroll: TDataSource;
@@ -45,7 +49,8 @@ implementation
 
 {$R *.dfm}
 
-uses UnitdmMain, UnitPaySlip, UnitReportPayroll, UnitPayrollCalc, UnitPayrollDetail;
+uses UnitdmMain, UnitPaySlip, UnitReportPayroll, UnitPayrollCalc, UnitPayrollDetail,
+  UnitReportPension, UnitReportBankTransfer;
 
 { TframePayroll }
 
@@ -687,6 +692,53 @@ begin
   ReportForm := TfrmReportPayroll.Create(Self);
   try
     ReportForm.ShowReport(qryPayroll, Period);
+    ReportForm.ShowModal;
+  finally
+    ReportForm.Free;
+  end;
+end;
+
+// ќб€зательный (по единой ставке из настроек) и добровольный (meyletin,
+// индивидуальный % по сотруднику) пенсионные взносы за выбранный мес€ц Ч
+// отдельный реестр дл€ сдачи в ѕенсионный фонд.
+procedure TframePayroll.btnPensionReportClick(Sender: TObject);
+var
+  ReportForm: TfrmReportPension;
+  SelectedPeriod, DisplayPeriod: string;
+  DeptID: Integer;
+begin
+  SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
+  DisplayPeriod := cmbMonth.Text + ' ' + cmbYear.Text;
+  DeptID := 0;
+  if (cmbDept.ItemIndex <> -1) and (cmbDept.Items.Count > 0) then
+    DeptID := Integer(cmbDept.Items.Objects[cmbDept.ItemIndex]);
+
+  ReportForm := TfrmReportPension.Create(Self);
+  try
+    ReportForm.ShowReport(SelectedPeriod, DisplayPeriod, DeptID);
+    ReportForm.ShowModal;
+  finally
+    ReportForm.Free;
+  end;
+end;
+
+// –еестр сумм к перечислению на карты сотрудников за выбранный мес€ц
+// (зарплата на карту, не наличными) Ч дл€ передачи в обслуживающий банк.
+procedure TframePayroll.btnBankTransferReportClick(Sender: TObject);
+var
+  ReportForm: TfrmReportBankTransfer;
+  SelectedPeriod, DisplayPeriod: string;
+  DeptID: Integer;
+begin
+  SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
+  DisplayPeriod := cmbMonth.Text + ' ' + cmbYear.Text;
+  DeptID := 0;
+  if (cmbDept.ItemIndex <> -1) and (cmbDept.Items.Count > 0) then
+    DeptID := Integer(cmbDept.Items.Objects[cmbDept.ItemIndex]);
+
+  ReportForm := TfrmReportBankTransfer.Create(Self);
+  try
+    ReportForm.ShowReport(SelectedPeriod, DisplayPeriod, DeptID);
     ReportForm.ShowModal;
   finally
     ReportForm.Free;

@@ -141,6 +141,9 @@ type
     procedure ApplyDatabase(const APath: string);
     procedure EnsurePayrollDetailsTable;
     procedure EnsurePayrollCalcInputsTable;
+    procedure EnsureCompanyInfoTable;
+    procedure EnsureCompanyInfoDefaults;
+    procedure EnsureEmployeesPensionAccountColumn;
     procedure CreateNewDb(const APath: string);
     procedure LoadConfig;
     procedure SaveConfig(const APath: string);
@@ -182,6 +185,9 @@ begin
     conn.Connected := True;
     EnsurePayrollDetailsTable;
     EnsurePayrollCalcInputsTable;
+    EnsureCompanyInfoTable;
+    EnsureCompanyInfoDefaults;
+    EnsureEmployeesPensionAccountColumn;
     OpenAllQueries;
     SaveConfig(APath);
     if Assigned(MainForm) then
@@ -247,6 +253,77 @@ begin
     '  dep_deduction REAL,' +
     '  alimony_pct REAL' +
     ')');
+end;
+
+// company_info могла отсутствовать в базах, созданных ещё до появления
+// вкладки "Компания" в настройках — создаём таблицу, если её ещё нет.
+procedure TdmMain.EnsureCompanyInfoTable;
+begin
+  conn.ExecSQL(
+    'CREATE TABLE IF NOT EXISTS company_info (' +
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+    '  key_name TEXT UNIQUE NOT NULL,' +
+    '  display_name TEXT NOT NULL,' +
+    '  key_value TEXT' +
+    ')');
+end;
+
+// Реквизиты для банковских и пенсионного отчётов, которых не было в более
+// старых базах. INSERT OR IGNORE безопасен при повторных запусках (у
+// key_name стоит UNIQUE) и не трогает значения, которые бухгалтер уже
+// заполнил сам. Сами значения (коды, счета) оставляем пустыми — реальные
+// реквизиты конкретного заказчика в код не зашиваем, их вводят в
+// настройках, на вкладке "Компания".
+procedure TdmMain.EnsureCompanyInfoDefaults;
+
+  procedure EnsureRow(const AKey, ADisplay, ADefault: string);
+  begin
+    conn.ExecSQL(
+      'INSERT OR IGNORE INTO company_info (key_name, display_name, key_value) VALUES (:k, :d, :v)',
+      [AKey, ADisplay, ADefault]);
+  end;
+
+begin
+  EnsureRow('org_code', 'Код организации (ОКПО/ХСУК)', '');
+  EnsureRow('tax_code', 'Налоговый код (ИНН)', '');
+  EnsureRow('ownership_type_code', 'Код формы собственности', '');
+  EnsureRow('ministry_code', 'Код министерства/ведомства', '');
+  EnsureRow('region_code', 'Код региона', '');
+  EnsureRow('pension_fund_bank', 'Банк-получатель (Пенсионный фонд)', '');
+  EnsureRow('pension_fund_account', 'Счёт получателя (Пенсионный фонд)', '');
+  EnsureRow('mandatory_pension_rate', 'Обязательный пенсионный взнос, %', '20');
+end;
+
+// В более старых базах у сотрудника не было отдельного номера пенсионного
+// счёта — он отличается от bank_account (счёта карты, на которую платится
+// зарплата). SQLite не поддерживает "ADD COLUMN IF NOT EXISTS", поэтому
+// сначала проверяем PRAGMA table_info, и добавляем колонку только если её
+// ещё нет.
+procedure TdmMain.EnsureEmployeesPensionAccountColumn;
+var
+  Q: TFDQuery;
+  Found: Boolean;
+begin
+  Found := False;
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := conn;
+    Q.SQL.Text := 'PRAGMA table_info(employees)';
+    Q.Open;
+    while not Q.Eof do
+    begin
+      if SameText(Q.FieldByName('name').AsString, 'pension_account') then
+      begin
+        Found := True;
+        Break;
+      end;
+      Q.Next;
+    end;
+  finally
+    Q.Free;
+  end;
+  if not Found then
+    conn.ExecSQL('ALTER TABLE employees ADD COLUMN pension_account TEXT');
 end;
 
 procedure TdmMain.CloseAllQueries;

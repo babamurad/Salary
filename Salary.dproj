@@ -202,6 +202,15 @@
             <Form>frmReportPayroll</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="UnitCompanyInfo.pas"/>
+        <DCCReference Include="UnitReportPension.pas">
+            <Form>frmReportPension</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="UnitReportBankTransfer.pas">
+            <Form>frmReportBankTransfer</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="UnitFrameReportSummary.pas">
             <Form>FrameReportSummary</Form>
             <FormType>dfm</FormType>

@@ -6,7 +6,8 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls,
   System.IOUtils,
-  Vcl.ExtCtrls, SHDocVw, UnitReportBrowserUtils, Vcl.OleCtrls;
+  Vcl.ExtCtrls, SHDocVw, UnitReportBrowserUtils, Vcl.OleCtrls,
+  FireDAC.Comp.Client;
 
 type
   TfrmPaySlip = class(TForm)
@@ -19,6 +20,9 @@ type
     function GetHtmlTemplate: string;
     // Единая функция генерации, которая умеет делать и 1 квиток, и 100
     function GenerateSlips(Dataset: TDataSet; Period: string; IsSingle: Boolean): string;
+    // Один расчётный листок с полной разбивкой по payroll_details (для
+    // проверки бухгалтером, а не для массовой печати сотрудникам)
+    function GenerateSingleDetailedSlip(Dataset: TDataSet; Period: string): string;
   public
     function GenerateAllSlips(Dataset: TDataSet; Period: string): string;
   public
@@ -33,6 +37,8 @@ type
 implementation
 
 {$R *.dfm}
+
+uses UnitdmMain;
 
 { TfrmPaySlip }
 
@@ -52,7 +58,10 @@ end;
 
 procedure TfrmPaySlip.ShowSinglePayslip(Dataset: TDataSet; Period: string);
 begin
-  FHtmlContent := GenerateSlips(Dataset, Period, True); // True = только текущий
+  // Полная разбивка (не компактная карточка) — этот листок открывается по
+  // двойному клику из "Начисление зарплаты" именно для проверки бухгалтером,
+  // а не для массовой печати сотрудникам (для этого есть ShowAllPayslips).
+  FHtmlContent := GenerateSingleDetailedSlip(Dataset, Period);
   ShowHtmlInBrowser(WebBrowser, FHtmlContent, 'PaySlip');
 end;
 
@@ -214,6 +223,109 @@ begin
     '</style>' +
     '</head><body>' +
     '<div class="container-fluid"><div class="row">' + Body + '</div></div>' +
+    '</body></html>';
+end;
+
+function TfrmPaySlip.GenerateSingleDetailedSlip(Dataset: TDataSet; Period: string): string;
+var
+  Qry: TFDQuery;
+  AccrualsHtml, DeductionsHtml, Row, Body: string;
+  ReportCssPath, ReportCSS: string;
+  ItemName, Details: string;
+  Amount, RatePct: Double;
+  DeductionsTotal: Double;
+begin
+  AccrualsHtml := '';
+  DeductionsHtml := '';
+  DeductionsTotal := 0;
+
+  Qry := TFDQuery.Create(nil);
+  try
+    Qry.Connection := dmMain.conn;
+    Qry.SQL.Text := 'SELECT item_type, item_name, details, rate_percent, amount ' +
+                    'FROM payroll_details WHERE payroll_id = :pid ORDER BY sort_order, id';
+    Qry.ParamByName('pid').AsInteger := Dataset.FieldByName('id').AsInteger;
+    Qry.Open;
+
+    while not Qry.Eof do
+    begin
+      ItemName := Qry.FieldByName('item_name').AsString;
+      Details := Qry.FieldByName('details').AsString;
+      Amount := Qry.FieldByName('amount').AsFloat;
+      RatePct := Qry.FieldByName('rate_percent').AsFloat;
+
+      Row := '<tr><td>' + ItemName;
+      if RatePct > 0 then
+        Row := Row + ' <span class="text-muted small">(' + FormatFloat('0.##', RatePct) + '%)</span>';
+      if Details <> '' then
+        Row := Row + '<br><span class="text-muted small">' + Details + '</span>';
+      Row := Row + '</td><td class="text-end">' + FormatFloat('#,##0.00', Amount) + '</td></tr>';
+
+      if Qry.FieldByName('item_type').AsString = 'accrual' then
+        AccrualsHtml := AccrualsHtml + Row
+      else
+      begin
+        DeductionsHtml := DeductionsHtml + Row;
+        DeductionsTotal := DeductionsTotal + Amount;
+      end;
+
+      Qry.Next;
+    end;
+  finally
+    Qry.Free;
+  end;
+
+  if AccrualsHtml = '' then
+    AccrualsHtml := '<tr><td colspan="2" class="text-muted">Нет данных (документ рассчитан до появления детализации)</td></tr>';
+  if DeductionsHtml = '' then
+    DeductionsHtml := '<tr><td colspan="2" class="text-muted">Удержаний нет</td></tr>';
+
+  Body :=
+    '<div class="card payslip-card">' +
+    '  <div class="card-body">' +
+    '    <h3 class="card-title text-primary border-bottom pb-2">Расчётный листок: ' + Period + '</h3>' +
+    '    <div class="mb-2"><strong>' + Dataset.FieldByName('fio').AsString + '</strong></div>' +
+    '    <div class="text-muted mb-4">' +
+           Dataset.FieldByName('dept_name').AsString + ' | ' + Dataset.FieldByName('pos_name').AsString + '</div>' +
+    '    <div class="row">' +
+    '      <div class="col-6">' +
+    '        <h5>Начислено</h5>' +
+    '        <table class="table table-sm">' + AccrualsHtml +
+    '          <tr class="table-light border-top"><td><strong>Итого начислено</strong></td>' +
+    '              <td class="text-end"><strong>' + FormatFloat('#,##0.00', Dataset.FieldByName('gross_amount').AsFloat) + '</strong></td></tr>' +
+    '        </table>' +
+    '      </div>' +
+    '      <div class="col-6">' +
+    '        <h5>Удержано</h5>' +
+    '        <table class="table table-sm">' + DeductionsHtml +
+    '          <tr class="table-light border-top"><td><strong>Итого удержано</strong></td>' +
+    '              <td class="text-end"><strong>' + FormatFloat('#,##0.00', DeductionsTotal) + '</strong></td></tr>' +
+    '        </table>' +
+    '      </div>' +
+    '    </div>' +
+    '    <table class="table table-borderless mb-0">' +
+    '      <tr class="table-dark"><td><strong>К ВЫДАЧЕ</strong></td>' +
+    '          <td class="text-end"><strong>' + FormatFloat('#,##0.00', Dataset.FieldByName('net_amount').AsFloat) + '</strong></td></tr>' +
+    '    </table>' +
+    '  </div>' +
+    '</div>';
+
+  ReportCssPath := ExtractFilePath(ParamStr(0)) + 'assets\report.css';
+  ReportCSS := '';
+  if TFile.Exists(ReportCssPath) then
+    ReportCSS := TFile.ReadAllText(ReportCssPath)
+  else
+    ShowMessage('Внимание: Файл ' + ReportCssPath + ' не найден! Вёрстка может поехать.');
+
+  Result :=
+    '<html><head>' +
+    '<style>' + ReportCSS + '</style>' +
+    '<style>' +
+    '  @media print { .no-print { display: none; } }' +
+    '  body { background: #f8f9fa; padding: 20px; }' +
+    '</style>' +
+    '</head><body>' +
+    '<div class="container-fluid">' + Body + '</div>' +
     '</body></html>';
 end;
 

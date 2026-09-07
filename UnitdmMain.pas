@@ -139,6 +139,7 @@ type
     function GetAverageYearlySalary(AEmpID: Integer; ACalcDate: TDate): Double;
     procedure SwitchDatabase(const ANewPath: string);
     procedure ApplyDatabase(const APath: string);
+    procedure EnsurePayrollDetailsTable;
     procedure CreateNewDb(const APath: string);
     procedure LoadConfig;
     procedure SaveConfig(const APath: string);
@@ -178,6 +179,7 @@ begin
 //    ShowMessage('ѕараметры подключени€:'#13#10 + conn.Params.Text);
     // ======================================
     conn.Connected := True;
+    EnsurePayrollDetailsTable;
     OpenAllQueries;
     SaveConfig(APath);
     if Assigned(MainForm) then
@@ -188,6 +190,29 @@ begin
                   'ѕуть: ' + APath + sLineBreak +
                   'ƒетали: ' + E.Message);
   end;
+end;
+
+// “аблица по€вилась уже после того, как многие базы (в том числе
+// демо-база и рабочие базы у пользователей) были созданы Ч досоздаЄм еЄ
+// автоматически при каждом подключении (CREATE TABLE IF NOT EXISTS,
+// безопасно выполн€ть повторно), чтобы не заставл€ть никого вручную
+// выполн€ть миграцию. ’ранит детализацию начислений/удержаний по каждой
+// строке payroll_journal Ч нужна дл€ расчЄтного листка с разбивкой.
+procedure TdmMain.EnsurePayrollDetailsTable;
+begin
+  conn.ExecSQL(
+    'CREATE TABLE IF NOT EXISTS payroll_details (' +
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+    '  payroll_id INTEGER NOT NULL REFERENCES payroll_journal(id) ON DELETE CASCADE,' +
+    '  item_type TEXT NOT NULL,' +      // 'accrual' / 'deduction'
+    '  item_name TEXT NOT NULL,' +
+    '  details TEXT,' +                 // произвольное по€снение (часы, вычеты и т.п.)
+    '  base_amount CURRENCY,' +         // база, от которой считалс€ % (если применимо)
+    '  rate_percent REAL,' +            // ставка % (если применимо)
+    '  amount CURRENCY NOT NULL,' +
+    '  sort_order INTEGER NOT NULL DEFAULT 0' +
+    ')');
+  conn.ExecSQL('CREATE INDEX IF NOT EXISTS idx_payroll_details_payroll ON payroll_details (payroll_id)');
 end;
 
 procedure TdmMain.CloseAllQueries;

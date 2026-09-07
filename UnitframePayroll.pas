@@ -187,7 +187,7 @@ end;
 
 procedure TframePayroll.btnCalcClick(Sender: TObject);
 var
-  QryEmp, QrySet, QryExec: TFDQuery;
+  QryEmp, QrySet, QryExec, QryDetail: TFDQuery;
   // Настройки
   TaxRate, DepDeduction, UnionRate, RotationRate: Double;
   Class1Rate, Class2Rate, Class3Rate: Double;
@@ -199,11 +199,29 @@ var
 
   // Расчетные переменные
   HourlyRate, RegularHours, OvertimeHours, BaseSal: Double;
-  BaseGross, RotationBonus, ClassBonus, TotalGross: Double;
+  BaseGross, RotationBonus, ClassBonus, ClassRateUsed, TotalGross: Double;
   TaxBase, Tax, Pension, UnionAmount, AlimonyAmount, NetBeforeAlimony, Net: Double;
 
   SelectedPeriod, CalcDateStr, SysName: string;
-  DeptID: Integer;
+  DeptID, NewPayrollId: Integer;
+
+  // Записывает одну строку детализации (начисление/удержание) для только что
+  // сохранённой строки payroll_journal — чтобы бухгалтер мог потом увидеть
+  // расчётный листок не только с итогами, но и с тем, из чего они сложились.
+  procedure AddDetail(const AItemType, AItemName, ADetails: string;
+    ABase, ARate, AAmount: Double; ASortOrder: Integer);
+  begin
+    QryDetail.ParamByName('pid').AsInteger := NewPayrollId;
+    QryDetail.ParamByName('itype').AsString := AItemType;
+    QryDetail.ParamByName('iname').AsString := AItemName;
+    QryDetail.ParamByName('idet').AsString := ADetails;
+    QryDetail.ParamByName('ibase').AsFloat := ABase;
+    QryDetail.ParamByName('irate').AsFloat := ARate;
+    QryDetail.ParamByName('iamt').AsFloat := AAmount;
+    QryDetail.ParamByName('isort').AsInteger := ASortOrder;
+    QryDetail.ExecSQL;
+  end;
+
 begin
   SelectedPeriod := cmbYear.Text + '-' + Format('%.2d', [cmbMonth.ItemIndex + 1]);
 
@@ -229,10 +247,15 @@ begin
   QryEmp := TFDQuery.Create(nil);
   QrySet := TFDQuery.Create(nil);
   QryExec := TFDQuery.Create(nil);
+  QryDetail := TFDQuery.Create(nil);
   try
     QryEmp.Connection := dmMain.conn;
     QrySet.Connection := dmMain.conn;
     QryExec.Connection := dmMain.conn;
+    QryDetail.Connection := dmMain.conn;
+    QryDetail.SQL.Text :=
+      'INSERT INTO payroll_details (payroll_id, item_type, item_name, details, base_amount, rate_percent, amount, sort_order) ' +
+      'VALUES (:pid, :itype, :iname, :idet, :ibase, :irate, :iamt, :isort)';
 
     // --- ЧИТАЕМ ГЛОБАЛЬНЫЕ НАСТРОЙКИ ---
     QrySet.SQL.Text := 'SELECT sys_name, key_value, is_active FROM settings';
@@ -272,11 +295,27 @@ begin
 
     dmMain.conn.StartTransaction;
     try
-      // Очищаем старые начисления
+      // Очищаем старую детализацию (по ещё не удалённым строкам payroll_journal)
+      // и сами старые начисления — на случай, если месяц пересчитывают повторно
       if DeptID > 0 then
-        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + ')'
+      begin
+        QryExec.SQL.Text := 'DELETE FROM payroll_details WHERE payroll_id IN (' +
+          'SELECT id FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P ' +
+          'AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + '))';
+        QryExec.ParamByName('P').AsString := SelectedPeriod;
+        QryExec.ExecSQL;
+
+        QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P AND emp_id IN (SELECT id FROM employees WHERE dept_id = ' + IntToStr(DeptID) + ')';
+      end
       else
+      begin
+        QryExec.SQL.Text := 'DELETE FROM payroll_details WHERE payroll_id IN (' +
+          'SELECT id FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P)';
+        QryExec.ParamByName('P').AsString := SelectedPeriod;
+        QryExec.ExecSQL;
+
         QryExec.SQL.Text := 'DELETE FROM payroll_journal WHERE strftime(''%Y-%m'', period_date) = :P';
+      end;
       QryExec.ParamByName('P').AsString := SelectedPeriod;
       QryExec.ExecSQL;
 
@@ -327,9 +366,10 @@ begin
         if IsRotation = 1 then RotationBonus := SimpleRoundTo(BaseGross * (RotationRate / 100.0), -2);
 
         ClassBonus := 0;
-        if ClassRank = 1 then ClassBonus := SimpleRoundTo(BaseGross * (Class1Rate / 100.0), -2)
-        else if ClassRank = 2 then ClassBonus := SimpleRoundTo(BaseGross * (Class2Rate / 100.0), -2)
-        else if ClassRank = 3 then ClassBonus := SimpleRoundTo(BaseGross * (Class3Rate / 100.0), -2);
+        ClassRateUsed := 0;
+        if ClassRank = 1 then begin ClassRateUsed := Class1Rate; ClassBonus := SimpleRoundTo(BaseGross * (Class1Rate / 100.0), -2); end
+        else if ClassRank = 2 then begin ClassRateUsed := Class2Rate; ClassBonus := SimpleRoundTo(BaseGross * (Class2Rate / 100.0), -2); end
+        else if ClassRank = 3 then begin ClassRateUsed := Class3Rate; ClassBonus := SimpleRoundTo(BaseGross * (Class3Rate / 100.0), -2); end;
 
         TotalGross := BaseGross + RotationBonus + ClassBonus;
 
@@ -341,7 +381,10 @@ begin
           UnionAmount := SimpleRoundTo(TotalGross * (UnionRate / 100.0), -2);
 
         if IsTaxExempt = 1 then
-          Tax := 0
+        begin
+          Tax := 0;
+          TaxBase := 0;
+        end
         else
         begin
           TaxBase := BaseGross - (DepCount * DepDeduction);
@@ -368,6 +411,41 @@ begin
         QryExec.ParamByName('net').AsFloat := Net;
         QryExec.ExecSQL;
 
+        // --- ДЕТАЛИЗАЦИЯ: из чего именно сложились начисления и удержания ---
+        NewPayrollId := dmMain.conn.ExecSQLScalar('SELECT last_insert_rowid()');
+
+        AddDetail('accrual', 'Оплата за отработанное время',
+          Format('Обычные часы: %.2f, сверхурочные: %.2f, ставка часа: %.2f',
+                 [RegularHours, OvertimeHours, HourlyRate]),
+          0, 0, BaseGross, 1);
+
+        if RotationBonus > 0 then
+          AddDetail('accrual', 'Надбавка за вахтовый метод',
+            'От оплаты за отработанное время', BaseGross, RotationRate, RotationBonus, 2);
+
+        if ClassBonus > 0 then
+          AddDetail('accrual', 'Надбавка за классность',
+            Format('Класс %d, от оплаты за отработанное время', [ClassRank]),
+            BaseGross, ClassRateUsed, ClassBonus, 3);
+
+        if IsTaxExempt = 1 then
+          AddDetail('deduction', 'Подоходный налог', 'Сотрудник освобождён от налога', 0, 0, 0, 10)
+        else
+          AddDetail('deduction', 'Подоходный налог',
+            Format('Вычет на %d иждивенца(ев) по %.2f из базы начисления', [DepCount, DepDeduction]),
+            TaxBase, TaxRate, Tax, 10);
+
+        AddDetail('deduction', 'Пенсионный взнос', 'От суммы начисленного (с надбавками)',
+          TotalGross, EmpPensionRate, Pension, 11);
+
+        if IsTradeUnion = 1 then
+          AddDetail('deduction', 'Профсоюзный взнос', 'От суммы начисленного (с надбавками)',
+            TotalGross, UnionRate, UnionAmount, 12);
+
+        if AlimonyPct > 0 then
+          AddDetail('deduction', 'Алименты', 'Удержаны после налога, пенсионного и профсоюза',
+            NetBeforeAlimony, AlimonyPct, AlimonyAmount, 13);
+
         QryEmp.Next;
       end;
 
@@ -383,7 +461,7 @@ begin
       end;
     end;
   finally
-    QryEmp.Free; QrySet.Free; QryExec.Free;
+    QryEmp.Free; QrySet.Free; QryExec.Free; QryDetail.Free;
   end;
 end;
 

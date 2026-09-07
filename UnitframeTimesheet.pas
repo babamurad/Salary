@@ -30,10 +30,6 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
-    Label4: TLabel;
-    lblCurrentEmp: TLabel;
-    DBGridNames: TDBGrid;
-    Splitter1: TSplitter;
     procedure DBGridTimesheetDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure btnLoadClick(Sender: TObject);
@@ -42,10 +38,8 @@ type
   private
     FCurYear: Integer;   // Текущий год отчета из формы
     FCurMonth: Integer;  // Текущий месяц отчета из формы
-    FCurrentEmpID: Integer;
     procedure ReadPeriodFromUI;
     procedure LoadDepartments;
-    procedure memTimesheetAfterScroll(DataSet: TDataSet);
     procedure DaysWorkedChange(Sender: TField);
     function GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
   public
@@ -150,28 +144,6 @@ begin
   end;
 end;
 
-procedure TframeTimesheet.memTimesheetAfterScroll(DataSet: TDataSet);
-begin
-  if DataSet.Active and not DataSet.IsEmpty then
-  begin
-    // Показываем текущего сотрудника
-    lblCurrentEmp.Caption := DataSet.FieldByName('fio').AsString;
-    FCurrentEmpID := DataSet.FieldByName('emp_id').AsInteger;
-  end
-  else
-  begin
-    lblCurrentEmp.Caption := '---';
-    FCurrentEmpID := -1;
-  end;
-
-  // --- Перерисовываем обе таблицы, чтобы подсветить строку ---
-  if Assigned(DBGridTimesheet) then
-    DBGridTimesheet.Invalidate;
-
-  if Assigned(DBGridNames) then
-    DBGridNames.Invalidate;
-end;
-
 // При ручном вводе "Отработано дней" сразу пересчитываем "Отработано часов"
 // (дни * HOURS_PER_DAY) — так бухгалтеру не нужно вручную умножать.
 // Поле "часы" при этом остаётся доступным для правки напрямую — на случай
@@ -203,8 +175,6 @@ procedure TframeTimesheet.PrepareMemTable(AYear, AMonth: Integer);
 begin
   if not Assigned(dmMain) then Exit;
 
-  // Отключаем обе сетки на время перестройки структуры
-  DBGridNames.DataSource := nil;
   DBGridTimesheet.DataSource := nil;
 
   with dmMain.memTimesheet do
@@ -221,23 +191,21 @@ begin
     FieldDefs.Add('hours_worked', ftFloat);
 
     CreateDataSet;
-    AfterScroll := memTimesheetAfterScroll;
 
-    // Подключаем обе таблицы к общему набору данных
-    DBGridNames.DataSource := dmMain.dsTimesheet;
     DBGridTimesheet.DataSource := dmMain.dsTimesheet;
 
-    // --- 1. Левая (замороженная) панель — только ФИО ---
-    DBGridNames.Columns.Clear;
-    with DBGridNames.Columns.Add do
+    // Одна таблица на всё: раньше ФИО держали в отдельной "замороженной"
+    // сетке слева (нужно было для широкой таблицы по дням месяца), но
+    // после перехода на итоги за месяц колонок всего пять — они спокойно
+    // помещаются в один грид, без второй сетки и её рассинхронизации при
+    // прокрутке/клике.
+    DBGridTimesheet.Columns.Clear;
+    with DBGridTimesheet.Columns.Add do
     begin
       FieldName := 'fio';
       Title.Caption := 'Сотрудник';
       Width := 220;
     end;
-
-    // --- 2. Правая панель — норма (справочно) + факт (для ввода) ---
-    DBGridTimesheet.Columns.Clear;
     with DBGridTimesheet.Columns.Add do
     begin
       FieldName := 'norm_days';
@@ -364,8 +332,6 @@ begin
     end;
 
     dmMain.memTimesheet.First;
-
-    memTimesheetAfterScroll(dmMain.memTimesheet);
 
   finally
     LoadQuery.Free;
@@ -563,39 +529,24 @@ end;
 
 procedure TframeTimesheet.DBGridTimesheetDrawColumnCell(Sender: TObject;
   const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
-var
-  IsActiveRow: Boolean;
-  Grid: TDBGrid;
 begin
-  Grid := Sender as TDBGrid; // Важно: работает, когда этот хендлер общий (общий для обеих сеток)
-  IsActiveRow := False;
-
-  if (dmMain.memTimesheet.Active) and (dmMain.memTimesheet.FindField('emp_id') <> nil) then
-    IsActiveRow := (dmMain.memTimesheet.FieldByName('emp_id').AsInteger = FCurrentEmpID);
-
-  // Подсветка строки текущего сотрудника
-  if IsActiveRow then
-  begin
-    Grid.Canvas.Brush.Color := $00FFF0E0;
-    Grid.Canvas.Font.Style := [fsBold];
-  end;
-
-  // Дополнительная подсветка редактируемых колонок (факт)
+  // Подсветка редактируемых колонок (факт) — сразу видно, что можно
+  // менять прямо в таблице, а что справочное (норма). Выделение текущей
+  // строки теперь целиком на самом гриде (сетка одна) — раньше эту
+  // подсветку рисовали вручную, потому что сеток было две.
   if (Column.FieldName = 'days_worked') or (Column.FieldName = 'hours_worked') then
   begin
-    if IsActiveRow then Grid.Canvas.Brush.Color := $00C0FFFF
-    else Grid.Canvas.Brush.Color := $00E0FFFF;
-    Grid.Canvas.Font.Style := [fsBold];
+    DBGridTimesheet.Canvas.Brush.Color := $00E0FFFF;
+    DBGridTimesheet.Canvas.Font.Style := [fsBold];
   end;
 
-  // Подсветка выделенной ячейки редактором
   if gdSelected in State then
   begin
-    Grid.Canvas.Brush.Color := clHighlight;
-    Grid.Canvas.Font.Color := clHighlightText;
+    DBGridTimesheet.Canvas.Brush.Color := clHighlight;
+    DBGridTimesheet.Canvas.Font.Color := clHighlightText;
   end;
 
-  Grid.DefaultDrawColumnCell(Rect, DataCol, Column, State);
+  DBGridTimesheet.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;
 
 end.

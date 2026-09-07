@@ -216,6 +216,16 @@ begin
       DBGrid1.Canvas.Font.Color := clNavy; // Темно-синий текст
     end;
   end;
+
+  // Подсветка активной ячейки — ставим ПОСЛЕ своей раскраски по статусу/
+  // окладу, иначе она перекрывает выделение, и не видно, где курсор
+  // (стрелки/Tab при этом реально двигают строку, просто незаметно).
+  if gdSelected in State then
+  begin
+    DBGrid1.Canvas.Brush.Color := clHighlight;
+    DBGrid1.Canvas.Font.Color := clHighlightText;
+  end;
+
   // Отрисовываем ячейку с новыми цветами
   DBGrid1.DefaultDrawColumnCell(Rect, DataCol, Column, State);
 end;

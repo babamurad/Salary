@@ -344,10 +344,10 @@ object frmBaseEdit: TfrmBaseEdit
           Top = 123
           Width = 121
           Height = 30
-          MaxValue = 0
-          MinValue = 100
+          MaxValue = 100
+          MinValue = 0
           TabOrder = 5
-          Value = 100
+          Value = 0
         end
         object seSickLeavePercent: TSpinEdit
           Left = 175

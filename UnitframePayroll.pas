@@ -55,7 +55,7 @@ implementation
 {$R *.dfm}
 
 uses UnitdmMain, UnitPaySlip, UnitReportPayroll, UnitPayrollCalc, UnitPayrollDetail,
-  UnitReportPension, UnitReportBankTransfer, UnitBaseEditForm;
+  UnitReportPension, UnitReportBankTransfer, UnitBaseEditForm, UnitGridPersist;
 
 { TframePayroll }
 
@@ -813,6 +813,10 @@ begin
   if DataSet.FindField('base_salary') <> nil then DataSet.FieldByName('base_salary').DisplayLabel := 'Базовый оклад';
   if DataSet.FindField('dept_name') <> nil then DataSet.FieldByName('dept_name').DisplayLabel := 'Отдел';
   if DataSet.FindField('pos_name') <> nil then DataSet.FieldByName('pos_name').DisplayLabel := 'Должность';
+
+  // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+  // подгонял вручную в прошлый раз (если сохранено).
+  LoadGridColumnWidths(DBGrid1, 'Payroll');
 end;
 
 procedure TframePayroll.DBGrid1DblClick(Sender: TObject);
@@ -883,6 +887,7 @@ end;
 
 destructor TframePayroll.Destroy;
 begin
+  SaveGridColumnWidths(DBGrid1, 'Payroll');
   if Assigned(qryPayroll) then qryPayroll.Free;
   if Assigned(dsPayroll) then dsPayroll.Free;
   inherited;

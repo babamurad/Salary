@@ -134,6 +134,7 @@
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
         <DCCReference Include="UnitPayrollCalc.pas"/>
+        <DCCReference Include="UnitGridPersist.pas"/>
         <DCCReference Include="UnitPayrollDetail.pas">
             <Form>frmPayrollDetail</Form>
             <FormType>dfm</FormType>

@@ -32,6 +32,7 @@ type
     procedure ApplyFilter;
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -39,7 +40,7 @@ implementation
 {$R *.dfm}
 
 uses
-  UnitdmMain, UnitBaseEditForm;
+  UnitdmMain, UnitBaseEditForm, UnitGridPersist;
 
 constructor TframeEmployees.Create(AOwner: TComponent);
 var
@@ -163,6 +164,16 @@ begin
     DS.FieldByName('pos_name').DisplayLabel := 'Должность';
     DS.FieldByName('pos_name').DisplayWidth := 20;
   end;
+
+  // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+  // подгонял вручную в прошлый раз (если сохранено).
+  LoadGridColumnWidths(DBGrid1, 'Employees');
+end;
+
+destructor TframeEmployees.Destroy;
+begin
+  SaveGridColumnWidths(DBGrid1, 'Employees');
+  inherited;
 end;
 
 

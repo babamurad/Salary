@@ -18,6 +18,7 @@ type
     procedure DBGrid1TitleClick(Column: TColumn); // Наш метод сортировки
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -25,7 +26,7 @@ implementation
 {$R *.dfm}
 
 uses
-  UnitdmMain; // Подключаем наш DataModule
+  UnitdmMain, UnitGridPersist; // Подключаем наш DataModule
 
 constructor TframeDepts.Create(AOwner: TComponent);
 begin
@@ -53,7 +54,17 @@ begin
     end;
     // Динамически подключаем событие клика по заголовку
     DBGrid1.OnTitleClick := DBGrid1TitleClick;
+
+    // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+    // подгонял вручную в прошлый раз (если сохранено).
+    LoadGridColumnWidths(DBGrid1, 'Depts');
   end;
+end;
+
+destructor TframeDepts.Destroy;
+begin
+  SaveGridColumnWidths(DBGrid1, 'Depts');
+  inherited;
 end;
 
 procedure TframeDepts.DBGrid1TitleClick(Column: TColumn);

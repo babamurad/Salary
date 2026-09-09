@@ -28,13 +28,14 @@ type
     procedure RefreshData; // Умное обновление данных с учетом фильтра
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
 
 {$R *.dfm}
 
-uses UnitdmMain, UnitSickLeaveCalc, UnitHtmlPreview;
+uses UnitdmMain, UnitSickLeaveCalc, UnitHtmlPreview, UnitGridPersist;
 
 constructor TframeSickLeave.Create(AOwner: TComponent);
 begin
@@ -142,7 +143,17 @@ begin
       (dmMain.qrySickLeave.FieldByName('payment_percent') as TNumericField).DisplayFormat := '0"%";-0"%"';
     if dmMain.qrySickLeave.FindField('total_amount') <> nil then
       (dmMain.qrySickLeave.FieldByName('total_amount') as TNumericField).DisplayFormat := '#,##0.00';
+
+    // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+    // подгонял вручную в прошлый раз (если сохранено).
+    LoadGridColumnWidths(DBGrid1, 'SickLeave');
   end;
+end;
+
+destructor TframeSickLeave.Destroy;
+begin
+  SaveGridColumnWidths(DBGrid1, 'SickLeave');
+  inherited;
 end;
 
 // --- 4. ДОБАВЛЕНИЕ НОВОГО РАСЧЕТА ---

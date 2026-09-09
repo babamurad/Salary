@@ -32,7 +32,7 @@ implementation
 {$R *.dfm}
 
 uses
-  UnitdmMain;
+  UnitdmMain, UnitGridPersist;
 
 constructor TframeReports.Create(AOwner: TComponent);
 begin
@@ -60,6 +60,7 @@ end;
 
 destructor TframeReports.Destroy;
 begin
+  SaveGridColumnWidths(DBGrid1, 'Reports');
   if Assigned(qryReport) then qryReport.Free;
   if Assigned(dsReport) then dsReport.Free;
   inherited;
@@ -72,6 +73,10 @@ begin
   if not Assigned(dmMain) then Exit;
 
   PeriodStr := FormatDateTime('yyyy-mm', dtpPeriod.Date);
+
+  // Ўирины ниже выставл€ютс€ заново при каждом формировании ведомости -
+  // сохран€ем то, что подогнал пользователь, до того как их перезатрут.
+  SaveGridColumnWidths(DBGrid1, 'Reports');
 
   qryReport.Close;
   qryReport.SQL.Text :=
@@ -107,6 +112,8 @@ begin
     DBGrid1.Columns[6].Width := 140;
     DBGrid1.Columns[7].Title.Caption := '  выдаче';
     DBGrid1.Columns[7].Width := 100;
+
+    LoadGridColumnWidths(DBGrid1, 'Reports');
   end;
 
   if qryReport.IsEmpty then

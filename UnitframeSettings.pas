@@ -49,13 +49,14 @@ type
   procedure MaxYearsGetText(Sender: TField; var Text: string; DisplayText: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
 
 {$R *.dfm}
 
-uses UnitdmMain;
+uses UnitdmMain, UnitGridPersist;
 
 
 
@@ -256,6 +257,10 @@ begin
         DBGrid1.OnDrawColumnCell := DBGrid1DrawColumnCell;
         DBGrid1.OnCellClick := DBGrid1CellClick;
 
+        // Поверх настроенных по умолчанию ширин накатываем то, что
+        // пользователь подгонял вручную в прошлый раз (если сохранено).
+        LoadGridColumnWidths(DBGrid1, 'Settings');
+
         if not dmMain.qrySickLeaveRates.Active then dmMain.qrySickLeaveRates.Open;
 
          DBGrid2.DataSource := dmMain.dsSickLeaveRates;
@@ -297,9 +302,19 @@ begin
             dmMain.qrySickLeaveRates.FieldByName('max_years').OnGetText := MaxYearsGetText;
           end;
 
+          LoadGridColumnWidths(DBGrid2, 'SickLeaveRates');
+
     // Настройка истории
     SetupCompanyInfoGrid;
   end;
+end;
+
+destructor TframeSettings.Destroy;
+begin
+  SaveGridColumnWidths(DBGrid1, 'Settings');
+  SaveGridColumnWidths(DBGrid2, 'SickLeaveRates');
+  SaveGridColumnWidths(DBGridCompany, 'CompanyInfo');
+  inherited;
 end;
 
 procedure TframeSettings.DBGrid1CellClick(Column: TColumn);
@@ -441,6 +456,8 @@ begin
       Title.Caption := 'Значение';
       Width := 400;
     end;
+
+    LoadGridColumnWidths(DBGridCompany, 'CompanyInfo');
   end;
 end;
 

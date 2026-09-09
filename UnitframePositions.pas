@@ -17,6 +17,7 @@ type
     procedure DBGrid1TitleClick(Column: TColumn);
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -24,7 +25,7 @@ implementation
 {$R *.dfm}
 
 uses
-  UnitdmMain;
+  UnitdmMain, UnitGridPersist;
 
 constructor TframePositions.Create(AOwner: TComponent);
 begin
@@ -59,7 +60,17 @@ begin
 
     // Подключаем сортировку
     DBGrid1.OnTitleClick := DBGrid1TitleClick;
+
+    // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+    // подгонял вручную в прошлый раз (если сохранено).
+    LoadGridColumnWidths(DBGrid1, 'Positions');
   end;
+end;
+
+destructor TframePositions.Destroy;
+begin
+  SaveGridColumnWidths(DBGrid1, 'Positions');
+  inherited;
 end;
 
 procedure TframePositions.DBGrid1TitleClick(Column: TColumn);

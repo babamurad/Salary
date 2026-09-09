@@ -31,7 +31,7 @@ implementation
 
 {$R *.dfm}
 
-uses UnitdmMain;
+uses UnitdmMain, UnitGridPersist;
 
 procedure TframeCalendar.qryCalendarAfterOpen(DataSet: TDataSet);
 begin
@@ -49,6 +49,10 @@ begin
     DBGrid1.Columns[3].Title.Caption := 'Норма часов';
     DBGrid1.Columns[3].Width := 120;
   end;
+
+  // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+  // подгонял вручную в прошлый раз (если сохранено).
+  LoadGridColumnWidths(DBGrid1, 'Calendar');
 end;
 
 // Процедура загрузки
@@ -110,6 +114,7 @@ end;
 
 destructor TframeCalendar.Destroy;
 begin
+  SaveGridColumnWidths(DBGrid1, 'Calendar');
   if Assigned(qryCalendar) then qryCalendar.Free;
   if Assigned(dsCalendar) then dsCalendar.Free;
   inherited;

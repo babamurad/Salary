@@ -1,0 +1,913 @@
+BEGIN TRANSACTION;
+CREATE TABLE IF NOT EXISTS "closed_periods" (
+	"period_str"	TEXT,
+	PRIMARY KEY("period_str")
+);
+CREATE TABLE IF NOT EXISTS "const_settings" (
+	"key_name"	TEXT,
+	"key_value"	REAL,
+	PRIMARY KEY("key_name")
+);
+CREATE TABLE IF NOT EXISTS "departments" (
+	"id"	INTEGER,
+	"dept_name"	TEXT NOT NULL UNIQUE,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "emp_adjustments" (
+	"emp_id"	INTEGER,
+	"adj_name"	TEXT,
+	"adj_value"	REAL,
+	"is_percent"	BOOLEAN,
+	FOREIGN KEY("emp_id") REFERENCES "employees"("id")
+);
+CREATE TABLE IF NOT EXISTS "employees" (
+	"id"	INTEGER,
+	"tabno"	INTEGER NOT NULL UNIQUE,
+	"fio"	TEXT NOT NULL,
+	"hire_date"	DATE,
+	"base_salary"	CURRENCY DEFAULT 0,
+	"dept_id"	INTEGER,
+	"pos_id"	INTEGER,
+	"status"	INTEGER DEFAULT 1,
+	"prior_exp_years"	INTEGER DEFAULT 0,
+	"prior_exp_months"	INTEGER DEFAULT 0,
+	"dependents_count"	INTEGER DEFAULT 0,
+	"pension_rate"	REAL DEFAULT 2.0,
+	"pay_type"	INTEGER DEFAULT 0,
+	"schedule_type"	INTEGER DEFAULT 0,
+	"hourly_rate"	REAL DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("dept_id") REFERENCES "departments"("id") ON DELETE SET NULL,
+	FOREIGN KEY("pos_id") REFERENCES "positions"("id") ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS "payroll_journal" (
+	"id"	INTEGER,
+	"emp_id"	INTEGER,
+	"period_date"	DATE,
+	"gross_amount"	CURRENCY,
+	"tax_amount"	CURRENCY,
+	"pension_amount"	CURRENCY,
+	"net_amount"	CURRENCY,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("emp_id") REFERENCES "employees"("id")
+);
+CREATE TABLE IF NOT EXISTS "positions" (
+	"id"	INTEGER,
+	"name"	TEXT NOT NULL UNIQUE,
+	"category"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "production_calendar" (
+	"year"	INTEGER,
+	"month"	INTEGER,
+	"working_days"	INTEGER,
+	"working_hours"	INTEGER,
+	PRIMARY KEY("year","month")
+);
+CREATE TABLE IF NOT EXISTS "salary_history" (
+	"id"	INTEGER,
+	"emp_id"	INTEGER NOT NULL,
+	"period_date"	DATE NOT NULL,
+	"amount"	DECIMAL(18, 2) DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("emp_id") REFERENCES "employees"("id") ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "settings" (
+	"key_name"	TEXT,
+	"key_value"	REAL,
+	PRIMARY KEY("key_name")
+);
+CREATE TABLE IF NOT EXISTS "sick_leave_journal" (
+	"id"	INTEGER,
+	"emp_id"	INTEGER NOT NULL,
+	"calc_date"	DATE NOT NULL,
+	"start_date"	DATE NOT NULL,
+	"end_date"	DATE NOT NULL,
+	"days_count"	INTEGER NOT NULL,
+	"avg_daily_salary"	DECIMAL(18, 2),
+	"experience_years"	INTEGER,
+	"payment_percent"	DECIMAL(5, 2),
+	"total_amount"	DECIMAL(18, 2),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("emp_id") REFERENCES "employees"("id")
+);
+CREATE TABLE IF NOT EXISTS "sick_leave_rates" (
+	"min_years"	INTEGER,
+	"percent"	REAL,
+	PRIMARY KEY("min_years")
+);
+CREATE TABLE IF NOT EXISTS "timesheet" (
+	"id"	INTEGER,
+	"emp_id"	INTEGER NOT NULL,
+	"work_date"	DATE NOT NULL,
+	"hours_worked"	REAL DEFAULT 0,
+	"status_code"	TEXT(5) DEFAULT 'Я',
+	"notes"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("emp_id") REFERENCES "employees"("id")
+);
+CREATE TABLE IF NOT EXISTS "vacation_journal" (
+	"id"	INTEGER,
+	"emp_id"	INTEGER NOT NULL,
+	"calc_date"	DATE NOT NULL,
+	"start_date"	DATE NOT NULL,
+	"end_date"	DATE NOT NULL,
+	"days_count"	INTEGER NOT NULL,
+	"avg_monthly_salary"	DECIMAL(18, 2),
+	"avg_daily_salary"	DECIMAL(18, 2),
+	"total_amount"	DECIMAL(18, 2),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("emp_id") REFERENCES "employees"("id")
+);
+INSERT INTO "closed_periods" VALUES ('2026-01');
+INSERT INTO "departments" VALUES (1,'Администрация');
+INSERT INTO "departments" VALUES (2,'Бухгалтерия');
+INSERT INTO "departments" VALUES (3,'Отдел кадров');
+INSERT INTO "departments" VALUES (4,'Производственный цех');
+INSERT INTO "departments" VALUES (5,'Транспортный отдел');
+INSERT INTO "departments" VALUES (6,'Склад');
+INSERT INTO "departments" VALUES (7,'Техотдел');
+INSERT INTO "employees" VALUES (3,3,'Сергеев Сергей Петрович','2018-02-10',2800,1,19,1,15,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (4,4,'Антонова Анна Викторовна','2019-05-20',2200,2,2,1,8,3,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (5,5,'Петрова Ольга Ивановна','2020-07-15',1700,2,3,1,4,6,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (6,6,'Сидоров Иван Петрович','2021-09-01',0,2,3,1,2,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (7,7,'Козлова Елена Дмитриевна','2022-01-12',1900,2,17,1,5,0,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (8,8,'Николаев Николай Николаевич','2017-11-03',2000,3,18,1,12,0,3,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (9,9,'Смирнова Мария Александровна','2020-03-25',1400,3,8,1,3,5,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (10,10,'Кузнецов Дмитрий Алексеевич','2022-06-30',1300,3,8,1,1,2,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (11,11,'Попов Андрей Сергеевич','2019-10-10',2100,4,4,1,7,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (12,12,'Васильев Владимир Владимирович','2020-12-01',1700,4,5,1,4,8,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (13,13,'Зайцева Татьяна Юрьевна','2021-04-18',1500,4,5,1,3,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (14,14,'Морозов Павел Павлович','2022-08-22',1400,4,9,1,2,4,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (15,15,'Волков Александр Александрович','2023-02-14',1300,4,9,1,1,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (16,16,'Алексеева Наталья Игоревна','2023-09-05',1200,4,9,1,0,7,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (17,17,'Лебедев Артем Викторович','2024-01-20',1100,4,10,1,0,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (18,18,'Семенова Ирина Васильевна','2024-03-11',1100,4,10,1,0,0,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (19,19,'Григорьев Григорий Григорьевич','2024-06-01',1150,4,10,1,0,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (20,20,'Павлова Оксана Олеговна','2025-01-15',1200,4,10,1,0,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (21,21,'Борисов Борис Борисович','2025-03-01',1250,4,10,1,0,0,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (22,22,'Федоров Федор Федорович','2025-05-10',1300,4,10,1,0,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (23,23,'Михайлов Михаил Михайлович','2025-07-20',1350,4,10,1,0,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (24,24,'Тарасова Татьяна Тарасовна','2025-09-01',1400,4,10,1,0,0,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (25,25,'Белов Бел Белович','2025-11-11',1450,4,10,1,0,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (26,26,'Комаров Комар Комарович','2026-01-05',1500,4,10,1,0,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (27,27,'Соколов Сокол Соколович','2018-08-08',2000,5,6,1,10,0,3,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (28,28,'Орлов Орел Орлович','2019-12-12',1800,5,6,1,7,6,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (29,29,'Гусев Гусь Гусевич','2020-04-04',1700,5,11,0,5,0,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (30,30,'Лебедев Лебедь Лебедевич','2021-07-07',1600,5,11,1,3,9,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (31,31,'Журавлев Журавль Журавлевич','2022-10-10',1500,5,12,1,2,4,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (32,32,'Цапля Цапля Цаплевич','2023-02-02',1400,5,12,1,1,2,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (33,33,'Пеликан Пеликан Пеликанович','2024-05-05',1300,5,12,1,0,8,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (34,34,'Фламинго Фламинго Фламингович','2025-08-08',1200,5,6,1,0,0,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (35,35,'Складской Склад Складской','2019-03-03',1600,6,7,1,6,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (36,36,'Полочкин Полка Полкович','2020-06-06',1500,6,7,1,4,5,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (37,37,'Ящиков Ящик Ящикович','2021-09-09',1400,6,7,1,3,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (38,38,'Грузчиков Грузчик Грузчикович','2022-11-11',1300,6,13,1,2,2,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (39,39,'Тяжелов Тяжело Тяжелович','2023-04-04',1200,6,13,1,1,4,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (40,40,'Легков Легко Легкович','2024-07-07',1100,6,13,1,0,6,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (41,41,'Завсклад Завсклад Завскладович','2025-10-10',1800,6,7,1,0,0,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (42,42,'Технический Техник Техникович','2020-01-01',1900,7,15,1,5,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (43,43,'Инженеров Инженер Инженерович','2021-02-02',1800,7,15,1,4,3,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (44,44,'Программистов Программ Программович','2022-03-03',2000,7,16,1,3,6,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (45,45,'Кодиров Код Кодович','2023-04-04',1700,7,16,1,2,0,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (46,46,'Схемов Схема Схемович','2024-05-05',1600,7,15,1,1,9,1,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (47,47,'Микросхемов Микро Микрович','2025-06-06',1500,7,16,1,0,2,0,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (48,48,'Админов Админ Админович','2021-08-08',2200,1,1,1,8,0,3,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (49,49,'Замдиректоров Зам Замович','2022-09-09',2100,1,19,1,6,5,2,2.0,0,0,0.0);
+INSERT INTO "employees" VALUES (50,50,'Экономов Эконом Экономович','2023-12-12',1700,1,17,1,4,0,1,2.0,0,0,0.0);
+INSERT INTO "payroll_journal" VALUES (49,3,'2025-12-01',2800,280,56,2464);
+INSERT INTO "payroll_journal" VALUES (50,4,'2025-12-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (51,5,'2025-12-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (52,6,'2025-12-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (53,7,'2025-12-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (54,8,'2025-12-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (55,9,'2025-12-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (56,10,'2025-12-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (57,11,'2025-12-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (58,12,'2025-12-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (59,13,'2025-12-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (60,14,'2025-12-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (61,15,'2025-12-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (62,16,'2025-12-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (63,17,'2025-12-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (64,18,'2025-12-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (65,19,'2025-12-01',1150,115,23,1012);
+INSERT INTO "payroll_journal" VALUES (66,20,'2025-12-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (67,21,'2025-12-01',1250,125,25,1100);
+INSERT INTO "payroll_journal" VALUES (68,22,'2025-12-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (69,23,'2025-12-01',1350,135,27,1188);
+INSERT INTO "payroll_journal" VALUES (70,24,'2025-12-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (71,25,'2025-12-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (72,27,'2025-12-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (73,28,'2025-12-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (74,29,'2025-12-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (75,30,'2025-12-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (76,31,'2025-12-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (77,32,'2025-12-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (78,33,'2025-12-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (79,34,'2025-12-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (80,35,'2025-12-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (81,36,'2025-12-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (82,37,'2025-12-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (83,38,'2025-12-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (84,39,'2025-12-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (85,40,'2025-12-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (86,41,'2025-12-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (87,42,'2025-12-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (88,43,'2025-12-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (89,44,'2025-12-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (90,45,'2025-12-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (91,46,'2025-12-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (92,47,'2025-12-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (93,48,'2025-12-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (94,49,'2025-12-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (95,50,'2025-12-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (96,3,'2026-01-01',3000,300,60,2640);
+INSERT INTO "payroll_journal" VALUES (97,4,'2026-01-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (98,5,'2026-01-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (99,6,'2026-01-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (100,7,'2026-01-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (101,8,'2026-01-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (102,9,'2026-01-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (103,10,'2026-01-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (104,11,'2026-01-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (105,12,'2026-01-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (106,13,'2026-01-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (107,14,'2026-01-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (108,15,'2026-01-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (109,16,'2026-01-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (110,17,'2026-01-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (111,18,'2026-01-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (112,19,'2026-01-01',1150,115,23,1012);
+INSERT INTO "payroll_journal" VALUES (113,20,'2026-01-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (114,21,'2026-01-01',1250,125,25,1100);
+INSERT INTO "payroll_journal" VALUES (115,22,'2026-01-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (116,23,'2026-01-01',1350,135,27,1188);
+INSERT INTO "payroll_journal" VALUES (117,24,'2026-01-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (118,25,'2026-01-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (119,27,'2026-01-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (120,28,'2026-01-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (121,29,'2026-01-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (122,30,'2026-01-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (123,31,'2026-01-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (124,32,'2026-01-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (125,33,'2026-01-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (126,34,'2026-01-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (127,35,'2026-01-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (128,36,'2026-01-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (129,37,'2026-01-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (130,38,'2026-01-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (131,39,'2026-01-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (132,40,'2026-01-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (133,41,'2026-01-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (134,42,'2026-01-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (135,43,'2026-01-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (136,44,'2026-01-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (137,45,'2026-01-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (138,46,'2026-01-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (139,47,'2026-01-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (140,48,'2026-01-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (141,49,'2026-01-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (142,50,'2026-01-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (191,3,'2026-03-01',3000,300,60,2640);
+INSERT INTO "payroll_journal" VALUES (192,4,'2026-03-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (193,5,'2026-03-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (194,6,'2026-03-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (195,7,'2026-03-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (196,8,'2026-03-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (197,9,'2026-03-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (198,10,'2026-03-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (199,11,'2026-03-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (200,12,'2026-03-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (201,13,'2026-03-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (202,14,'2026-03-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (203,15,'2026-03-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (204,16,'2026-03-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (205,17,'2026-03-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (206,18,'2026-03-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (207,19,'2026-03-01',1150,115,23,1012);
+INSERT INTO "payroll_journal" VALUES (208,20,'2026-03-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (209,21,'2026-03-01',1250,125,25,1100);
+INSERT INTO "payroll_journal" VALUES (210,22,'2026-03-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (211,23,'2026-03-01',1350,135,27,1188);
+INSERT INTO "payroll_journal" VALUES (212,24,'2026-03-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (213,25,'2026-03-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (214,26,'2026-03-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (215,27,'2026-03-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (216,28,'2026-03-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (217,29,'2026-03-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (218,30,'2026-03-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (219,31,'2026-03-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (220,32,'2026-03-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (221,33,'2026-03-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (222,34,'2026-03-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (223,35,'2026-03-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (224,36,'2026-03-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (225,37,'2026-03-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (226,38,'2026-03-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (227,39,'2026-03-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (228,40,'2026-03-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (229,41,'2026-03-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (230,42,'2026-03-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (231,43,'2026-03-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (232,44,'2026-03-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (233,45,'2026-03-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (234,46,'2026-03-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (235,47,'2026-03-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (236,48,'2026-03-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (237,49,'2026-03-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (238,50,'2026-03-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (239,3,'2026-04-01',3000,300,60,2640);
+INSERT INTO "payroll_journal" VALUES (240,4,'2026-04-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (241,5,'2026-04-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (242,6,'2026-04-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (243,7,'2026-04-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (244,8,'2026-04-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (245,9,'2026-04-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (246,10,'2026-04-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (247,11,'2026-04-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (248,12,'2026-04-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (249,13,'2026-04-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (250,14,'2026-04-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (251,15,'2026-04-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (252,16,'2026-04-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (253,17,'2026-04-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (254,18,'2026-04-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (255,19,'2026-04-01',1150,115,23,1012);
+INSERT INTO "payroll_journal" VALUES (256,20,'2026-04-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (257,21,'2026-04-01',1250,125,25,1100);
+INSERT INTO "payroll_journal" VALUES (258,22,'2026-04-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (259,23,'2026-04-01',1350,135,27,1188);
+INSERT INTO "payroll_journal" VALUES (260,24,'2026-04-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (261,25,'2026-04-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (262,26,'2026-04-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (263,27,'2026-04-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (264,28,'2026-04-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (265,29,'2026-04-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (266,30,'2026-04-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (267,31,'2026-04-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (268,32,'2026-04-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (269,33,'2026-04-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (270,34,'2026-04-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (271,35,'2026-04-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (272,36,'2026-04-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (273,37,'2026-04-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (274,38,'2026-04-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (275,39,'2026-04-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (276,40,'2026-04-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (277,41,'2026-04-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (278,42,'2026-04-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (279,43,'2026-04-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (280,44,'2026-04-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (281,45,'2026-04-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (282,46,'2026-04-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (283,47,'2026-04-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (284,48,'2026-04-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (285,49,'2026-04-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (286,50,'2026-04-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (287,3,'2026-05-01',3000,300,60,2640);
+INSERT INTO "payroll_journal" VALUES (288,4,'2026-05-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (289,5,'2026-05-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (290,6,'2026-05-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (291,7,'2026-05-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (292,8,'2026-05-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (293,9,'2026-05-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (294,10,'2026-05-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (295,11,'2026-05-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (296,12,'2026-05-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (297,13,'2026-05-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (298,14,'2026-05-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (299,15,'2026-05-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (300,16,'2026-05-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (301,17,'2026-05-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (302,18,'2026-05-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (303,19,'2026-05-01',1150,115,23,1012);
+INSERT INTO "payroll_journal" VALUES (304,20,'2026-05-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (305,21,'2026-05-01',1250,125,25,1100);
+INSERT INTO "payroll_journal" VALUES (306,22,'2026-05-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (307,23,'2026-05-01',1350,135,27,1188);
+INSERT INTO "payroll_journal" VALUES (308,24,'2026-05-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (309,25,'2026-05-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (310,26,'2026-05-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (311,27,'2026-05-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (312,28,'2026-05-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (313,29,'2026-05-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (314,30,'2026-05-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (315,31,'2026-05-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (316,32,'2026-05-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (317,33,'2026-05-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (318,34,'2026-05-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (319,35,'2026-05-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (320,36,'2026-05-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (321,37,'2026-05-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (322,38,'2026-05-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (323,39,'2026-05-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (324,40,'2026-05-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (325,41,'2026-05-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (326,42,'2026-05-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (327,43,'2026-05-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (328,44,'2026-05-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (329,45,'2026-05-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (330,46,'2026-05-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (331,47,'2026-05-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (332,48,'2026-05-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (333,49,'2026-05-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (334,50,'2026-05-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (335,3,'2026-06-01',3000,300,60,2640);
+INSERT INTO "payroll_journal" VALUES (336,4,'2026-06-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (337,5,'2026-06-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (338,6,'2026-06-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (339,7,'2026-06-01',1900,190,38,1672);
+INSERT INTO "payroll_journal" VALUES (340,8,'2026-06-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (341,9,'2026-06-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (342,10,'2026-06-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (343,11,'2026-06-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (344,12,'2026-06-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (345,13,'2026-06-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (346,14,'2026-06-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (347,15,'2026-06-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (348,16,'2026-06-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (349,17,'2026-06-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (350,18,'2026-06-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (351,19,'2026-06-01',1150,115,23,1012);
+INSERT INTO "payroll_journal" VALUES (352,20,'2026-06-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (353,21,'2026-06-01',1250,125,25,1100);
+INSERT INTO "payroll_journal" VALUES (354,22,'2026-06-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (355,23,'2026-06-01',1350,135,27,1188);
+INSERT INTO "payroll_journal" VALUES (356,24,'2026-06-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (357,25,'2026-06-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (358,26,'2026-06-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (359,27,'2026-06-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (360,28,'2026-06-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (361,29,'2026-06-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (362,30,'2026-06-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (363,31,'2026-06-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (364,32,'2026-06-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (365,33,'2026-06-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (366,34,'2026-06-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (367,35,'2026-06-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (368,36,'2026-06-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (369,37,'2026-06-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (370,38,'2026-06-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (371,39,'2026-06-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (372,40,'2026-06-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (373,41,'2026-06-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (374,42,'2026-06-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (375,43,'2026-06-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (376,44,'2026-06-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (377,45,'2026-06-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (378,46,'2026-06-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (379,47,'2026-06-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (380,48,'2026-06-01',2200,220,44,1936);
+INSERT INTO "payroll_journal" VALUES (381,49,'2026-06-01',2100,210,42,1848);
+INSERT INTO "payroll_journal" VALUES (382,50,'2026-06-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (527,3,'2026-02-01',2800,270,56,2474);
+INSERT INTO "payroll_journal" VALUES (528,4,'2026-02-01',2200,215,44,1941);
+INSERT INTO "payroll_journal" VALUES (529,5,'2026-02-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (530,6,'2026-02-01',0,0,0,0);
+INSERT INTO "payroll_journal" VALUES (531,7,'2026-02-01',1900,185,38,1677);
+INSERT INTO "payroll_journal" VALUES (532,8,'2026-02-01',2000,185,40,1775);
+INSERT INTO "payroll_journal" VALUES (533,9,'2026-02-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (534,10,'2026-02-01',1300,125,26,1149);
+INSERT INTO "payroll_journal" VALUES (535,11,'2026-02-01',2100,200,42,1858);
+INSERT INTO "payroll_journal" VALUES (536,12,'2026-02-01',1700,170,34,1496);
+INSERT INTO "payroll_journal" VALUES (537,13,'2026-02-01',1500,140,30,1330);
+INSERT INTO "payroll_journal" VALUES (538,14,'2026-02-01',1400,135,28,1237);
+INSERT INTO "payroll_journal" VALUES (539,15,'2026-02-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (540,16,'2026-02-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (541,17,'2026-02-01',1100,110,22,968);
+INSERT INTO "payroll_journal" VALUES (542,18,'2026-02-01',1100,105,22,973);
+INSERT INTO "payroll_journal" VALUES (543,19,'2026-02-01',1150,105,23,1022);
+INSERT INTO "payroll_journal" VALUES (544,20,'2026-02-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (545,21,'2026-02-01',1250,120,25,1105);
+INSERT INTO "payroll_journal" VALUES (546,22,'2026-02-01',1300,130,26,1144);
+INSERT INTO "payroll_journal" VALUES (547,23,'2026-02-01',1350,125,27,1198);
+INSERT INTO "payroll_journal" VALUES (548,24,'2026-02-01',1400,135,28,1237);
+INSERT INTO "payroll_journal" VALUES (549,25,'2026-02-01',1450,145,29,1276);
+INSERT INTO "payroll_journal" VALUES (550,26,'2026-02-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (551,27,'2026-02-01',2000,185,40,1775);
+INSERT INTO "payroll_journal" VALUES (552,28,'2026-02-01',1800,170,36,1594);
+INSERT INTO "payroll_journal" VALUES (553,30,'2026-02-01',1600,160,32,1408);
+INSERT INTO "payroll_journal" VALUES (554,31,'2026-02-01',1500,145,30,1325);
+INSERT INTO "payroll_journal" VALUES (555,32,'2026-02-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (556,33,'2026-02-01',1300,120,26,1154);
+INSERT INTO "payroll_journal" VALUES (557,34,'2026-02-01',1200,115,24,1061);
+INSERT INTO "payroll_journal" VALUES (558,35,'2026-02-01',1600,150,32,1418);
+INSERT INTO "payroll_journal" VALUES (559,36,'2026-02-01',1500,145,30,1325);
+INSERT INTO "payroll_journal" VALUES (560,37,'2026-02-01',1400,140,28,1232);
+INSERT INTO "payroll_journal" VALUES (561,38,'2026-02-01',1300,120,26,1154);
+INSERT INTO "payroll_journal" VALUES (562,39,'2026-02-01',1200,120,24,1056);
+INSERT INTO "payroll_journal" VALUES (563,40,'2026-02-01',1100,105,22,973);
+INSERT INTO "payroll_journal" VALUES (564,41,'2026-02-01',1800,180,36,1584);
+INSERT INTO "payroll_journal" VALUES (565,42,'2026-02-01',1900,180,38,1682);
+INSERT INTO "payroll_journal" VALUES (566,43,'2026-02-01',1800,175,36,1589);
+INSERT INTO "payroll_journal" VALUES (567,44,'2026-02-01',2000,200,40,1760);
+INSERT INTO "payroll_journal" VALUES (568,45,'2026-02-01',1700,160,34,1506);
+INSERT INTO "payroll_journal" VALUES (569,46,'2026-02-01',1600,155,32,1413);
+INSERT INTO "payroll_journal" VALUES (570,47,'2026-02-01',1500,150,30,1320);
+INSERT INTO "payroll_journal" VALUES (571,48,'2026-02-01',2200,205,44,1951);
+INSERT INTO "payroll_journal" VALUES (572,49,'2026-02-01',2100,200,42,1858);
+INSERT INTO "payroll_journal" VALUES (573,50,'2026-02-01',1700,165,34,1501);
+INSERT INTO "positions" VALUES (1,'Директор','АУП');
+INSERT INTO "positions" VALUES (2,'Главный бухгалтер','АУП');
+INSERT INTO "positions" VALUES (3,'Бухгалтер','АУП');
+INSERT INTO "positions" VALUES (4,'Начальник цеха','Производство');
+INSERT INTO "positions" VALUES (5,'Мастер','Производство');
+INSERT INTO "positions" VALUES (6,'Водитель','Транспорт');
+INSERT INTO "positions" VALUES (7,'Кладовщик','Склад');
+INSERT INTO "positions" VALUES (8,'Специалист по кадрам','АУП');
+INSERT INTO "positions" VALUES (9,'Инженер-технолог','Производство');
+INSERT INTO "positions" VALUES (10,'Оператор станка','Производство');
+INSERT INTO "positions" VALUES (11,'Механик','Транспорт');
+INSERT INTO "positions" VALUES (12,'Экспедитор','Транспорт');
+INSERT INTO "positions" VALUES (13,'Грузчик','Склад');
+INSERT INTO "positions" VALUES (15,'Инженер-конструктор','ИТР');
+INSERT INTO "positions" VALUES (16,'Программист','ИТР');
+INSERT INTO "positions" VALUES (17,'Экономист','АУП');
+INSERT INTO "positions" VALUES (18,'Начальник отдела кадров','АУП');
+INSERT INTO "positions" VALUES (19,'Заместитель директора','АУП');
+INSERT INTO "production_calendar" VALUES (2026,1,20,160);
+INSERT INTO "production_calendar" VALUES (2026,2,19,152);
+INSERT INTO "production_calendar" VALUES (2025,1,21,152);
+INSERT INTO "production_calendar" VALUES (2025,2,22,160);
+INSERT INTO "production_calendar" VALUES (2026,3,21,168);
+INSERT INTO "production_calendar" VALUES (2026,4,22,176);
+INSERT INTO "production_calendar" VALUES (2026,5,17,135);
+INSERT INTO "salary_history" VALUES (5,3,'2025-12-01',2800);
+INSERT INTO "salary_history" VALUES (6,4,'2025-12-01',2200);
+INSERT INTO "salary_history" VALUES (7,5,'2025-12-01',1700);
+INSERT INTO "salary_history" VALUES (8,6,'2025-12-01',1600);
+INSERT INTO "salary_history" VALUES (9,7,'2025-12-01',1900);
+INSERT INTO "salary_history" VALUES (10,8,'2025-12-01',2000);
+INSERT INTO "salary_history" VALUES (11,9,'2025-12-01',1400);
+INSERT INTO "salary_history" VALUES (12,10,'2025-12-01',1300);
+INSERT INTO "salary_history" VALUES (13,11,'2025-12-01',2100);
+INSERT INTO "salary_history" VALUES (14,12,'2025-12-01',1700);
+INSERT INTO "salary_history" VALUES (15,13,'2025-12-01',1500);
+INSERT INTO "salary_history" VALUES (16,14,'2025-12-01',1400);
+INSERT INTO "salary_history" VALUES (17,15,'2025-12-01',1300);
+INSERT INTO "salary_history" VALUES (18,16,'2025-12-01',1200);
+INSERT INTO "salary_history" VALUES (19,17,'2025-12-01',1100);
+INSERT INTO "salary_history" VALUES (20,18,'2025-12-01',1100);
+INSERT INTO "salary_history" VALUES (21,19,'2025-12-01',1150);
+INSERT INTO "salary_history" VALUES (22,20,'2025-12-01',1200);
+INSERT INTO "salary_history" VALUES (23,21,'2025-12-01',1250);
+INSERT INTO "salary_history" VALUES (24,22,'2025-12-01',1300);
+INSERT INTO "salary_history" VALUES (25,23,'2025-12-01',1350);
+INSERT INTO "salary_history" VALUES (26,24,'2025-12-01',1400);
+INSERT INTO "salary_history" VALUES (27,25,'2025-12-01',1450);
+INSERT INTO "salary_history" VALUES (28,27,'2025-12-01',2000);
+INSERT INTO "salary_history" VALUES (29,28,'2025-12-01',1800);
+INSERT INTO "salary_history" VALUES (30,29,'2025-12-01',1700);
+INSERT INTO "salary_history" VALUES (31,30,'2025-12-01',1600);
+INSERT INTO "salary_history" VALUES (32,31,'2025-12-01',1500);
+INSERT INTO "salary_history" VALUES (33,32,'2025-12-01',1400);
+INSERT INTO "salary_history" VALUES (34,33,'2025-12-01',1300);
+INSERT INTO "salary_history" VALUES (35,34,'2025-12-01',1200);
+INSERT INTO "salary_history" VALUES (36,35,'2025-12-01',1600);
+INSERT INTO "salary_history" VALUES (37,36,'2025-12-01',1500);
+INSERT INTO "salary_history" VALUES (38,37,'2025-12-01',1400);
+INSERT INTO "salary_history" VALUES (39,38,'2025-12-01',1300);
+INSERT INTO "salary_history" VALUES (40,39,'2025-12-01',1200);
+INSERT INTO "salary_history" VALUES (41,40,'2025-12-01',1100);
+INSERT INTO "salary_history" VALUES (42,41,'2025-12-01',1800);
+INSERT INTO "salary_history" VALUES (43,42,'2025-12-01',1900);
+INSERT INTO "salary_history" VALUES (44,43,'2025-12-01',1800);
+INSERT INTO "salary_history" VALUES (45,44,'2025-12-01',2000);
+INSERT INTO "salary_history" VALUES (46,45,'2025-12-01',1700);
+INSERT INTO "salary_history" VALUES (47,46,'2025-12-01',1600);
+INSERT INTO "salary_history" VALUES (48,47,'2025-12-01',1500);
+INSERT INTO "salary_history" VALUES (49,48,'2025-12-01',2200);
+INSERT INTO "salary_history" VALUES (50,49,'2025-12-01',2100);
+INSERT INTO "salary_history" VALUES (51,50,'2025-12-01',1700);
+INSERT INTO "salary_history" VALUES (52,3,'2026-01-01',3000);
+INSERT INTO "salary_history" VALUES (53,4,'2026-01-01',2200);
+INSERT INTO "salary_history" VALUES (54,5,'2026-01-01',1700);
+INSERT INTO "salary_history" VALUES (55,6,'2026-01-01',1600);
+INSERT INTO "salary_history" VALUES (56,7,'2026-01-01',1900);
+INSERT INTO "salary_history" VALUES (57,8,'2026-01-01',2000);
+INSERT INTO "salary_history" VALUES (58,9,'2026-01-01',1400);
+INSERT INTO "salary_history" VALUES (59,10,'2026-01-01',1300);
+INSERT INTO "salary_history" VALUES (60,11,'2026-01-01',2100);
+INSERT INTO "salary_history" VALUES (61,12,'2026-01-01',1700);
+INSERT INTO "salary_history" VALUES (62,13,'2026-01-01',1500);
+INSERT INTO "salary_history" VALUES (63,14,'2026-01-01',1400);
+INSERT INTO "salary_history" VALUES (64,15,'2026-01-01',1300);
+INSERT INTO "salary_history" VALUES (65,16,'2026-01-01',1200);
+INSERT INTO "salary_history" VALUES (66,17,'2026-01-01',1100);
+INSERT INTO "salary_history" VALUES (67,18,'2026-01-01',1100);
+INSERT INTO "salary_history" VALUES (68,19,'2026-01-01',1150);
+INSERT INTO "salary_history" VALUES (69,20,'2026-01-01',1200);
+INSERT INTO "salary_history" VALUES (70,21,'2026-01-01',1250);
+INSERT INTO "salary_history" VALUES (71,22,'2026-01-01',1300);
+INSERT INTO "salary_history" VALUES (72,23,'2026-01-01',1350);
+INSERT INTO "salary_history" VALUES (73,24,'2026-01-01',1400);
+INSERT INTO "salary_history" VALUES (74,25,'2026-01-01',1450);
+INSERT INTO "salary_history" VALUES (75,27,'2026-01-01',2000);
+INSERT INTO "salary_history" VALUES (76,28,'2026-01-01',1800);
+INSERT INTO "salary_history" VALUES (77,29,'2026-01-01',1700);
+INSERT INTO "salary_history" VALUES (78,30,'2026-01-01',1600);
+INSERT INTO "salary_history" VALUES (79,31,'2026-01-01',1500);
+INSERT INTO "salary_history" VALUES (80,32,'2026-01-01',1400);
+INSERT INTO "salary_history" VALUES (81,33,'2026-01-01',1300);
+INSERT INTO "salary_history" VALUES (82,34,'2026-01-01',1200);
+INSERT INTO "salary_history" VALUES (83,35,'2026-01-01',1600);
+INSERT INTO "salary_history" VALUES (84,36,'2026-01-01',1500);
+INSERT INTO "salary_history" VALUES (85,37,'2026-01-01',1400);
+INSERT INTO "salary_history" VALUES (86,38,'2026-01-01',1300);
+INSERT INTO "salary_history" VALUES (87,39,'2026-01-01',1200);
+INSERT INTO "salary_history" VALUES (88,40,'2026-01-01',1100);
+INSERT INTO "salary_history" VALUES (89,41,'2026-01-01',1800);
+INSERT INTO "salary_history" VALUES (90,42,'2026-01-01',1900);
+INSERT INTO "salary_history" VALUES (91,43,'2026-01-01',1800);
+INSERT INTO "salary_history" VALUES (92,44,'2026-01-01',2000);
+INSERT INTO "salary_history" VALUES (93,45,'2026-01-01',1700);
+INSERT INTO "salary_history" VALUES (94,46,'2026-01-01',1600);
+INSERT INTO "salary_history" VALUES (95,47,'2026-01-01',1500);
+INSERT INTO "salary_history" VALUES (96,48,'2026-01-01',2200);
+INSERT INTO "salary_history" VALUES (97,49,'2026-01-01',2100);
+INSERT INTO "salary_history" VALUES (98,50,'2026-01-01',1700);
+INSERT INTO "salary_history" VALUES (99,3,'2026-02-01',3000);
+INSERT INTO "salary_history" VALUES (100,4,'2026-02-01',2200);
+INSERT INTO "salary_history" VALUES (101,5,'2026-02-01',1700);
+INSERT INTO "salary_history" VALUES (102,6,'2026-02-01',1600);
+INSERT INTO "salary_history" VALUES (103,7,'2026-02-01',1900);
+INSERT INTO "salary_history" VALUES (104,8,'2026-02-01',2200);
+INSERT INTO "salary_history" VALUES (105,9,'2026-02-01',1400);
+INSERT INTO "salary_history" VALUES (106,10,'2026-02-01',1300);
+INSERT INTO "salary_history" VALUES (107,11,'2026-02-01',2100);
+INSERT INTO "salary_history" VALUES (108,12,'2026-02-01',1700);
+INSERT INTO "salary_history" VALUES (109,13,'2026-02-01',1500);
+INSERT INTO "salary_history" VALUES (110,14,'2026-02-01',1400);
+INSERT INTO "salary_history" VALUES (111,15,'2026-02-01',1300);
+INSERT INTO "salary_history" VALUES (112,16,'2026-02-01',1200);
+INSERT INTO "salary_history" VALUES (113,17,'2026-02-01',1100);
+INSERT INTO "salary_history" VALUES (114,18,'2026-02-01',1100);
+INSERT INTO "salary_history" VALUES (115,19,'2026-02-01',1150);
+INSERT INTO "salary_history" VALUES (116,20,'2026-02-01',1200);
+INSERT INTO "salary_history" VALUES (117,21,'2026-02-01',1250);
+INSERT INTO "salary_history" VALUES (118,22,'2026-02-01',1300);
+INSERT INTO "salary_history" VALUES (119,23,'2026-02-01',1350);
+INSERT INTO "salary_history" VALUES (120,24,'2026-02-01',1400);
+INSERT INTO "salary_history" VALUES (121,25,'2026-02-01',1450);
+INSERT INTO "salary_history" VALUES (122,26,'2026-02-01',1500);
+INSERT INTO "salary_history" VALUES (123,27,'2026-02-01',2000);
+INSERT INTO "salary_history" VALUES (124,28,'2026-02-01',1800);
+INSERT INTO "salary_history" VALUES (125,29,'2026-02-01',1700);
+INSERT INTO "salary_history" VALUES (126,30,'2026-02-01',1600);
+INSERT INTO "salary_history" VALUES (127,31,'2026-02-01',1500);
+INSERT INTO "salary_history" VALUES (128,32,'2026-02-01',1400);
+INSERT INTO "salary_history" VALUES (129,33,'2026-02-01',1300);
+INSERT INTO "salary_history" VALUES (130,34,'2026-02-01',1200);
+INSERT INTO "salary_history" VALUES (131,35,'2026-02-01',1600);
+INSERT INTO "salary_history" VALUES (132,36,'2026-02-01',1500);
+INSERT INTO "salary_history" VALUES (133,37,'2026-02-01',1400);
+INSERT INTO "salary_history" VALUES (134,38,'2026-02-01',1300);
+INSERT INTO "salary_history" VALUES (135,39,'2026-02-01',1200);
+INSERT INTO "salary_history" VALUES (136,40,'2026-02-01',1100);
+INSERT INTO "salary_history" VALUES (137,41,'2026-02-01',1800);
+INSERT INTO "salary_history" VALUES (138,42,'2026-02-01',1900);
+INSERT INTO "salary_history" VALUES (139,43,'2026-02-01',1800);
+INSERT INTO "salary_history" VALUES (140,44,'2026-02-01',2000);
+INSERT INTO "salary_history" VALUES (141,45,'2026-02-01',1700);
+INSERT INTO "salary_history" VALUES (142,46,'2026-02-01',1600);
+INSERT INTO "salary_history" VALUES (143,47,'2026-02-01',1500);
+INSERT INTO "salary_history" VALUES (144,48,'2026-02-01',2200);
+INSERT INTO "salary_history" VALUES (145,49,'2026-02-01',2100);
+INSERT INTO "salary_history" VALUES (146,50,'2026-02-01',1700);
+INSERT INTO "salary_history" VALUES (147,3,'2026-03-01',3000);
+INSERT INTO "salary_history" VALUES (148,4,'2026-03-01',2200);
+INSERT INTO "salary_history" VALUES (149,5,'2026-03-01',1700);
+INSERT INTO "salary_history" VALUES (150,6,'2026-03-01',1600);
+INSERT INTO "salary_history" VALUES (151,7,'2026-03-01',1900);
+INSERT INTO "salary_history" VALUES (152,8,'2026-03-01',2200);
+INSERT INTO "salary_history" VALUES (153,9,'2026-03-01',1400);
+INSERT INTO "salary_history" VALUES (154,10,'2026-03-01',1300);
+INSERT INTO "salary_history" VALUES (155,11,'2026-03-01',2100);
+INSERT INTO "salary_history" VALUES (156,12,'2026-03-01',1700);
+INSERT INTO "salary_history" VALUES (157,13,'2026-03-01',1500);
+INSERT INTO "salary_history" VALUES (158,14,'2026-03-01',1400);
+INSERT INTO "salary_history" VALUES (159,15,'2026-03-01',1300);
+INSERT INTO "salary_history" VALUES (160,16,'2026-03-01',1200);
+INSERT INTO "salary_history" VALUES (161,17,'2026-03-01',1100);
+INSERT INTO "salary_history" VALUES (162,18,'2026-03-01',1100);
+INSERT INTO "salary_history" VALUES (163,19,'2026-03-01',1150);
+INSERT INTO "salary_history" VALUES (164,20,'2026-03-01',1200);
+INSERT INTO "salary_history" VALUES (165,21,'2026-03-01',1250);
+INSERT INTO "salary_history" VALUES (166,22,'2026-03-01',1300);
+INSERT INTO "salary_history" VALUES (167,23,'2026-03-01',1350);
+INSERT INTO "salary_history" VALUES (168,24,'2026-03-01',1400);
+INSERT INTO "salary_history" VALUES (169,25,'2026-03-01',1450);
+INSERT INTO "salary_history" VALUES (170,26,'2026-03-01',1500);
+INSERT INTO "salary_history" VALUES (171,27,'2026-03-01',2000);
+INSERT INTO "salary_history" VALUES (172,28,'2026-03-01',1800);
+INSERT INTO "salary_history" VALUES (173,29,'2026-03-01',1700);
+INSERT INTO "salary_history" VALUES (174,30,'2026-03-01',1600);
+INSERT INTO "salary_history" VALUES (175,31,'2026-03-01',1500);
+INSERT INTO "salary_history" VALUES (176,32,'2026-03-01',1400);
+INSERT INTO "salary_history" VALUES (177,33,'2026-03-01',1300);
+INSERT INTO "salary_history" VALUES (178,34,'2026-03-01',1200);
+INSERT INTO "salary_history" VALUES (179,35,'2026-03-01',1800);
+INSERT INTO "salary_history" VALUES (180,36,'2026-03-01',1500);
+INSERT INTO "salary_history" VALUES (181,37,'2026-03-01',1400);
+INSERT INTO "salary_history" VALUES (182,38,'2026-03-01',1300);
+INSERT INTO "salary_history" VALUES (183,39,'2026-03-01',1200);
+INSERT INTO "salary_history" VALUES (184,40,'2026-03-01',1100);
+INSERT INTO "salary_history" VALUES (185,41,'2026-03-01',1800);
+INSERT INTO "salary_history" VALUES (186,42,'2026-03-01',1900);
+INSERT INTO "salary_history" VALUES (187,43,'2026-03-01',1800);
+INSERT INTO "salary_history" VALUES (188,44,'2026-03-01',2000);
+INSERT INTO "salary_history" VALUES (189,45,'2026-03-01',1700);
+INSERT INTO "salary_history" VALUES (190,46,'2026-03-01',1600);
+INSERT INTO "salary_history" VALUES (191,47,'2026-03-01',1500);
+INSERT INTO "salary_history" VALUES (192,48,'2026-03-01',2200);
+INSERT INTO "salary_history" VALUES (193,49,'2026-03-01',2100);
+INSERT INTO "salary_history" VALUES (194,50,'2026-03-01',1700);
+INSERT INTO "salary_history" VALUES (195,3,'2026-04-01',3000);
+INSERT INTO "salary_history" VALUES (196,4,'2026-04-01',2200);
+INSERT INTO "salary_history" VALUES (197,5,'2026-04-01',1700);
+INSERT INTO "salary_history" VALUES (198,6,'2026-04-01',1600);
+INSERT INTO "salary_history" VALUES (199,7,'2026-04-01',1900);
+INSERT INTO "salary_history" VALUES (200,8,'2026-04-01',2200);
+INSERT INTO "salary_history" VALUES (201,9,'2026-04-01',1400);
+INSERT INTO "salary_history" VALUES (202,10,'2026-04-01',1300);
+INSERT INTO "salary_history" VALUES (203,11,'2026-04-01',2100);
+INSERT INTO "salary_history" VALUES (204,12,'2026-04-01',1700);
+INSERT INTO "salary_history" VALUES (205,13,'2026-04-01',1500);
+INSERT INTO "salary_history" VALUES (206,14,'2026-04-01',1400);
+INSERT INTO "salary_history" VALUES (207,15,'2026-04-01',1300);
+INSERT INTO "salary_history" VALUES (208,16,'2026-04-01',1200);
+INSERT INTO "salary_history" VALUES (209,17,'2026-04-01',1100);
+INSERT INTO "salary_history" VALUES (210,18,'2026-04-01',1100);
+INSERT INTO "salary_history" VALUES (211,19,'2026-04-01',1150);
+INSERT INTO "salary_history" VALUES (212,20,'2026-04-01',1200);
+INSERT INTO "salary_history" VALUES (213,21,'2026-04-01',1250);
+INSERT INTO "salary_history" VALUES (214,22,'2026-04-01',1300);
+INSERT INTO "salary_history" VALUES (215,23,'2026-04-01',1350);
+INSERT INTO "salary_history" VALUES (216,24,'2026-04-01',1400);
+INSERT INTO "salary_history" VALUES (217,25,'2026-04-01',1450);
+INSERT INTO "salary_history" VALUES (218,26,'2026-04-01',1500);
+INSERT INTO "salary_history" VALUES (219,27,'2026-04-01',2200);
+INSERT INTO "salary_history" VALUES (220,28,'2026-04-01',1800);
+INSERT INTO "salary_history" VALUES (221,29,'2026-04-01',1700);
+INSERT INTO "salary_history" VALUES (222,30,'2026-04-01',1600);
+INSERT INTO "salary_history" VALUES (223,31,'2026-04-01',1500);
+INSERT INTO "salary_history" VALUES (224,32,'2026-04-01',1400);
+INSERT INTO "salary_history" VALUES (225,33,'2026-04-01',1300);
+INSERT INTO "salary_history" VALUES (226,34,'2026-04-01',1200);
+INSERT INTO "salary_history" VALUES (227,35,'2026-04-01',1800);
+INSERT INTO "salary_history" VALUES (228,36,'2026-04-01',1500);
+INSERT INTO "salary_history" VALUES (229,37,'2026-04-01',1400);
+INSERT INTO "salary_history" VALUES (230,38,'2026-04-01',1300);
+INSERT INTO "salary_history" VALUES (231,39,'2026-04-01',1200);
+INSERT INTO "salary_history" VALUES (232,40,'2026-04-01',1100);
+INSERT INTO "salary_history" VALUES (233,41,'2026-04-01',1800);
+INSERT INTO "salary_history" VALUES (234,42,'2026-04-01',1900);
+INSERT INTO "salary_history" VALUES (235,43,'2026-04-01',1800);
+INSERT INTO "salary_history" VALUES (236,44,'2026-04-01',2000);
+INSERT INTO "salary_history" VALUES (237,45,'2026-04-01',1700);
+INSERT INTO "salary_history" VALUES (238,46,'2026-04-01',1600);
+INSERT INTO "salary_history" VALUES (239,47,'2026-04-01',1500);
+INSERT INTO "salary_history" VALUES (240,48,'2026-04-01',2200);
+INSERT INTO "salary_history" VALUES (241,49,'2026-04-01',2100);
+INSERT INTO "salary_history" VALUES (242,50,'2026-04-01',1700);
+INSERT INTO "salary_history" VALUES (243,3,'2026-05-01',3000);
+INSERT INTO "salary_history" VALUES (244,4,'2026-05-01',2200);
+INSERT INTO "salary_history" VALUES (245,5,'2026-05-01',1700);
+INSERT INTO "salary_history" VALUES (246,6,'2026-05-01',1600);
+INSERT INTO "salary_history" VALUES (247,7,'2026-05-01',1900);
+INSERT INTO "salary_history" VALUES (248,8,'2026-05-01',2200);
+INSERT INTO "salary_history" VALUES (249,9,'2026-05-01',1400);
+INSERT INTO "salary_history" VALUES (250,10,'2026-05-01',1300);
+INSERT INTO "salary_history" VALUES (251,11,'2026-05-01',2100);
+INSERT INTO "salary_history" VALUES (252,12,'2026-05-01',1700);
+INSERT INTO "salary_history" VALUES (253,13,'2026-05-01',1500);
+INSERT INTO "salary_history" VALUES (254,14,'2026-05-01',1400);
+INSERT INTO "salary_history" VALUES (255,15,'2026-05-01',1300);
+INSERT INTO "salary_history" VALUES (256,16,'2026-05-01',1200);
+INSERT INTO "salary_history" VALUES (257,17,'2026-05-01',1100);
+INSERT INTO "salary_history" VALUES (258,18,'2026-05-01',1100);
+INSERT INTO "salary_history" VALUES (259,19,'2026-05-01',1150);
+INSERT INTO "salary_history" VALUES (260,20,'2026-05-01',1200);
+INSERT INTO "salary_history" VALUES (261,21,'2026-05-01',1250);
+INSERT INTO "salary_history" VALUES (262,22,'2026-05-01',1300);
+INSERT INTO "salary_history" VALUES (263,23,'2026-05-01',1350);
+INSERT INTO "salary_history" VALUES (264,24,'2026-05-01',1400);
+INSERT INTO "salary_history" VALUES (265,25,'2026-05-01',1450);
+INSERT INTO "salary_history" VALUES (266,26,'2026-05-01',1500);
+INSERT INTO "salary_history" VALUES (267,27,'2026-05-01',2200);
+INSERT INTO "salary_history" VALUES (268,28,'2026-05-01',1800);
+INSERT INTO "salary_history" VALUES (269,29,'2026-05-01',1700);
+INSERT INTO "salary_history" VALUES (270,30,'2026-05-01',1600);
+INSERT INTO "salary_history" VALUES (271,31,'2026-05-01',1500);
+INSERT INTO "salary_history" VALUES (272,32,'2026-05-01',1400);
+INSERT INTO "salary_history" VALUES (273,33,'2026-05-01',1300);
+INSERT INTO "salary_history" VALUES (274,34,'2026-05-01',1200);
+INSERT INTO "salary_history" VALUES (275,35,'2026-05-01',1800);
+INSERT INTO "salary_history" VALUES (276,36,'2026-05-01',1500);
+INSERT INTO "salary_history" VALUES (277,37,'2026-05-01',1400);
+INSERT INTO "salary_history" VALUES (278,38,'2026-05-01',1300);
+INSERT INTO "salary_history" VALUES (279,39,'2026-05-01',1200);
+INSERT INTO "salary_history" VALUES (280,40,'2026-05-01',1100);
+INSERT INTO "salary_history" VALUES (281,41,'2026-05-01',1800);
+INSERT INTO "salary_history" VALUES (282,42,'2026-05-01',2100);
+INSERT INTO "salary_history" VALUES (283,43,'2026-05-01',1800);
+INSERT INTO "salary_history" VALUES (284,44,'2026-05-01',2000);
+INSERT INTO "salary_history" VALUES (285,45,'2026-05-01',1700);
+INSERT INTO "salary_history" VALUES (286,46,'2026-05-01',1600);
+INSERT INTO "salary_history" VALUES (287,47,'2026-05-01',1500);
+INSERT INTO "salary_history" VALUES (288,48,'2026-05-01',2200);
+INSERT INTO "salary_history" VALUES (289,49,'2026-05-01',2100);
+INSERT INTO "salary_history" VALUES (290,50,'2026-05-01',1700);
+INSERT INTO "salary_history" VALUES (291,3,'2026-06-01',3000);
+INSERT INTO "salary_history" VALUES (292,4,'2026-06-01',2200);
+INSERT INTO "salary_history" VALUES (293,5,'2026-06-01',1700);
+INSERT INTO "salary_history" VALUES (294,6,'2026-06-01',1600);
+INSERT INTO "salary_history" VALUES (295,7,'2026-06-01',1900);
+INSERT INTO "salary_history" VALUES (296,8,'2026-06-01',2200);
+INSERT INTO "salary_history" VALUES (297,9,'2026-06-01',1400);
+INSERT INTO "salary_history" VALUES (298,10,'2026-06-01',1300);
+INSERT INTO "salary_history" VALUES (299,11,'2026-06-01',2100);
+INSERT INTO "salary_history" VALUES (300,12,'2026-06-01',1700);
+INSERT INTO "salary_history" VALUES (301,13,'2026-06-01',1500);
+INSERT INTO "salary_history" VALUES (302,14,'2026-06-01',1400);
+INSERT INTO "salary_history" VALUES (303,15,'2026-06-01',1300);
+INSERT INTO "salary_history" VALUES (304,16,'2026-06-01',1200);
+INSERT INTO "salary_history" VALUES (305,17,'2026-06-01',1100);
+INSERT INTO "salary_history" VALUES (306,18,'2026-06-01',1100);
+INSERT INTO "salary_history" VALUES (307,19,'2026-06-01',1150);
+INSERT INTO "salary_history" VALUES (308,20,'2026-06-01',1200);
+INSERT INTO "salary_history" VALUES (309,21,'2026-06-01',1250);
+INSERT INTO "salary_history" VALUES (310,22,'2026-06-01',1300);
+INSERT INTO "salary_history" VALUES (311,23,'2026-06-01',1350);
+INSERT INTO "salary_history" VALUES (312,24,'2026-06-01',1400);
+INSERT INTO "salary_history" VALUES (313,25,'2026-06-01',1450);
+INSERT INTO "salary_history" VALUES (314,26,'2026-06-01',1500);
+INSERT INTO "salary_history" VALUES (315,27,'2026-06-01',2200);
+INSERT INTO "salary_history" VALUES (316,28,'2026-06-01',1800);
+INSERT INTO "salary_history" VALUES (317,29,'2026-06-01',1700);
+INSERT INTO "salary_history" VALUES (318,30,'2026-06-01',1600);
+INSERT INTO "salary_history" VALUES (319,31,'2026-06-01',1500);
+INSERT INTO "salary_history" VALUES (320,32,'2026-06-01',1400);
+INSERT INTO "salary_history" VALUES (321,33,'2026-06-01',1300);
+INSERT INTO "salary_history" VALUES (322,34,'2026-06-01',1200);
+INSERT INTO "salary_history" VALUES (323,35,'2026-06-01',1800);
+INSERT INTO "salary_history" VALUES (324,36,'2026-06-01',1500);
+INSERT INTO "salary_history" VALUES (325,37,'2026-06-01',1400);
+INSERT INTO "salary_history" VALUES (326,38,'2026-06-01',1300);
+INSERT INTO "salary_history" VALUES (327,39,'2026-06-01',1200);
+INSERT INTO "salary_history" VALUES (328,40,'2026-06-01',1100);
+INSERT INTO "salary_history" VALUES (329,41,'2026-06-01',1800);
+INSERT INTO "salary_history" VALUES (330,42,'2026-06-01',2100);
+INSERT INTO "salary_history" VALUES (331,43,'2026-06-01',1800);
+INSERT INTO "salary_history" VALUES (332,44,'2026-06-01',2000);
+INSERT INTO "salary_history" VALUES (333,45,'2026-06-01',1700);
+INSERT INTO "salary_history" VALUES (334,46,'2026-06-01',1600);
+INSERT INTO "salary_history" VALUES (335,47,'2026-06-01',1500);
+INSERT INTO "salary_history" VALUES (336,48,'2026-06-01',2200);
+INSERT INTO "salary_history" VALUES (337,49,'2026-06-01',2100);
+INSERT INTO "salary_history" VALUES (338,50,'2026-06-01',1700);
+INSERT INTO "settings" VALUES ('income_tax',10.0);
+INSERT INTO "settings" VALUES ('pension_fund',2.0);
+INSERT INTO "settings" VALUES ('min_salary_limit',1200.0);
+INSERT INTO "settings" VALUES ('dependent_deduction',50.0);
+INSERT INTO "sick_leave_journal" VALUES (3,5,'2026-02-10','2026-02-10','2026-02-15',6,56.66,6,60,203.98);
+INSERT INTO "sick_leave_journal" VALUES (4,9,'2026-03-05','2026-03-05','2026-03-09',5,46.67,4,60,140.01);
+INSERT INTO "sick_leave_journal" VALUES (5,12,'2026-04-12','2026-04-12','2026-04-18',7,58.02,5,60,243.68);
+INSERT INTO "sick_leave_journal" VALUES (6,18,'2026-05-20','2026-05-20','2026-05-25',6,37.54,2,60,135.14);
+INSERT INTO "sick_leave_journal" VALUES (7,25,'2026-06-01','2026-06-01','2026-06-07',7,49.49,0,60,207.86);
+INSERT INTO "sick_leave_journal" VALUES (8,29,'2026-07-15','2026-07-15','2026-07-20',6,58.02,5,60,208.87);
+INSERT INTO "sick_leave_journal" VALUES (9,33,'2026-08-01','2026-08-01','2026-08-08',8,44.37,1,60,212.98);
+INSERT INTO "sick_leave_journal" VALUES (10,40,'2026-03-22','2026-03-22','2026-03-28',7,37.54,0,60,157.67);
+INSERT INTO "sick_leave_rates" VALUES (0,60.0);
+INSERT INTO "sick_leave_rates" VALUES (5,60.0);
+INSERT INTO "sick_leave_rates" VALUES (7,80.0);
+INSERT INTO "sick_leave_rates" VALUES (8,100.0);
+INSERT INTO "vacation_journal" VALUES (8,3,'2026-06-15','2026-07-01','2026-07-14',14,3000,102.39,1433.46);
+INSERT INTO "vacation_journal" VALUES (9,4,'2026-05-20','2026-06-10','2026-06-23',14,2200,75.09,1051.26);
+INSERT INTO "vacation_journal" VALUES (10,8,'2026-04-01','2026-04-15','2026-05-05',21,2200,75.09,1576.89);
+INSERT INTO "vacation_journal" VALUES (11,11,'2026-07-10','2026-08-01','2026-08-14',14,2100,71.67,1003.38);
+INSERT INTO "vacation_journal" VALUES (12,15,'2026-02-01','2026-02-20','2026-03-06',15,1300,44.37,665.55);
+INSERT INTO "vacation_journal" VALUES (13,20,'2026-03-15','2026-04-01','2026-04-10',10,1200,40.96,409.6);
+INSERT INTO "vacation_journal" VALUES (14,27,'2026-05-01','2026-05-15','2026-05-28',14,2200,75.09,1051.26);
+INSERT INTO "vacation_journal" VALUES (15,30,'2026-08-01','2026-08-10','2026-08-23',14,1600,54.61,764.54);
+INSERT INTO "vacation_journal" VALUES (16,35,'2026-01-10','2026-02-01','2026-02-14',14,1800,61.43,860.02);
+INSERT INTO "vacation_journal" VALUES (17,38,'2026-06-01','2026-06-15','2026-06-28',14,1300,44.37,621.18);
+INSERT INTO "vacation_journal" VALUES (18,42,'2026-04-20','2026-05-01','2026-05-21',21,2100,71.67,1505.07);
+INSERT INTO "vacation_journal" VALUES (19,44,'2026-07-20','2026-08-01','2026-08-21',21,2000,68.26,1433.46);
+INSERT INTO "vacation_journal" VALUES (20,46,'2026-03-01','2026-03-10','2026-03-23',14,1600,54.61,764.54);
+INSERT INTO "vacation_journal" VALUES (21,48,'2026-02-15','2026-03-01','2026-03-14',14,2200,75.09,1051.26);
+INSERT INTO "vacation_journal" VALUES (22,50,'2026-05-05','2026-06-01','2026-06-14',14,1700,58.02,812.28);
+INSERT INTO "vacation_journal" VALUES (23,40,'2026-03-01','2026-02-28','2026-03-28',29,2200,74.0740740740741,2148.14814814815);
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_salary_history_emp_period" ON "salary_history" (
+	"emp_id",
+	"period_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_timesheet_date" ON "timesheet" (
+	"work_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_timesheet_emp_date" ON "timesheet" (
+	"emp_id",
+	"work_date"
+);
+COMMIT;

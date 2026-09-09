@@ -1,0 +1,1 @@
+ALTER TABLE employees ADD COLUMN sick_leave_percent INTEGER DEFAULT 60;

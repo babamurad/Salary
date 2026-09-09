@@ -87,9 +87,9 @@
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Icon_MainIcon>Salary_Icon.ico</Icon_MainIcon>
-        <UWP_DelphiLogo44>..\..\..\..\..\Pictures\img\1772924476860-019cca88-376c-70cd-a27b-4744f3170dab.png</UWP_DelphiLogo44>
-        <UWP_DelphiLogo150>..\..\..\..\..\Pictures\img\1772924476860-019cca88-376c-70cd-a27b-4744f3170dab.png</UWP_DelphiLogo150>
+        <Icon_MainIcon>Salary_Icon1.ico</Icon_MainIcon>
+        <UWP_DelphiLogo44>..\bmstore.loc\bmdemo\11zon_11zon_cropped\icon_64.ico</UWP_DelphiLogo44>
+        <UWP_DelphiLogo150>..\bmstore.loc\bmdemo\11zon_11zon_cropped\icon_64.ico</UWP_DelphiLogo150>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -132,12 +132,6 @@
             <Form>framePayroll</Form>
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
-        </DCCReference>
-        <DCCReference Include="UnitPayrollCalc.pas"/>
-        <DCCReference Include="UnitGridPersist.pas"/>
-        <DCCReference Include="UnitPayrollDetail.pas">
-            <Form>frmPayrollDetail</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="UnitBaseEditForm.pas">
             <Form>frmBaseEdit</Form>
@@ -203,15 +197,6 @@
             <Form>frmReportPayroll</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="UnitCompanyInfo.pas"/>
-        <DCCReference Include="UnitReportPension.pas">
-            <Form>frmReportPension</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
-        <DCCReference Include="UnitReportBankTransfer.pas">
-            <Form>frmReportBankTransfer</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
         <DCCReference Include="UnitFrameReportSummary.pas">
             <Form>FrameReportSummary</Form>
             <FormType>dfm</FormType>
@@ -252,8 +237,6 @@
                     <Source Name="MainSource">Salary.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k280.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp280.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k280.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp280.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
@@ -265,7 +248,7 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="..\..\..\..\..\Pictures\img\1772924476860-019cca88-376c-70cd-a27b-4744f3170dab.png" Configuration="Debug" Class="UWP_DelphiLogo44">
+                <DeployFile LocalName="..\bmstore.loc\bmdemo\11zon_11zon_cropped\icon_64.ico" Configuration="Debug" Class="UWP_DelphiLogo44">
                     <Platform Name="Win32">
                         <RemoteDir>Assets\</RemoteDir>
                         <RemoteName>Logo44x44.png</RemoteName>
@@ -1075,8 +1058,8 @@
                 <ProjectRoot Platform="OSX64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="OSXARM64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="OSXARM64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Linux64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>

@@ -38,6 +38,22 @@ object frameEmployees: TframeEmployees
       TabOrder = 1
       OnChange = edtSearchChange
     end
+    object Label2: TLabel
+      Left = 735
+      Top = 13
+      Width = 44
+      Height = 15
+      Caption = #1054#1090#1076#1077#1083':'
+    end
+    object cmbDeptFilter: TComboBox
+      Left = 782
+      Top = 10
+      Width = 150
+      Height = 23
+      Style = csDropDownList
+      TabOrder = 2
+      OnChange = cmbDeptFilterChange
+    end
   end
   object DBGrid1: TDBGrid
     Left = 0

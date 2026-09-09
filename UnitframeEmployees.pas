@@ -17,14 +17,19 @@ type
     DBGrid1: TDBGrid;
     edtSearch: TEdit;
     Label1: TLabel;
+    Label2: TLabel;
+    cmbDeptFilter: TComboBox;
     procedure DBGrid1DblClick(Sender: TObject);
     procedure edtSearchChange(Sender: TObject);
+    procedure cmbDeptFilterChange(Sender: TObject);
     procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
   private
     dsLocal: TDataSource;
     procedure DBGrid1TitleClick(Column: TColumn);
     procedure SetupGrid;
+    procedure LoadDeptFilter;
+    procedure ApplyFilter;
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -65,9 +70,25 @@ begin
 
 
   SetupGrid;
+  LoadDeptFilter;
 
   DBGrid1.OnTitleClick := DBGrid1TitleClick;
 
+end;
+
+procedure TframeEmployees.LoadDeptFilter;
+begin
+  cmbDeptFilter.Items.Clear;
+  cmbDeptFilter.Items.AddObject('--- Все отделы ---', TObject(0));
+
+  dmMain.qryDepts.First;
+  while not dmMain.qryDepts.Eof do
+  begin
+    cmbDeptFilter.Items.AddObject(dmMain.qryDepts.FieldByName('dept_name').AsString,
+                                  TObject(dmMain.qryDepts.FieldByName('id').AsInteger));
+    dmMain.qryDepts.Next;
+  end;
+  cmbDeptFilter.ItemIndex := 0;
 end;
 
 procedure TframeEmployees.SetupGrid;
@@ -147,35 +168,62 @@ end;
 
 
 procedure TframeEmployees.edtSearchChange(Sender: TObject);
+begin
+  ApplyFilter;
+end;
+
+procedure TframeEmployees.cmbDeptFilterChange(Sender: TObject);
+begin
+  ApplyFilter;
+end;
+
+procedure TframeEmployees.ApplyFilter;
 var
-  SearchText: string;
-  TabNum: Integer;
+  SearchText, SearchCond, FilterStr: string;
+  TabNum, DeptId: Integer;
 begin
   if not Assigned(dmMain) then Exit;
 
-  SearchText := Trim(edtSearch.Text);
+  // --- Отдел (выпадающий список рядом с поиском) ---
+  DeptId := 0;
+  if cmbDeptFilter.ItemIndex >= 0 then
+    DeptId := Integer(cmbDeptFilter.Items.Objects[cmbDeptFilter.ItemIndex]);
 
-  // Если поле очистили — показываем весь список
-  if SearchText = '' then
+  // --- Поиск по ФИО / табельному номеру ---
+  SearchText := Trim(edtSearch.Text);
+  SearchCond := '';
+  if SearchText <> '' then
   begin
-    dmMain.qryEmployees.Filtered := False;
-    Exit;
+    // Проверяем: ввел пользователь число (табельный номер) или текст?
+    TabNum := StrToIntDef(SearchText, -1);
+    if TabNum <> -1 then
+      // Если ввели число: ищем точное совпадение по ID ИЛИ вхождение в ФИО
+      SearchCond := '(id = ' + IntToStr(TabNum) + ' OR fio LIKE ''%' + SearchText + '%'')'
+    else
+      // Если ввели буквы: ищем только по ФИО
+      SearchCond := 'fio LIKE ''%' + SearchText + '%''';
   end;
+
+  // --- Объединяем оба условия ---
+  FilterStr := '';
+  if DeptId > 0 then
+    FilterStr := 'dept_id = ' + IntToStr(DeptId);
+  if SearchCond <> '' then
+  begin
+    if FilterStr <> '' then FilterStr := FilterStr + ' AND ';
+    FilterStr := FilterStr + SearchCond;
+  end;
+
   // Включаем поиск без учета регистра букв (А = а)
   dmMain.qryEmployees.FilterOptions := [foCaseInsensitive];
 
-  // Проверяем: ввел пользователь число (табельный номер) или текст?
-  TabNum := StrToIntDef(SearchText, -1);
-
-  if TabNum <> -1 then
-    // Если ввели число: ищем точное совпадение по ID ИЛИ вхождение в ФИО
-    dmMain.qryEmployees.Filter := 'id = ' + IntToStr(TabNum) + ' OR fio LIKE ''%' + SearchText + '%'''
+  if FilterStr = '' then
+    dmMain.qryEmployees.Filtered := False
   else
-    // Если ввели буквы: ищем только по ФИО
-    dmMain.qryEmployees.Filter := 'fio LIKE ''%' + SearchText + '%''';
-
-  // Включаем фильтрацию
-  dmMain.qryEmployees.Filtered := True;
+  begin
+    dmMain.qryEmployees.Filter := FilterStr;
+    dmMain.qryEmployees.Filtered := True;
+  end;
 end;
 
 procedure TframeEmployees.DBGrid1DblClick(Sender: TObject);

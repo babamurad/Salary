@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids,
   Vcl.DBGrids, Vcl.ExtCtrls, Vcl.DBCtrls, Vcl.StdCtrls, System.Math, System.DateUtils,
-  ComObj,
+  Vcl.Menus, ComObj,
   FireDAC.Comp.Client, FireDAC.Comp.DataSet, FireDAC.Stan.Param;
 
 type
@@ -23,15 +23,20 @@ type
     btnSummaryReport: TButton;
     btnPensionReport: TButton;
     btnBankTransferReport: TButton;
+    PopupMenu1: TPopupMenu;
+    miEditEmployee: TMenuItem;
     procedure btnCalcClick(Sender: TObject);
     procedure btnCloseMonthClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
     procedure DBGrid1DblClick(Sender: TObject);
+    procedure DBGrid1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure btnExportClick(Sender: TObject);
     procedure btnPrintAllSlipsClick(Sender: TObject);
     procedure btnSummaryReportClick(Sender: TObject);
     procedure btnPensionReportClick(Sender: TObject);
     procedure btnBankTransferReportClick(Sender: TObject);
+    procedure miEditEmployeeClick(Sender: TObject);
   private
     qryPayroll: TFDQuery;
     dsPayroll: TDataSource;
@@ -50,7 +55,7 @@ implementation
 {$R *.dfm}
 
 uses UnitdmMain, UnitPaySlip, UnitReportPayroll, UnitPayrollCalc, UnitPayrollDetail,
-  UnitReportPension, UnitReportBankTransfer;
+  UnitReportPension, UnitReportBankTransfer, UnitBaseEditForm;
 
 { TframePayroll }
 
@@ -828,6 +833,52 @@ begin
       RefreshData;
   finally
     DetailForm.Free;
+  end;
+end;
+
+procedure TframePayroll.DBGrid1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  Coord: TGridCoord;
+begin
+  // Перед показом контекстного меню переставляем курсор на строку под правой кнопкой мыши -
+  // иначе "Редактировать сотрудника" сработает для ранее выделенной строки, а не той, по которой кликнули.
+  if (Button = mbRight) and Assigned(qryPayroll) and qryPayroll.Active then
+  begin
+    Coord := DBGrid1.MouseToCell(X, Y);
+    if Coord.Y > 0 then
+      qryPayroll.MoveBy(Coord.Y - DBGrid1.Row);
+  end;
+end;
+
+procedure TframePayroll.miEditEmployeeClick(Sender: TObject);
+var
+  Frm: TfrmBaseEdit;
+  EmpId: Integer;
+begin
+  if qryPayroll.IsEmpty then Exit;
+  EmpId := qryPayroll.FieldByName('emp_id').AsInteger;
+
+  if not dmMain.qryEmployees.Active then dmMain.qryEmployees.Open;
+  if not dmMain.qryEmployees.Locate('id', EmpId, []) then
+  begin
+    ShowMessage('Не удалось найти сотрудника для этой строки.');
+    Exit;
+  end;
+
+  // Та же форма редактирования, что и на фрейме "Сотрудники"
+  Frm := TfrmBaseEdit.Create(Self);
+  try
+    Frm.LoadFromDataset(dmMain.qryEmployees);
+    if Frm.ShowModal = mrOk then
+    begin
+      dmMain.qryEmployees.Edit;
+      Frm.SaveToDataset(dmMain.qryEmployees);
+      dmMain.qryEmployees.Post;
+      RefreshData; // ФИО/отдел/должность в списке начислений могли измениться
+    end;
+  finally
+    Frm.Free;
   end;
 end;
 

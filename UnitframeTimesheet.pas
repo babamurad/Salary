@@ -46,13 +46,14 @@ type
     procedure PrepareMemTable(AYear, AMonth: Integer);
     procedure FillEmployeesList;
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
 
 {$R *.dfm}
 
-uses UnitdmMain;
+uses UnitdmMain, UnitGridPersist;
 
 { TframeTimesheet }
 
@@ -84,6 +85,12 @@ begin
 
   // Выполняем первую загрузку "Текущего периода" сразу при создании фрейма
   btnLoadClick(nil);
+end;
+
+destructor TframeTimesheet.Destroy;
+begin
+  SaveGridColumnWidths(DBGridTimesheet, 'Timesheet');
+  inherited;
 end;
 
 procedure TframeTimesheet.LoadDepartments;
@@ -258,6 +265,12 @@ begin
     // Ввод дней сразу пересчитывает часы (см. DaysWorkedChange)
     FieldByName('days_worked').OnChange := DaysWorkedChange;
   end;
+
+  // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+  // подгонял вручную в прошлый раз (если сохранено). Грид пересоздаётся
+  // заново при каждой смене года/месяца/отдела, поэтому без этого широкий
+  // столбец после каждого такого переключения снова становился узким.
+  LoadGridColumnWidths(DBGridTimesheet, 'Timesheet');
 end;
 
 procedure TframeTimesheet.FillEmployeesList;

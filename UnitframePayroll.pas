@@ -751,40 +751,84 @@ begin
 end;
 
 procedure TframePayroll.qryPayrollAfterOpen(DataSet: TDataSet);
-var
-i: Integer;
-begin
-  if DBGrid1.Columns.Count > 0 then
+
+  // Ищем столбец по имени поля, а не по номеру - физический порядок
+  // столбцов в payroll_journal НЕ совпадает с порядком, в котором их
+  // когда-то стали использовать в расчёте (net_amount создан ДО
+  // union_amount/alimony_amount и в SELECT p.* идёт перед ними), так что
+  // подписи по индексу [6]/[7]/[8] были прибиты к чужим столбцам
+  // ('На руки' на самом деле показывал alimony_amount, а не net_amount).
+  function ColByField(const AFieldName: string): TColumn;
+  var
+    k: Integer;
   begin
-    DBGrid1.Columns[0].Visible := False; // id
-    DBGrid1.Columns[1].Visible := False; // emp_id
-    DBGrid1.Columns[2].Title.Caption := 'Дата';
+    Result := nil;
+    for k := 0 to DBGrid1.Columns.Count - 1 do
+      if SameText(DBGrid1.Columns[k].FieldName, AFieldName) then
+        Exit(DBGrid1.Columns[k]);
+  end;
 
-    DBGrid1.Columns[3].Title.Caption := 'Начислено';
-    DBGrid1.Columns[3].Width := 120;
+var
+  i: Integer;
+  Col: TColumn;
+begin
+  Col := ColByField('id');
+  if Assigned(Col) then Col.Visible := False;
 
-    DBGrid1.Columns[4].Title.Caption := 'Подоходный';
-    DBGrid1.Columns[4].Width := 100;
+  Col := ColByField('emp_id');
+  if Assigned(Col) then Col.Visible := False;
 
-    DBGrid1.Columns[5].Title.Caption := 'Пенсионный';
-    DBGrid1.Columns[5].Width := 100;
+  Col := ColByField('period_date');
+  if Assigned(Col) then Col.Title.Caption := 'Дата';
 
-    // Новые колонки в гриде
-    if DBGrid1.Columns.Count > 6 then
-    begin
-      DBGrid1.Columns[6].Title.Caption := 'Профсоюз';
-      DBGrid1.Columns[6].Width := 90;
+  Col := ColByField('gross_amount');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'Начислено';
+    Col.Width := 120;
+  end;
 
-      DBGrid1.Columns[7].Title.Caption := 'Алименты';
-      DBGrid1.Columns[7].Width := 90;
+  Col := ColByField('tax_amount');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'Подоходный';
+    Col.Width := 100;
+  end;
 
-      DBGrid1.Columns[8].Title.Caption := 'На руки';
-      DBGrid1.Columns[8].Width := 120;
+  Col := ColByField('pension_amount');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'Пенсионный';
+    Col.Width := 100;
+  end;
 
-      DBGrid1.Columns[9].Title.Caption := 'Сотрудник';
-      DBGrid1.Columns[9].Width := 200;
-      DBGrid1.Columns[9].Index := 0; // Двигаем ФИО влево
-    end;
+  Col := ColByField('union_amount');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'Профсоюз';
+    Col.Width := 90;
+  end;
+
+  Col := ColByField('alimony_amount');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'Алименты';
+    Col.Width := 90;
+  end;
+
+  Col := ColByField('net_amount');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'На руки';
+    Col.Width := 120;
+  end;
+
+  Col := ColByField('fio');
+  if Assigned(Col) then
+  begin
+    Col.Title.Caption := 'Сотрудник';
+    Col.Width := 200;
+    Col.Index := 0; // Двигаем ФИО влево
   end;
 
   for i := 0 to DBGrid1.Columns.Count - 1 do

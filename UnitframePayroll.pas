@@ -838,16 +838,15 @@ end;
 
 procedure TframePayroll.DBGrid1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-var
-  Coord: TGridCoord;
 begin
-  // Перед показом контекстного меню переставляем курсор на строку под правой кнопкой мыши -
-  // иначе "Редактировать сотрудника" сработает для ранее выделенной строки, а не той, по которой кликнули.
-  if (Button = mbRight) and Assigned(qryPayroll) and qryPayroll.Active then
+  // TCustomGrid.Row/MouseCoord недоступны отсюда (protected), а сам DBGrid переставляет
+  // курсор на строку только по ЛЕВОЙ кнопке. Поэтому перед показом контекстного меню
+  // эмулируем клик левой кнопкой в той же точке - иначе "Редактировать сотрудника"
+  // сработает для ранее выделенной строки, а не той, по которой кликнули правой кнопкой.
+  if Button = mbRight then
   begin
-    Coord := DBGrid1.MouseToCell(X, Y);
-    if Coord.Y > 0 then
-      qryPayroll.MoveBy(Coord.Y - DBGrid1.Row);
+    DBGrid1.Perform(WM_LBUTTONDOWN, MK_LBUTTON, MakeLParam(X, Y));
+    DBGrid1.Perform(WM_LBUTTONUP, 0, MakeLParam(X, Y));
   end;
 end;
 

@@ -30,17 +30,21 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
+    Label4: TLabel;
+    edtSearch: TEdit;
     procedure DBGridTimesheetDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure btnLoadClick(Sender: TObject);
     procedure btnAutoFillClick(Sender: TObject);
     procedure btnSaveClick(Sender: TObject);
+    procedure edtSearchChange(Sender: TObject);
   private
     FCurYear: Integer;   // Текущий год отчета из формы
     FCurMonth: Integer;  // Текущий месяц отчета из формы
     procedure ReadPeriodFromUI;
     procedure LoadDepartments;
     procedure DaysWorkedChange(Sender: TField);
+    procedure ApplyEmployeeFilter;
     function GetWorkingDaysNorm(AYear, AMonth: Integer): Integer;
   public
     procedure PrepareMemTable(AYear, AMonth: Integer);
@@ -113,6 +117,28 @@ begin
   cmbDept.ItemIndex := 0;
 end;
 
+procedure TframeTimesheet.ApplyEmployeeFilter;
+var
+  SearchText: string;
+begin
+  if not Assigned(dmMain) or not dmMain.memTimesheet.Active then Exit;
+
+  SearchText := Trim(edtSearch.Text);
+  dmMain.memTimesheet.FilterOptions := [foCaseInsensitive];
+  if SearchText = '' then
+    dmMain.memTimesheet.Filtered := False
+  else
+  begin
+    dmMain.memTimesheet.Filter := 'fio LIKE ''%' + SearchText + '%''';
+    dmMain.memTimesheet.Filtered := True;
+  end;
+end;
+
+procedure TframeTimesheet.edtSearchChange(Sender: TObject);
+begin
+  ApplyEmployeeFilter;
+end;
+
 // Норма рабочих дней за месяц — сперва пытаемся взять из производственного
 // календаря (production_calendar), если его для этого периода не заполнили —
 // считаем "по старинке" (все дни кроме сб/вс). Та же логика, что и в
@@ -181,6 +207,12 @@ end;
 procedure TframeTimesheet.PrepareMemTable(AYear, AMonth: Integer);
 begin
   if not Assigned(dmMain) then Exit;
+
+  // Столбцы этого грида пересоздаются с нуля при каждой смене года/месяца/
+  // отдела (см. ниже), поэтому без сохранения ЗДЕСЬ, ДО пересборки, ручная
+  // подстройка ширины слетала не при перезапуске программы, а сразу же при
+  // следующем переключении фильтра.
+  SaveGridColumnWidths(DBGridTimesheet, 'Timesheet');
 
   DBGridTimesheet.DataSource := nil;
 
@@ -354,6 +386,8 @@ begin
     dmMain.memTimesheet.EnableControls;
     dmMain.qryEmployees.Filtered := False;
   end;
+
+  ApplyEmployeeFilter;
 end;
 
 procedure TframeTimesheet.btnAutoFillClick(Sender: TObject);

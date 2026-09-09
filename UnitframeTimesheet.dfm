@@ -9,7 +9,7 @@ object frameTimesheet: TframeTimesheet
     Left = 0
     Top = 0
     Width = 1040
-    Height = 81
+    Height = 120
     Align = alTop
     TabOrder = 0
     object Label1: TLabel
@@ -32,6 +32,21 @@ object frameTimesheet: TframeTimesheet
       Width = 33
       Height = 15
       Caption = #1054#1090#1076#1077#1083
+    end
+    object Label4: TLabel
+      Left = 40
+      Top = 74
+      Width = 82
+      Height = 15
+      Caption = #1055#1086#1080#1089#1082' '#1087#1086' '#1060#1048#1054':'
+    end
+    object edtSearch: TEdit
+      Left = 128
+      Top = 71
+      Width = 337
+      Height = 23
+      TabOrder = 5
+      OnChange = edtSearchChange
     end
     object cbYear: TComboBox
       Left = 40
@@ -93,9 +108,9 @@ object frameTimesheet: TframeTimesheet
   end
   object DBGridTimesheet: TDBGrid
     Left = 0
-    Top = 81
+    Top = 120
     Width = 1040
-    Height = 398
+    Height = 359
     Align = alClient
     DataSource = dmMain.dsTimesheet
     Options = [dgEditing, dgAlwaysShowEditor, dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]

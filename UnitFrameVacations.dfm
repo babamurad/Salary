@@ -9,12 +9,19 @@ object frameVacations: TframeVacations
     Left = 0
     Top = 0
     Width = 931
-    Height = 41
+    Height = 80
     Align = alTop
     TabOrder = 0
     ExplicitLeft = 376
     ExplicitTop = 256
     ExplicitWidth = 185
+    object Label1: TLabel
+      Left = 8
+      Top = 52
+      Width = 82
+      Height = 15
+      Caption = #1055#1086#1080#1089#1082' '#1087#1086' '#1060#1048#1054':'
+    end
     object btnAdd: TButton
       Left = 232
       Top = 8
@@ -50,12 +57,20 @@ object frameVacations: TframeVacations
       TabOrder = 3
       OnClick = btnPrintClick
     end
+    object edtSearch: TEdit
+      Left = 100
+      Top = 49
+      Width = 300
+      Height = 23
+      TabOrder = 4
+      OnChange = edtSearchChange
+    end
   end
   object DBGridVacations: TDBGrid
     Left = 0
-    Top = 41
+    Top = 80
     Width = 931
-    Height = 511
+    Height = 472
     Align = alClient
     DataSource = dmMain.dsVacation
     TabOrder = 1

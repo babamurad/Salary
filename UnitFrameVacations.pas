@@ -16,21 +16,26 @@ type
     btnRefresh: TButton;
     DBGridVacations: TDBGrid;
     btnPrint: TButton;
+    Label1: TLabel;
+    edtSearch: TEdit;
     procedure btnAddClick(Sender: TObject);
     procedure btnDeleteClick(Sender: TObject);
     procedure btnRefreshClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
+    procedure edtSearchChange(Sender: TObject);
   private
     procedure SetupGrid;
+    procedure ApplyEmployeeFilter;
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 implementation
 
 {$R *.dfm}
 
-uses UnitdmMain, UnitVacationCalc, UnitHtmlPreview; // Подключаем базу и форму расчета отпускных
+uses UnitdmMain, UnitVacationCalc, UnitHtmlPreview, UnitGridPersist; // Подключаем базу и форму расчета отпускных
 
 constructor TframeVacations.Create(AOwner: TComponent);
 begin
@@ -43,7 +48,36 @@ begin
 
     DBGridVacations.DataSource := dmMain.dsVacation;
     SetupGrid;
+    ApplyEmployeeFilter;
   end;
+end;
+
+destructor TframeVacations.Destroy;
+begin
+  SaveGridColumnWidths(DBGridVacations, 'Vacations');
+  inherited;
+end;
+
+procedure TframeVacations.ApplyEmployeeFilter;
+var
+  SearchText: string;
+begin
+  if not Assigned(dmMain) or not dmMain.qryVacation.Active then Exit;
+
+  SearchText := Trim(edtSearch.Text);
+  dmMain.qryVacation.FilterOptions := [foCaseInsensitive];
+  if SearchText = '' then
+    dmMain.qryVacation.Filtered := False
+  else
+  begin
+    dmMain.qryVacation.Filter := 'fio LIKE ''%' + SearchText + '%''';
+    dmMain.qryVacation.Filtered := True;
+  end;
+end;
+
+procedure TframeVacations.edtSearchChange(Sender: TObject);
+begin
+  ApplyEmployeeFilter;
 end;
 
 procedure TframeVacations.SetupGrid;
@@ -71,6 +105,10 @@ begin
     // Формат денег
     if dmMain.qryVacation.FindField('total_amount') <> nil then
       (dmMain.qryVacation.FieldByName('total_amount') as TNumericField).DisplayFormat := '#,##0.00';
+
+    // Поверх настроенных по умолчанию ширин накатываем то, что пользователь
+    // подгонял вручную в прошлый раз (если сохранено).
+    LoadGridColumnWidths(DBGridVacations, 'Vacations');
   end;
 end;
 

@@ -9,7 +9,7 @@ object frameSickLeave: TframeSickLeave
     Left = 0
     Top = 0
     Width = 1105
-    Height = 41
+    Height = 80
     Align = alTop
     TabOrder = 0
     ExplicitWidth = 830
@@ -19,6 +19,13 @@ object frameSickLeave: TframeSickLeave
       Width = 104
       Height = 15
       Caption = #1060#1080#1083#1100#1090#1088' '#1087#1086' '#1084#1077#1089#1103#1094#1091':'
+    end
+    object Label2: TLabel
+      Left = 16
+      Top = 52
+      Width = 82
+      Height = 15
+      Caption = #1055#1086#1080#1089#1082' '#1087#1086' '#1060#1048#1054':'
     end
     object btnNewCalc: TButton
       Left = 360
@@ -65,12 +72,20 @@ object frameSickLeave: TframeSickLeave
       TabOrder = 4
       OnClick = btnEditClick
     end
+    object edtSearch: TEdit
+      Left = 140
+      Top = 49
+      Width = 300
+      Height = 23
+      TabOrder = 5
+      OnChange = edtSearchChange
+    end
   end
   object DBGrid1: TDBGrid
     Left = 0
-    Top = 41
+    Top = 80
     Width = 1105
-    Height = 483
+    Height = 444
     Align = alClient
     DataSource = dmMain.dsSickLeave
     TabOrder = 1

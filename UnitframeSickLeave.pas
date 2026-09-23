@@ -17,15 +17,19 @@ type
     cmbMonthFilter: TComboBox;
     Label1: TLabel;
     btnEdit: TButton;
+    Label2: TLabel;
+    edtSearch: TEdit;
     procedure btnNewCalcClick(Sender: TObject);
     procedure btnDeleteClick(Sender: TObject);
     procedure btnPrintClick(Sender: TObject);
     procedure cmbMonthFilterChange(Sender: TObject);
     procedure btnEditClick(Sender: TObject);
+    procedure edtSearchChange(Sender: TObject);
   private
     procedure SetupGrid;
     procedure LoadMonths; // Загрузка месяцев для фильтра
     procedure RefreshData; // Умное обновление данных с учетом фильтра
+    procedure ApplyEmployeeFilter;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -111,6 +115,30 @@ begin
   end;
 
   dmMain.qrySickLeave.Open;
+
+  ApplyEmployeeFilter; // Текст поиска (если введён) остаётся в силе после перезагрузки
+end;
+
+procedure TframeSickLeave.ApplyEmployeeFilter;
+var
+  SearchText: string;
+begin
+  if not Assigned(dmMain) or not dmMain.qrySickLeave.Active then Exit;
+
+  SearchText := Trim(edtSearch.Text);
+  dmMain.qrySickLeave.FilterOptions := [foCaseInsensitive];
+  if SearchText = '' then
+    dmMain.qrySickLeave.Filtered := False
+  else
+  begin
+    dmMain.qrySickLeave.Filter := 'fio LIKE ''%' + SearchText + '%''';
+    dmMain.qrySickLeave.Filtered := True;
+  end;
+end;
+
+procedure TframeSickLeave.edtSearchChange(Sender: TObject);
+begin
+  ApplyEmployeeFilter;
 end;
 
 procedure TframeSickLeave.cmbMonthFilterChange(Sender: TObject);

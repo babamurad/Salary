@@ -1,0 +1,35 @@
+name: Build check
+
+# Просто проверяет, что проект компилируется (Debug|Win32) при каждом пуше
+# и pull request в main — ничего не публикует. Использует тот же
+# self-hosted раннер, что и release.yml (см. .github/RELEASE_SETUP.md).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [self-hosted, Windows]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Собираем Salary.dproj (Debug|Win32)
+        shell: cmd
+        env:
+          RSVARS: ${{ vars.RAD_STUDIO_RSVARS }}
+        run: |
+          if "%RSVARS%"=="" (
+            echo В репозитории не задана переменная RAD_STUDIO_RSVARS ^(путь к rsvars.bat^).
+            echo См. .github/RELEASE_SETUP.md
+            exit /b 1
+          )
+          call "%RSVARS%"
+          if errorlevel 1 exit /b 1
+          msbuild Salary.dproj /t:Build /p:Config=Debug /p:Platform=Win32 /verbosity:normal
+          if errorlevel 1 exit /b 1

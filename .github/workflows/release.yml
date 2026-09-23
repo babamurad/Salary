@@ -1,0 +1,86 @@
+name: Build and Release
+
+# Запускается либо на пуш тега вида v1.2.3, либо вручную из вкладки Actions
+# (Run workflow), с указанием версии.
+#
+# Требует self-hosted раннер на компьютере с установленной RAD Studio
+# (сборка Delphi-проекта на обычном GitHub-хостed раннере невозможна —
+# там нет и не может быть лицензионной RAD Studio). Как настроить раннер
+# и что нужно указать в переменных репозитория — см. .github/RELEASE_SETUP.md.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Тег релиза, например v1.0.1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: [self-hosted, Windows]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Определяем версию релиза
+        id: ver
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $tag = '${{ inputs.version }}'
+          } else {
+            $tag = '${{ github.ref_name }}'
+          }
+          if ($tag -notmatch '^v\d+\.\d+\.\d+$') {
+            Write-Error "Версия '$tag' не похожа на vX.Y.Z"
+            exit 1
+          }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Собираем Salary.dproj (Release|Win32)
+        shell: cmd
+        env:
+          RSVARS: ${{ vars.RAD_STUDIO_RSVARS }}
+        run: |
+          if "%RSVARS%"=="" (
+            echo В репозитории не задана переменная RAD_STUDIO_RSVARS ^(путь к rsvars.bat^).
+            echo См. .github/RELEASE_SETUP.md
+            exit /b 1
+          )
+          call "%RSVARS%"
+          if errorlevel 1 exit /b 1
+          msbuild Salary.dproj /t:Build /p:Config=Release /p:Platform=Win32 /verbosity:normal
+          if errorlevel 1 exit /b 1
+
+      - name: Проверяем, что exe действительно собрался
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'Win32\Release\Salary.exe')) {
+            Write-Error "Win32\Release\Salary.exe не найден после сборки"
+            exit 1
+          }
+
+      - name: Упаковываем папку Win32\Release в архив
+        id: pkg
+        shell: pwsh
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          $zip = "Salary-$env:TAG-win32.zip"
+          Compress-Archive -Path 'Win32\Release\*' -DestinationPath $zip -Force
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+
+      - name: Публикуем GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: Salary ${{ steps.ver.outputs.tag }}
+          files: ${{ steps.pkg.outputs.zip }}
+          generate_release_notes: true

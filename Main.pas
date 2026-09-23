@@ -74,7 +74,7 @@ uses
   UnitframeEmployees,
   UnitframePayroll,
   UnitframeReports, UnitBaseEditForm, UnitdmMain, UnitEditEmployee,
-  UnitframeDepts, UnitframePositions, UnitframeSettings, UnitframeVacation,
+  UnitframeDepts, UnitframePositions, UnitframeSettings,
   UnitframeSickLeave, UnitframeDashboard, UnitframeCalendar, UnitFormHelp,
   UnitframeTimesheet, UnitFrameReportSummary, UnitFrameVacations, UnitLogin;
 

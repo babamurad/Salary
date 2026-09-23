@@ -13,7 +13,6 @@ uses
   UnitframeDepts in 'UnitframeDepts.pas' {frameDepts: TFrame},
   UnitframePositions in 'UnitframePositions.pas' {framePositions: TFrame},
   UnitframeSettings in 'UnitframeSettings.pas' {frameSettings: TFrame},
-  UnitframeVacation in 'UnitframeVacation.pas' {frameVacation: TFrame},
   UnitVacationCalc in 'UnitVacationCalc.pas' {FormVacationCalc},
   UnitSickLeaveCalc in 'UnitSickLeaveCalc.pas' {FormSickLeaveCalc},
   UnitframeSickLeave in 'UnitframeSickLeave.pas' {frameSickLeave: TFrame},
